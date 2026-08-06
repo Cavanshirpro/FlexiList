@@ -104,6 +104,10 @@ Aşağıdaki liste, FlexiList projesinin başlangıcından bugüne kadarki geli�
 - `[+]` Workout Planlayıcı defterlerinden gereksiz Öncelik Seviyesi Ayarları düğmesinin kaldırılması (Ana liste ve Defter Ayarları)
 - `[+]` Liste Kartlarında Renkli Öncelik Görselleştirmesi: Öncelikli öğelerde özel arka plan tonlaması, sol dikey renk çubuğu ve öncelik rozeti (badge) gösterimi
 - `[+]` Öğe Ekleme/Düzenleme Ekranlarında Yatay Kaydırma (Horizontal Scroll): Dar ekranlarda öncelik çiplerinin taşmasını engelleyen UX düzeltmesi
+- `[+]` **[Geliştirildi]** Workout planlayıcıdaki haftanın günleri seçici barının dar ekranlarda kırılmasını önleyen yatay kaydırılabilir (`LazyRow`) çip tasarımı
+- `[+]` **[Geliştirildi]** Egzersiz kartlarındaki parametre pill'lerinin (Set, Tekrar/Süre, Ağırlık, Mola) ve hedef kas etiketlerinin tüm ekran boyutları ve çözünürlüklerde taşmasını engelleyen esnek düzen (`FlowRow`) entegrasyonu
+- `[+]` **[Geliştirildi]** Antrenman oyuncusu tam ekran arayüzünün (`WorkoutPlayerScreen`) küçük ve dikey kısıtlı ekranlarda kaydırılabilir (`verticalScroll`) hale getirilmesi
+- `[+]` **[Düzeltildi]** Paylaşılan `.flexi` defter dosyalarının ve metinlerinin FlexiList ile açıldığında otomatik algılanıp veritabanına sorunsuz içe aktarılması (`ACTION_VIEW` & `ACTION_SEND` Intent filtreleri)
 - `[+]` Dokunsal Geri Bildirim Entegrasyonu (Haptic Feedback): Öğe tamamlama, yıldızlama ve seçme işlemlerinde `LocalHapticFeedback` titreşim geribildirimi
 - `[+]` Tüm Derleme ve Lint İkazlarının (Deprecation Warnings) Temizlenmesi
 - `[ ]` Tamamlanan egzersizlerin otomatik olarak listenin en altına taşınması animasyonu optimizasyonu
@@ -111,7 +115,7 @@ Aşağıdaki liste, FlexiList projesinin başlangıcından bugüne kadarki geli�
 
 ### [G] Bulut Depolama, Yedekleme ve Senkronizasyon
 - `[+]` Sıfır konfigürasyonlu, kullanıcı dostu Bulut Yedekleme ve Senkronizasyon mimarisi
-- `[+]` `CloudSyncManager` üzerinden `kvdb.io` REST API entegrasyonu (OkHttp tabanlı)
+- `[+]` `CloudSyncManager` üzerinden `JSONBlob` SSL korumalı küresel REST API entegrasyonu (OkHttp tabanlı)
 - `[+]` Her yedek için otomatik ve rastgele üretilebilen yüksek güvenlikli senkronizasyon kodları (`FLX-XXXXXX`)
 - `[+]` Buluttan tek dokunuşla geri yükleme (Download & Restore) ve yerel SQLite veritabanı ile otomatik veri birleştirme
 - `[+]` AndroidManifest.xml'de güvenli `INTERNET` izinlerinin yapılandırılması

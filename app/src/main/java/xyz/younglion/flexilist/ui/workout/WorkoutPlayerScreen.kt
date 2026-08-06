@@ -1,0 +1,1132 @@
+package xyz.younglion.flexilist.ui.workout
+
+import android.content.Context
+import android.widget.Toast
+import androidx.compose.animation.*
+import androidx.compose.animation.core.*
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import xyz.younglion.flexilist.data.model.ListItemEntity
+import xyz.younglion.flexilist.data.notifications.SystemSoundAndNotificationHelper
+import xyz.younglion.flexilist.ui.FlexiViewModel
+import xyz.younglion.flexilist.ui.detail.parseExerciseConfig
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import xyz.younglion.flexilist.ui.notebooks.varRemember
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+
+@Composable
+fun WorkoutPlayerScreen(
+    viewModel: FlexiViewModel,
+    notebookId: Long = 0L,
+    workoutName: String,
+    exercises: List<ListItemEntity>,
+    onDismiss: () -> Unit
+) {
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+
+    // Flatten exercise items into a structured sequence of exercises and sets
+    // If we have Supersets, we can interleave them based on their supersetGroupId
+    val exerciseConfigs = remember(exercises) {
+        exercises.map { item ->
+            val cfg = parseExerciseConfig(item.description)
+            PlayableExercise(
+                id = item.id,
+                name = item.title,
+                type = cfg.type, // "Reps" or "Timer"
+                setsCount = cfg.setsCount,
+                targetReps = cfg.targetReps,
+                targetTimeSeconds = cfg.targetTimeSeconds,
+                restTimeSeconds = cfg.restTimeSeconds,
+                weightKg = cfg.weightKg,
+                targetMuscles = cfg.targetMuscles,
+                supersetGroupId = cfg.supersetGroupId
+            )
+        }
+    }
+
+    // Generate execution queue of set-by-set steps
+    // Standard: Exercise 1 Set 1, Set 2, Set 3 -> Exercise 2
+    // Superset: If consecutive exercises share same non-empty group, interleave their sets!
+    val executionQueue = remember(exerciseConfigs) {
+        val queue = mutableStateListOf<WorkoutStep>()
+        var i = 0
+        while (i < exerciseConfigs.size) {
+            val current = exerciseConfigs[i]
+            val group = current.supersetGroupId
+
+            if (group.isNotBlank()) {
+                // Find contiguous exercises with same supersetGroupId
+                val groupExercises = mutableListOf(current)
+                var j = i + 1
+                while (j < exerciseConfigs.size && exerciseConfigs[j].supersetGroupId == group) {
+                    groupExercises.add(exerciseConfigs[j])
+                    j++
+                }
+
+                val maxSets = groupExercises.maxOf { it.setsCount }
+                // Interleave sets for superset
+                for (setIdx in 0 until maxSets) {
+                    for (ex in groupExercises) {
+                        if (setIdx < ex.setsCount) {
+                            queue.add(
+                                WorkoutStep(
+                                    exercise = ex,
+                                    setNumber = setIdx + 1,
+                                    isSuperset = true,
+                                    supersetPartnerNames = groupExercises.filter { it.id != ex.id }.map { it.name }
+                                )
+                            )
+                        }
+                    }
+                }
+                i = j
+            } else {
+                for (setIdx in 0 until current.setsCount) {
+                    queue.add(
+                        WorkoutStep(
+                            exercise = current,
+                            setNumber = setIdx + 1,
+                            isSuperset = false
+                        )
+                    )
+                }
+                i++
+            }
+        }
+        queue
+    }
+
+    if (executionQueue.isEmpty()) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background)
+                .padding(24.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(
+                    "Antrenmanda hiç egzersiz yok!",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    "Lütfen önce bu deftere egzersizler ve set ayarları ekleyin.",
+                    textAlign = TextAlign.Center,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
+                )
+                Spacer(modifier = Modifier.height(24.dp))
+                Button(onClick = onDismiss) {
+                    Text("Geri Dön")
+                }
+            }
+        }
+        return
+    }
+
+    val savedIndex = remember(notebookId) { viewModel.getSavedWorkoutStepIndex(notebookId) }
+    var currentStepIndex by remember {
+        mutableStateOf(if (executionQueue.isNotEmpty()) savedIndex.coerceIn(0, executionQueue.size - 1) else 0)
+    }
+
+    LaunchedEffect(currentStepIndex, notebookId) {
+        if (notebookId > 0L) {
+            viewModel.saveWorkoutStepIndex(notebookId, currentStepIndex)
+        }
+    }
+
+    val currentStep = executionQueue.getOrNull(currentStepIndex)
+
+    // Log tracking
+    val completedSteps = remember { mutableStateMapOf<Int, Boolean>() }
+    val startTime = remember { System.currentTimeMillis() }
+
+    // Timing Engine State
+    var isTimerRunning by remember { mutableStateOf(false) }
+    var secondsRemaining by remember { mutableStateOf(0) }
+    var isRestingState by remember { mutableStateOf(false) } // true if in post-set rest countdown
+    var isPrepState by remember { mutableStateOf(false) } // true if in pre-timer preparation countdown
+    var prepSecondsRemaining by remember { mutableStateOf(0) }
+    var currentExerciseWeight by remember { mutableStateOf(0.0) }
+    var isAwaitingConfirmation by remember { mutableStateOf(true) }
+
+    // Live Ongoing Notification Manager for Active Workout
+    LaunchedEffect(currentStepIndex, isRestingState, isPrepState, secondsRemaining, isTimerRunning) {
+        val step = executionQueue.getOrNull(currentStepIndex)
+        val statusText = when {
+            step == null -> "Antrenman son aşamasında."
+            isRestingState -> "⏸️ Mola: $secondsRemaining sn kaldı! (Sıradaki: ${step.exercise.name})"
+            isPrepState -> "🚀 Hazırlık: $prepSecondsRemaining sn..."
+            step.exercise.type == "Timer" && isTimerRunning -> "⏱️ ${step.exercise.name} (Set ${step.setNumber}/${step.exercise.setsCount}) - $secondsRemaining sn"
+            else -> "🏋️ ${step.exercise.name} (Set ${step.setNumber}/${step.exercise.setsCount}) ${if (step.exercise.weightKg > 0) "- ${step.exercise.weightKg} kg" else ""}"
+        }
+        xyz.younglion.flexilist.data.notifications.WorkoutNotificationManager.showOrUpdateWorkoutNotification(
+            context = context,
+            workoutName = workoutName,
+            statusText = statusText,
+            isPaused = !isTimerRunning && (step?.exercise?.type == "Timer")
+        )
+    }
+
+    DisposableEffect(Unit) {
+        onDispose {
+            xyz.younglion.flexilist.data.notifications.WorkoutNotificationManager.dismissWorkoutNotification(context)
+        }
+    }
+
+    // Final finish dialog & saver
+    fun finishWorkout() {
+        val endTime = System.currentTimeMillis()
+        val totalSec = (endTime - startTime) / 1000
+        val totalCompletedSets = completedSteps.filter { it.value }.size
+
+        // Calculate total weight lifted
+        var totalWeight = 0.0
+        val summaryMap = mutableMapOf<String, Int>() // exercise to completed sets count
+        completedSteps.filter { it.value }.forEach { (idx, _) ->
+            val step = executionQueue.getOrNull(idx)
+            if (step != null) {
+                totalWeight += step.exercise.weightKg
+                summaryMap[step.exercise.name] = (summaryMap[step.exercise.name] ?: 0) + 1
+            }
+        }
+
+        // Format programmatic JSON
+        val summaryList = summaryMap.map { (name, sets) ->
+            val ex = exerciseConfigs.find { it.name == name }
+            "{\"exercise\":\"$name\",\"sets\":$sets,\"weight\":${ex?.weightKg ?: 0.0}}"
+        }
+        val statsJson = "[${summaryList.joinToString(",")}]"
+
+        viewModel.saveWorkoutLog(
+            name = workoutName,
+            startTime = startTime,
+            endTime = endTime,
+            totalDurationSec = totalSec,
+            totalSets = totalCompletedSets,
+            totalWeightKg = totalWeight,
+            exerciseStatsJson = statsJson
+        )
+
+        // Also mark all exercises in active workout as completed in the database!
+        val completedExerciseIds = exercises.map { it.id }
+        if (completedExerciseIds.isNotEmpty()) {
+            viewModel.markExercisesAsCompleted(completedExerciseIds)
+        }
+
+        viewModel.resetWorkoutStepIndex(notebookId)
+
+        SystemSoundAndNotificationHelper.dismissWorkoutNotification(context)
+        Toast.makeText(context, "Antrenman Kaydedildi!", Toast.LENGTH_LONG).show()
+        onDismiss()
+    }
+
+    // Helper to transition state cleanly and prevent key race conditions
+    fun moveToNextStep() {
+        if (currentStepIndex < executionQueue.size - 1) {
+            isRestingState = false
+            currentStepIndex++
+        } else {
+            isRestingState = false
+            finishWorkout()
+        }
+    }
+
+    // Skip/Bunu Sonra Yap action
+    fun skipCurrentExercise() {
+        val step = currentStep ?: return
+        val currentExId = step.exercise.id
+        
+        // Find if there is any OTHER exercise after the current step index
+        val hasOtherExercises = executionQueue.any { it.exercise.id != currentExId && executionQueue.indexOf(it) > currentStepIndex }
+        
+        if (hasOtherExercises) {
+            val newList = executionQueue.toMutableList()
+            
+            // Steps before the current step index remain unchanged
+            val listBefore = newList.subList(0, currentStepIndex)
+            // Steps from the current index onwards
+            val listAfter = newList.subList(currentStepIndex, newList.size)
+            
+            val nonCurrentAfter = listAfter.filter { it.exercise.id != currentExId }
+            val currentAfter = listAfter.filter { it.exercise.id == currentExId }
+            
+            // Re-build the executionQueue
+            executionQueue.clear()
+            executionQueue.addAll(listBefore + nonCurrentAfter + currentAfter)
+            
+            // After re-building, the currentStepIndex will now point to the first step of the NEXT exercise,
+            // which has been moved up to the currentStepIndex spot!
+            isAwaitingConfirmation = true
+            isRestingState = false
+            isTimerRunning = false
+            isPrepState = false
+            prepSecondsRemaining = 0
+            
+            val newStep = executionQueue.getOrNull(currentStepIndex)
+            if (newStep != null) {
+                currentExerciseWeight = newStep.exercise.weightKg
+                secondsRemaining = if (newStep.exercise.type == "Timer") newStep.exercise.targetTimeSeconds else 0
+            }
+            
+            Toast.makeText(context, "${step.exercise.name} antrenmanın sonuna ertelendi!", Toast.LENGTH_SHORT).show()
+        } else {
+            Toast.makeText(context, "Ertelenecek başka farklı egzersiz yok!", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    // Initialize state on step change
+    LaunchedEffect(currentStepIndex, isRestingState) {
+        val step = executionQueue.getOrNull(currentStepIndex)
+        val prevStep = if (currentStepIndex > 0) executionQueue.getOrNull(currentStepIndex - 1) else null
+        if (step != null) {
+            currentExerciseWeight = step.exercise.weightKg
+            if (isRestingState) {
+                secondsRemaining = step.exercise.restTimeSeconds
+                isTimerRunning = true
+                isPrepState = false
+                prepSecondsRemaining = 0
+                isAwaitingConfirmation = false
+            } else {
+                val isNewExercise = currentStepIndex == 0 || (prevStep != null && step.exercise.id != prevStep.exercise.id)
+                if (isNewExercise) {
+                    isAwaitingConfirmation = true
+                    isTimerRunning = false
+                    isPrepState = false
+                    prepSecondsRemaining = 0
+                    secondsRemaining = if (step.exercise.type == "Timer") step.exercise.targetTimeSeconds else 0
+                } else {
+                    isAwaitingConfirmation = false
+                    if (step.exercise.type == "Timer") {
+                        prepSecondsRemaining = 5
+                        isPrepState = true
+                        secondsRemaining = step.exercise.targetTimeSeconds
+                        isTimerRunning = true
+                    } else {
+                        secondsRemaining = 0
+                        isTimerRunning = false
+                        isPrepState = false
+                        prepSecondsRemaining = 0
+                    }
+                }
+            }
+        }
+    }
+
+    // Core Timer Countdown ticker loop
+    LaunchedEffect(isTimerRunning, isRestingState, isPrepState, isAwaitingConfirmation) {
+        if (isTimerRunning && !isAwaitingConfirmation) {
+            while (true) {
+                delay(1000)
+                if (isPrepState) {
+                    if (prepSecondsRemaining > 0) {
+                        prepSecondsRemaining--
+                        val progressMsg = "HAZIRLAN: ${prepSecondsRemaining}sn kaldı"
+                        SystemSoundAndNotificationHelper.showWorkoutNotification(context, workoutName, progressMsg)
+
+                        if (prepSecondsRemaining == 0) {
+                            SystemSoundAndNotificationHelper.playDing()
+                            isPrepState = false
+                        } else if (prepSecondsRemaining <= 3) {
+                            SystemSoundAndNotificationHelper.playTick()
+                        }
+                    } else {
+                        isPrepState = false
+                    }
+                } else if (secondsRemaining > 0) {
+                    secondsRemaining--
+                    val progressMsg = if (isRestingState) {
+                        "MOLA: ${secondsRemaining}sn kaldı"
+                    } else {
+                        currentStep?.let { "${it.exercise.name} (Set ${it.setNumber}): ${secondsRemaining}sn" } ?: ""
+                    }
+                    SystemSoundAndNotificationHelper.showWorkoutNotification(context, workoutName, progressMsg)
+
+                    if (secondsRemaining == 0) {
+                        SystemSoundAndNotificationHelper.playDing()
+                        if (isRestingState) {
+                            // Rest is over, start next set/exercise
+                            moveToNextStep()
+                        } else {
+                            // Timer exercise set is done, automatically enter rest state
+                            completedSteps[currentStepIndex] = true
+                            if (currentStepIndex < executionQueue.size - 1) {
+                                isRestingState = true
+                            } else {
+                                // All finished!
+                                isTimerRunning = false
+                                finishWorkout()
+                                break
+                            }
+                        }
+                    } else if (secondsRemaining <= 3) {
+                        SystemSoundAndNotificationHelper.playTick()
+                    }
+                } else {
+                    break
+                }
+            }
+        }
+    }
+
+    // Dismiss notifications on clear
+    DisposableEffect(Unit) {
+        onDispose {
+            SystemSoundAndNotificationHelper.dismissWorkoutNotification(context)
+        }
+    }
+
+    // Visual Theme (Dark Distraction-free Slate Space)
+    Surface(
+        modifier = Modifier.fillMaxSize(),
+        color = Color(0xFF0F172A) // Sleek slate space dark background
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(24.dp)
+                .statusBarsPadding()
+                .navigationBarsPadding()
+                .verticalScroll(rememberScrollState()),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.SpaceBetween
+        ) {
+            // 1. Top bar summary
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                IconButton(onClick = onDismiss) {
+                    Icon(Icons.Default.Close, "Kapat", tint = Color.White.copy(alpha = 0.6f))
+                }
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        workoutName,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White,
+                        fontSize = 18.sp
+                    )
+                    Text(
+                        "Adım ${currentStepIndex + 1} / ${executionQueue.size}",
+                        color = Color.White.copy(alpha = 0.5f),
+                        fontSize = 12.sp
+                    )
+                }
+                IconButton(onClick = { finishWorkout() }) {
+                    Icon(Icons.Default.DoneAll, "Bitir", tint = MaterialTheme.colorScheme.primary)
+                }
+            }
+
+            // Progress bar
+            LinearProgressIndicator(
+                progress = { (currentStepIndex.toFloat() + 1) / executionQueue.size.toFloat() },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp)
+                    .clip(RoundedCornerShape(4.dp)),
+                color = MaterialTheme.colorScheme.primary,
+                trackColor = Color.White.copy(alpha = 0.1f)
+            )
+
+            if (currentStep != null) {
+                val ex = currentStep.exercise
+
+                // 2. Muscle Group Visualizer & Exercise details
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f),
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    if (isAwaitingConfirmation) {
+                        Text(
+                            "SIRADAKİ EGZERSİZ",
+                            fontWeight = FontWeight.ExtraBold,
+                            color = MaterialTheme.colorScheme.primary,
+                            fontSize = 14.sp,
+                            letterSpacing = 2.sp
+                        )
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text(
+                            ex.name.uppercase(),
+                            fontWeight = FontWeight.Black,
+                            fontSize = 28.sp,
+                            color = Color.White,
+                            textAlign = TextAlign.Center
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Box(
+                            modifier = Modifier
+                                .size(160.dp)
+                                .padding(8.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            MuscleGroupVisualizer(targetMuscles = ex.targetMuscles)
+                        }
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(16.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text("SET SAYISI", color = Color.White.copy(alpha = 0.5f), fontSize = 11.sp)
+                                Text("${ex.setsCount}", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Black)
+                            }
+                            Box(modifier = Modifier.width(1.dp).height(24.dp).background(Color.White.copy(alpha = 0.1f)))
+                            if (ex.type == "Reps") {
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    Text("HEDEF TEKRAR", color = Color.White.copy(alpha = 0.5f), fontSize = 11.sp)
+                                    Text("${ex.targetReps}", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Black)
+                                }
+                            } else {
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    Text("HEDEF SÜRE", color = Color.White.copy(alpha = 0.5f), fontSize = 11.sp)
+                                    Text("${ex.targetTimeSeconds}s", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Black)
+                                }
+                            }
+                            Box(modifier = Modifier.width(1.dp).height(24.dp).background(Color.White.copy(alpha = 0.1f)))
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text("AĞIRLIK", color = Color.White.copy(alpha = 0.5f), fontSize = 11.sp)
+                                Text("${ex.weightKg} kg", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Black)
+                            }
+                        }
+                    } else if (isPrepState) {
+                        Text(
+                            "HAZIRLANIN!",
+                            fontWeight = FontWeight.ExtraBold,
+                            color = Color(0xFFF59E0B), // Vibrant amber gold
+                            fontSize = 18.sp,
+                            letterSpacing = 3.sp
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Box(
+                            modifier = Modifier
+                                .size(140.dp)
+                                .background(Color(0xFFF59E0B).copy(alpha = 0.1f), CircleShape)
+                                .border(4.dp, Color(0xFFF59E0B), CircleShape),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "$prepSecondsRemaining",
+                                fontWeight = FontWeight.Black,
+                                fontSize = 64.sp,
+                                color = Color(0xFFF59E0B)
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(20.dp))
+                        Text(
+                            "Sıradaki: ${ex.name}",
+                            color = Color.White.copy(alpha = 0.9f),
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            textAlign = TextAlign.Center
+                        )
+                        Text(
+                            "Set ${currentStep.setNumber} / ${ex.setsCount}",
+                            color = Color.White.copy(alpha = 0.6f),
+                            fontSize = 14.sp,
+                            textAlign = TextAlign.Center
+                        )
+                    } else if (isRestingState) {
+                        Text(
+                            "DİNLENME SÜRESİ",
+                            fontWeight = FontWeight.ExtraBold,
+                            color = MaterialTheme.colorScheme.secondary,
+                            fontSize = 14.sp,
+                            letterSpacing = 2.sp
+                        )
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text(
+                            "${secondsRemaining}s",
+                            fontWeight = FontWeight.Black,
+                            fontSize = 64.sp,
+                            color = Color.White
+                        )
+                        Text(
+                            "Sıradaki: ${ex.name} (Set ${currentStep.setNumber})",
+                            color = Color.White.copy(alpha = 0.7f),
+                            fontSize = 14.sp,
+                            textAlign = TextAlign.Center
+                        )
+                    } else {
+                        // Title of current action
+                        Text(
+                            ex.name.uppercase(),
+                            fontWeight = FontWeight.Black,
+                            fontSize = 24.sp,
+                            color = Color.White,
+                            textAlign = TextAlign.Center
+                        )
+
+                        if (currentStep.isSuperset) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier
+                                    .background(
+                                        MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
+                                        RoundedCornerShape(8.dp)
+                                    )
+                                    .padding(horizontal = 10.dp, vertical = 4.dp)
+                            ) {
+                                Icon(Icons.Default.Sync, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(14.dp))
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                    "HIBRİT HİPER SUPERSET (Grup ${ex.supersetGroupId})",
+                                    color = MaterialTheme.colorScheme.primary,
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        // Target Info Cards Row
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(16.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text("SET", color = Color.White.copy(alpha = 0.5f), fontSize = 11.sp)
+                                Text("${currentStep.setNumber} / ${ex.setsCount}", color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.Black)
+                            }
+                            Box(modifier = Modifier.width(1.dp).height(32.dp).background(Color.White.copy(alpha = 0.1f)))
+                            
+                            if (ex.type == "Reps") {
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    Text("HEDEF TEKRAR", color = Color.White.copy(alpha = 0.5f), fontSize = 11.sp)
+                                    Text("${ex.targetReps}", color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.Black)
+                                }
+                            } else {
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    Text("SÜRE", color = Color.White.copy(alpha = 0.5f), fontSize = 11.sp)
+                                    Text("${secondsRemaining}s", color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.Black)
+                                }
+                            }
+                            Box(modifier = Modifier.width(1.dp).height(32.dp).background(Color.White.copy(alpha = 0.1f)))
+                            
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text("AĞIRLIK", color = Color.White.copy(alpha = 0.5f), fontSize = 11.sp)
+                                Text("${currentExerciseWeight} kg", color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.Black)
+                            }
+                        }
+                    }
+                }
+
+                // 3. Bottom controls
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    if (isAwaitingConfirmation) {
+                        Column(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Button(
+                                onClick = {
+                                    isAwaitingConfirmation = false
+                                    val step = executionQueue.getOrNull(currentStepIndex)
+                                    if (step != null) {
+                                        if (step.exercise.type == "Timer") {
+                                            prepSecondsRemaining = 5
+                                            isPrepState = true
+                                            secondsRemaining = step.exercise.targetTimeSeconds
+                                            isTimerRunning = true
+                                        } else {
+                                            secondsRemaining = 0
+                                            isTimerRunning = false
+                                            isPrepState = false
+                                            prepSecondsRemaining = 0
+                                        }
+                                    }
+                                },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(56.dp)
+                                    .testTag("confirm_start_exercise_button"),
+                                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                                shape = RoundedCornerShape(16.dp)
+                            ) {
+                                Icon(Icons.Default.PlayArrow, null)
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("EGZERSİZE BAŞLA (HAZIRIM!)", fontWeight = FontWeight.ExtraBold, fontSize = 16.sp)
+                            }
+
+                            OutlinedButton(
+                                onClick = { skipCurrentExercise() },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(50.dp)
+                                    .testTag("skip_exercise_start_screen_button"),
+                                colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White),
+                                border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.3f)),
+                                shape = RoundedCornerShape(16.dp)
+                            ) {
+                                Icon(Icons.Default.Schedule, null, modifier = Modifier.size(18.dp), tint = Color.White)
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("Bunu Sonra Yap", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                            }
+                        }
+                    } else if (isPrepState) {
+                        Button(
+                            onClick = {
+                                isPrepState = false
+                                prepSecondsRemaining = 0
+                                val step = executionQueue.getOrNull(currentStepIndex)
+                                if (step != null) {
+                                    secondsRemaining = step.exercise.targetTimeSeconds
+                                    isTimerRunning = true
+                                }
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(56.dp)
+                                .testTag("skip_prep_countdown_button"),
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF59E0B)),
+                            shape = RoundedCornerShape(16.dp)
+                        ) {
+                            Icon(Icons.Default.SkipNext, null)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("GERİ SAYIMI ATLA", fontWeight = FontWeight.ExtraBold, fontSize = 16.sp)
+                        }
+                    } else if (isRestingState) {
+                        // Rest screen quick action buttons
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            TextButton(onClick = { secondsRemaining += 15 }) {
+                                Text("+15sn Ekle", color = MaterialTheme.colorScheme.primary)
+                            }
+                            Button(
+                                onClick = {
+                                    moveToNextStep()
+                                },
+                                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
+                            ) {
+                                Text("Molayı Atla", fontWeight = FontWeight.Bold)
+                            }
+                        }
+                    } else {
+                        // Action buttons based on exercise type
+                        if (ex.type == "Reps") {
+                            Button(
+                                onClick = {
+                                    completedSteps[currentStepIndex] = true
+                                    if (currentStepIndex < executionQueue.size - 1) {
+                                        isRestingState = true
+                                    } else {
+                                        finishWorkout()
+                                    }
+                                },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(56.dp)
+                                    .testTag("complete_set_button"),
+                                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                                shape = RoundedCornerShape(16.dp)
+                            ) {
+                                Icon(Icons.Default.Check, null)
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("SETİ TAMAMLA", fontWeight = FontWeight.ExtraBold, fontSize = 16.sp)
+                            }
+                        } else {
+                            // Timer control buttons
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Button(
+                                    onClick = { isTimerRunning = !isTimerRunning },
+                                    modifier = Modifier
+                                        .weight(1.5f)
+                                        .height(56.dp),
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = if (isTimerRunning) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
+                                    ),
+                                    shape = RoundedCornerShape(16.dp)
+                                ) {
+                                    Icon(if (isTimerRunning) Icons.Default.Pause else Icons.Default.PlayArrow, null)
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(if (isTimerRunning) "DURAKLAT" else "BAŞLAT", fontWeight = FontWeight.ExtraBold)
+                                }
+
+                                Button(
+                                    onClick = {
+                                        completedSteps[currentStepIndex] = true
+                                        if (currentStepIndex < executionQueue.size - 1) {
+                                            isRestingState = true
+                                        } else {
+                                            finishWorkout()
+                                        }
+                                    },
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .height(56.dp),
+                                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary),
+                                    shape = RoundedCornerShape(16.dp)
+                                ) {
+                                    Text("GEÇ / TAMAM", fontWeight = FontWeight.Bold)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun MuscleGroupVisualizer(targetMuscles: List<String>) {
+    // Beautiful Canvas rendering custom high-fidelity cyberpunk anatomical model with scanning lines
+    Canvas(modifier = Modifier.fillMaxSize()) {
+        val w = size.width
+        val h = size.height
+        val cx = w / 2f
+        val cy = h / 2f - 10.dp.toPx()
+
+        // 1. Draw elegant background scanning grid lines
+        val gridLines = 5
+        for (i in 0..gridLines) {
+            val ratio = i.toFloat() / gridLines
+            // Vertical grid lines
+            drawLine(
+                color = Color(0xFF1E293B).copy(alpha = 0.4f),
+                start = Offset(w * ratio, 0f),
+                end = Offset(w * ratio, h),
+                strokeWidth = 1f
+            )
+            // Horizontal grid lines
+            drawLine(
+                color = Color(0xFF1E293B).copy(alpha = 0.4f),
+                start = Offset(0f, h * ratio),
+                end = Offset(w, h * ratio),
+                strokeWidth = 1f
+            )
+        }
+
+        // Draw outer radar rings
+        drawCircle(
+            color = Color(0xFF38BDF8).copy(alpha = 0.05f),
+            radius = 110.dp.toPx(),
+            center = Offset(cx, cy),
+            style = Stroke(width = 1.dp.toPx(), pathEffect = PathEffect.dashPathEffect(floatArrayOf(10f, 10f), 0f))
+        )
+        drawCircle(
+            color = Color(0xFF38BDF8).copy(alpha = 0.08f),
+            radius = 80.dp.toPx(),
+            center = Offset(cx, cy),
+            style = Stroke(width = 1.dp.toPx())
+        )
+
+        // 2. Draw Body Base Outline (Cyberpunk anatomical wireframe)
+        // Head / Helmet Contour
+        drawCircle(
+            color = Color(0xFF64748B).copy(alpha = 0.25f),
+            radius = 16.dp.toPx(),
+            center = Offset(cx, cy - 65.dp.toPx())
+        )
+        drawCircle(
+            color = Color(0xFF64748B).copy(alpha = 0.4f),
+            radius = 16.dp.toPx(),
+            center = Offset(cx, cy - 65.dp.toPx()),
+            style = Stroke(width = 1.5.dp.toPx())
+        )
+
+        // Spine & Ribcage wireframe
+        drawLine(
+            color = Color(0xFF64748B).copy(alpha = 0.3f),
+            start = Offset(cx, cy - 48.dp.toPx()),
+            end = Offset(cx, cy + 15.dp.toPx()),
+            strokeWidth = 3.dp.toPx()
+        )
+        // Shoulders base
+        drawLine(
+            color = Color(0xFF64748B).copy(alpha = 0.3f),
+            start = Offset(cx - 32.dp.toPx(), cy - 44.dp.toPx()),
+            end = Offset(cx + 32.dp.toPx(), cy - 44.dp.toPx()),
+            strokeWidth = 4.dp.toPx(),
+            cap = StrokeCap.Round
+        )
+        // Hips base
+        drawLine(
+            color = Color(0xFF64748B).copy(alpha = 0.3f),
+            start = Offset(cx - 20.dp.toPx(), cy + 15.dp.toPx()),
+            end = Offset(cx + 20.dp.toPx(), cy + 15.dp.toPx()),
+            strokeWidth = 4.dp.toPx(),
+            cap = StrokeCap.Round
+        )
+
+        // 3. Render High-fidelity Muscle Zones with translucent active fills & vibrant glows
+        targetMuscles.forEach { muscle ->
+            val cleanMuscle = muscle.trim()
+            val colorToken = when (cleanMuscle) {
+                "Göğüs" -> Color(0xFFEF4444) // Vibrant Neon Red
+                "Sırt" -> Color(0xFF3B82F6)  // Bright Cobalt Blue
+                "Bacak" -> Color(0xFF10B981)  // Neon Emerald Green
+                "Omuz" -> Color(0xFFF59E0B)  // Vivid Amber
+                "Kollar" -> Color(0xFFD946EF) // Laser Magenta
+                "Karın" -> Color(0xFF06B6D4)  // Cyan Tech Blue
+                else -> Color(0xFF38BDF8)
+            }
+
+            // Draw a halo ring around active targets
+            drawCircle(
+                color = colorToken.copy(alpha = 0.04f),
+                radius = 90.dp.toPx(),
+                center = Offset(cx, cy)
+            )
+
+            when (cleanMuscle) {
+                "Göğüs" -> {
+                    // Left Chest Plate
+                    drawRoundRect(
+                        color = colorToken.copy(alpha = 0.35f),
+                        topLeft = Offset(cx - 28.dp.toPx(), cy - 38.dp.toPx()),
+                        size = Size(24.dp.toPx(), 18.dp.toPx()),
+                        cornerRadius = CornerRadius(4.dp.toPx(), 4.dp.toPx())
+                    )
+                    drawRoundRect(
+                        color = colorToken,
+                        topLeft = Offset(cx - 28.dp.toPx(), cy - 38.dp.toPx()),
+                        size = Size(24.dp.toPx(), 18.dp.toPx()),
+                        cornerRadius = CornerRadius(4.dp.toPx(), 4.dp.toPx()),
+                        style = Stroke(width = 2.dp.toPx())
+                    )
+                    // Right Chest Plate
+                    drawRoundRect(
+                        color = colorToken.copy(alpha = 0.35f),
+                        topLeft = Offset(cx + 4.dp.toPx(), cy - 38.dp.toPx()),
+                        size = Size(24.dp.toPx(), 18.dp.toPx()),
+                        cornerRadius = CornerRadius(4.dp.toPx(), 4.dp.toPx())
+                    )
+                    drawRoundRect(
+                        color = colorToken,
+                        topLeft = Offset(cx + 4.dp.toPx(), cy - 38.dp.toPx()),
+                        size = Size(24.dp.toPx(), 18.dp.toPx()),
+                        cornerRadius = CornerRadius(4.dp.toPx(), 4.dp.toPx()),
+                        style = Stroke(width = 2.dp.toPx())
+                    )
+                }
+                "Sırt" -> {
+                    // Massive Upper Back Wing Traps Left
+                    val leftTrap = Path().apply {
+                        moveTo(cx - 4.dp.toPx(), cy - 42.dp.toPx())
+                        lineTo(cx - 32.dp.toPx(), cy - 40.dp.toPx())
+                        lineTo(cx - 12.dp.toPx(), cy - 10.dp.toPx())
+                        close()
+                    }
+                    drawPath(leftTrap, color = colorToken.copy(alpha = 0.35f))
+                    drawPath(leftTrap, color = colorToken, style = Stroke(width = 2.dp.toPx()))
+
+                    // Right Trap Wing
+                    val rightTrap = Path().apply {
+                        moveTo(cx + 4.dp.toPx(), cy - 42.dp.toPx())
+                        lineTo(cx + 32.dp.toPx(), cy - 40.dp.toPx())
+                        lineTo(cx + 12.dp.toPx(), cy - 10.dp.toPx())
+                        close()
+                    }
+                    drawPath(rightTrap, color = colorToken.copy(alpha = 0.35f))
+                    drawPath(rightTrap, color = colorToken, style = Stroke(width = 2.dp.toPx()))
+                }
+                "Bacak" -> {
+                    // Left Quad
+                    drawRoundRect(
+                        color = colorToken.copy(alpha = 0.35f),
+                        topLeft = Offset(cx - 18.dp.toPx(), cy + 18.dp.toPx()),
+                        size = Size(14.dp.toPx(), 36.dp.toPx()),
+                        cornerRadius = CornerRadius(6.dp.toPx(), 6.dp.toPx())
+                    )
+                    drawRoundRect(
+                        color = colorToken,
+                        topLeft = Offset(cx - 18.dp.toPx(), cy + 18.dp.toPx()),
+                        size = Size(14.dp.toPx(), 36.dp.toPx()),
+                        cornerRadius = CornerRadius(6.dp.toPx(), 6.dp.toPx()),
+                        style = Stroke(width = 2.dp.toPx())
+                    )
+                    // Right Quad
+                    drawRoundRect(
+                        color = colorToken.copy(alpha = 0.35f),
+                        topLeft = Offset(cx + 4.dp.toPx(), cy + 18.dp.toPx()),
+                        size = Size(14.dp.toPx(), 36.dp.toPx()),
+                        cornerRadius = CornerRadius(6.dp.toPx(), 6.dp.toPx())
+                    )
+                    drawRoundRect(
+                        color = colorToken,
+                        topLeft = Offset(cx + 4.dp.toPx(), cy + 18.dp.toPx()),
+                        size = Size(14.dp.toPx(), 36.dp.toPx()),
+                        cornerRadius = CornerRadius(6.dp.toPx(), 6.dp.toPx()),
+                        style = Stroke(width = 2.dp.toPx())
+                    )
+
+                    // Left Calf
+                    drawRoundRect(
+                        color = colorToken.copy(alpha = 0.25f),
+                        topLeft = Offset(cx - 16.dp.toPx(), cy + 58.dp.toPx()),
+                        size = Size(10.dp.toPx(), 26.dp.toPx()),
+                        cornerRadius = CornerRadius(4.dp.toPx(), 4.dp.toPx())
+                    )
+                    drawRoundRect(
+                        color = colorToken,
+                        topLeft = Offset(cx - 16.dp.toPx(), cy + 58.dp.toPx()),
+                        size = Size(10.dp.toPx(), 26.dp.toPx()),
+                        cornerRadius = CornerRadius(4.dp.toPx(), 4.dp.toPx()),
+                        style = Stroke(width = 1.5.dp.toPx())
+                    )
+                    // Right Calf
+                    drawRoundRect(
+                        color = colorToken.copy(alpha = 0.25f),
+                        topLeft = Offset(cx + 6.dp.toPx(), cy + 58.dp.toPx()),
+                        size = Size(10.dp.toPx(), 26.dp.toPx()),
+                        cornerRadius = CornerRadius(4.dp.toPx(), 4.dp.toPx())
+                    )
+                    drawRoundRect(
+                        color = colorToken,
+                        topLeft = Offset(cx + 6.dp.toPx(), cy + 58.dp.toPx()),
+                        size = Size(10.dp.toPx(), 26.dp.toPx()),
+                        cornerRadius = CornerRadius(4.dp.toPx(), 4.dp.toPx()),
+                        style = Stroke(width = 1.5.dp.toPx())
+                    )
+                }
+                "Omuz" -> {
+                    // Left Deltoid Cap
+                    drawCircle(
+                        color = colorToken.copy(alpha = 0.4f),
+                        radius = 8.dp.toPx(),
+                        center = Offset(cx - 32.dp.toPx(), cy - 44.dp.toPx())
+                    )
+                    drawCircle(
+                        color = colorToken,
+                        radius = 8.dp.toPx(),
+                        center = Offset(cx - 32.dp.toPx(), cy - 44.dp.toPx()),
+                        style = Stroke(width = 2.dp.toPx())
+                    )
+                    // Right Deltoid Cap
+                    drawCircle(
+                        color = colorToken.copy(alpha = 0.4f),
+                        radius = 8.dp.toPx(),
+                        center = Offset(cx + 32.dp.toPx(), cy - 44.dp.toPx())
+                    )
+                    drawCircle(
+                        color = colorToken,
+                        radius = 8.dp.toPx(),
+                        center = Offset(cx + 32.dp.toPx(), cy - 44.dp.toPx()),
+                        style = Stroke(width = 2.dp.toPx())
+                    )
+                }
+                "Kollar" -> {
+                    // Left Upper Arm
+                    drawLine(
+                        color = colorToken,
+                        start = Offset(cx - 34.dp.toPx(), cy - 36.dp.toPx()),
+                        end = Offset(cx - 42.dp.toPx(), cy - 10.dp.toPx()),
+                        strokeWidth = 6.dp.toPx(),
+                        cap = StrokeCap.Round
+                    )
+                    // Left Forearm
+                    drawLine(
+                        color = colorToken.copy(alpha = 0.7f),
+                        start = Offset(cx - 42.dp.toPx(), cy - 8.dp.toPx()),
+                        end = Offset(cx - 44.dp.toPx(), cy + 16.dp.toPx()),
+                        strokeWidth = 4.dp.toPx(),
+                        cap = StrokeCap.Round
+                    )
+
+                    // Right Upper Arm
+                    drawLine(
+                        color = colorToken,
+                        start = Offset(cx + 34.dp.toPx(), cy - 36.dp.toPx()),
+                        end = Offset(cx + 42.dp.toPx(), cy - 10.dp.toPx()),
+                        strokeWidth = 6.dp.toPx(),
+                        cap = StrokeCap.Round
+                    )
+                    // Right Forearm
+                    drawLine(
+                        color = colorToken.copy(alpha = 0.7f),
+                        start = Offset(cx + 42.dp.toPx(), cy - 8.dp.toPx()),
+                        end = Offset(cx + 44.dp.toPx(), cy + 16.dp.toPx()),
+                        strokeWidth = 4.dp.toPx(),
+                        cap = StrokeCap.Round
+                    )
+                }
+                "Karın" -> {
+                    // Tech Core Abdominal Wall
+                    drawRoundRect(
+                        color = colorToken.copy(alpha = 0.3f),
+                        topLeft = Offset(cx - 8.dp.toPx(), cy - 16.dp.toPx()),
+                        size = Size(16.dp.toPx(), 26.dp.toPx()),
+                        cornerRadius = CornerRadius(3.dp.toPx(), 3.dp.toPx())
+                    )
+                    drawRoundRect(
+                        color = colorToken,
+                        topLeft = Offset(cx - 8.dp.toPx(), cy - 16.dp.toPx()),
+                        size = Size(16.dp.toPx(), 26.dp.toPx()),
+                        cornerRadius = CornerRadius(3.dp.toPx(), 3.dp.toPx()),
+                        style = Stroke(width = 1.5.dp.toPx())
+                    )
+                    // Ab Lines
+                    drawLine(colorToken, Offset(cx - 6.dp.toPx(), cy - 10.dp.toPx()), Offset(cx + 6.dp.toPx(), cy - 10.dp.toPx()), 2.dp.toPx())
+                    drawLine(colorToken, Offset(cx - 6.dp.toPx(), cy - 2.dp.toPx()), Offset(cx + 6.dp.toPx(), cy - 2.dp.toPx()), 2.dp.toPx())
+                    drawLine(colorToken, Offset(cx - 6.dp.toPx(), cy + 6.dp.toPx()), Offset(cx + 6.dp.toPx(), cy + 6.dp.toPx()), 2.dp.toPx())
+                }
+            }
+        }
+    }
+}
+
+data class PlayableExercise(
+    val id: Long,
+    val name: String,
+    val type: String,
+    val setsCount: Int,
+    val targetReps: Int,
+    val targetTimeSeconds: Int,
+    val restTimeSeconds: Int,
+    val weightKg: Double,
+    val targetMuscles: List<String>,
+    val supersetGroupId: String
+)
+
+data class WorkoutStep(
+    val exercise: PlayableExercise,
+    val setNumber: Int,
+    val isSuperset: Boolean,
+    val supersetPartnerNames: List<String> = emptyList()
+)
