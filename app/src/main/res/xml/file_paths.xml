@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths xmlns:android="http://schemas.android.com/apk/res/android">
+    <cache-path name="flexi_cache" path="." />
+    <files-path name="flexi_files" path="." />
+    <external-path name="flexi_external" path="." />
+</paths>

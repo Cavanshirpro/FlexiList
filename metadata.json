@@ -1,0 +1,6 @@
+{
+  "name": "FlexiList",
+  "description": "Süper hızlı, offline-first, esnek ve özelleştirilebilir çok amaçlı liste yönetim uygulaması.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
