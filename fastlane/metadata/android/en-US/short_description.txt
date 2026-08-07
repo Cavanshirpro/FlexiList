@@ -1,1 +1,1 @@
-Ultra-fast, flexible offline-first multi-purpose list manager & workout assistant.
+Ultra-fast offline-first list manager and workout assistant
