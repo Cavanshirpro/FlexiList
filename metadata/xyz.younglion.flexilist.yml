@@ -1,0 +1,30 @@
+Categories:
+  - Time
+  - Sports & Health
+License: GPL-3.0-only
+SourceCode: https://github.com/Cavanshirpro/FlexiList
+IssueTracker: https://github.com/Cavanshirpro/FlexiList/issues
+
+Summary: Ultra-fast offline-first list manager and workout assistant
+Description: |-
+  FlexiList is an ultra-fast, offline-first, modern, modular, and flexible multi-purpose list management and workout assistant application built with Kotlin and Jetpack Compose.
+
+  Features:
+  - Advanced Workout Assistant with DSL parsing for exercises, sets, reps, timers, and target muscle groups.
+  - Interactive Muscle Group Visualizer with cyberpunk anatomical body graphics.
+  - Multi-purpose notebook support: To-Do lists, Shopping lists, Habit trackers, and Workout planners.
+  - SSL-encrypted Cloud Sync and offline JSON backup/restore.
+  - Multi-language support (English, Turkish, Russian, German, Spanish, French).
+  - Material Design 3 customizable dark and light themes with custom accent colors.
+  - Zero proprietary trackers, analytics, or proprietary ad SDKs.
+
+RepoType: git
+Repo: https://github.com/Cavanshirpro/FlexiList.git
+
+Builds:
+  - versionName: 1.0.1
+    versionCode: 2
+    commit: v1.0.1
+    subdir: app
+    gradle:
+      - fdroid

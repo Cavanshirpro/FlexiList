@@ -27,4 +27,4 @@ Builds:
     commit: v1.0.1
     subdir: app
     gradle:
-      - yes
+      - fdroid

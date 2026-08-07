@@ -5,8 +5,35 @@ plugins {
   alias(libs.plugins.kotlin.compose)
   alias(libs.plugins.google.devtools.ksp)
   alias(libs.plugins.roborazzi)
-  alias(libs.plugins.secrets)
-  alias(libs.plugins.google.services)
+}
+
+val isFdroidBuild = gradle.startParameter.taskNames.any { it.contains("fdroid", ignoreCase = true) }
+
+if (!isFdroidBuild) {
+  pluginManager.apply("com.google.android.libraries.mapsplatform.secrets-gradle-plugin")
+  pluginManager.apply("com.google.gms.google-services")
+
+  extensions.findByName("secrets")?.let { ext ->
+    try {
+      ext.javaClass.getMethod("setPropertiesFileName", String::class.java).invoke(ext, ".env")
+      ext.javaClass.getMethod("setDefaultPropertiesFileName", String::class.java).invoke(ext, ".env.example")
+    } catch (e: Exception) {
+      // Ignore fallback
+    }
+  }
+
+  extensions.findByName("googleServices")?.let { ext ->
+    try {
+      val warnEnum = Class.forName("com.google.gms.googleservices.GoogleServicesPlugin\$MissingGoogleServicesStrategy")
+        .enumConstants?.firstOrNull { it.toString() == "WARN" }
+      if (warnEnum != null) {
+        val method = ext.javaClass.methods.firstOrNull { it.name == "setMissingGoogleServicesStrategy" || it.name == "missingGoogleServicesStrategy" }
+        method?.invoke(ext, warnEnum)
+      }
+    } catch (e: Exception) {
+      // Ignore fallback
+    }
+  }
 }
 
 android {
@@ -23,13 +50,28 @@ android {
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
   }
 
+  flavorDimensions += "mode"
+
+  productFlavors {
+    create("full") {
+      dimension = "mode"
+    }
+    create("fdroid") {
+      dimension = "mode"
+      signingConfig = null
+    }
+  }
+
   signingConfigs {
-    create("release") {
-      val keystorePath = System.getenv("KEYSTORE_PATH") ?: "${rootDir}/my-upload-key.jks"
-      storeFile = file(keystorePath)
-      storePassword = System.getenv("STORE_PASSWORD")
-      keyAlias = "upload"
-      keyPassword = System.getenv("KEY_PASSWORD")
+    val keystorePath = System.getenv("KEYSTORE_PATH") ?: "${rootDir}/my-upload-key.jks"
+    val keystoreFile = file(keystorePath)
+    if (keystoreFile.exists()) {
+      create("release") {
+        storeFile = keystoreFile
+        storePassword = System.getenv("STORE_PASSWORD")
+        keyAlias = "upload"
+        keyPassword = System.getenv("KEY_PASSWORD")
+      }
     }
     create("debugConfig") {
       storeFile = file("${rootDir}/debug.keystore")
@@ -44,7 +86,10 @@ android {
       isCrunchPngs = false
       isMinifyEnabled = false
       proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-      signingConfig = signingConfigs.getByName("release")
+      val releaseSigning = signingConfigs.findByName("release")
+      if (releaseSigning != null) {
+        signingConfig = releaseSigning
+      }
     }
     debug {
       signingConfig = signingConfigs.getByName("debugConfig")
@@ -61,23 +106,11 @@ android {
   testOptions { unitTests { isIncludeAndroidResources = true } }
 }
 
-// Configure the Secrets Gradle Plugin to use .env and .env.example files
-// to match the convention used in Web projects.
-secrets {
-  propertiesFileName = ".env"
-  defaultPropertiesFileName = ".env.example"
-}
-
-googleServices {
-  missingGoogleServicesStrategy = MissingGoogleServicesStrategy.WARN
-}
-
-
 // Some unused dependencies are commented out below instead of being removed.
 // This makes it easy to add them back in the future if needed.
 dependencies {
   implementation(platform(libs.androidx.compose.bom))
-  implementation(platform(libs.firebase.bom))
+  "fullImplementation"(platform(libs.firebase.bom))
   // implementation(libs.accompanist.permissions)
   implementation(libs.androidx.activity.compose)
   // implementation(libs.androidx.camera.camera2)
@@ -100,8 +133,8 @@ dependencies {
   implementation(libs.androidx.room.runtime)
   // implementation(libs.coil.compose)
   implementation(libs.converter.moshi)
-  implementation(libs.firebase.ai)
-  implementation(libs.firebase.appcheck.recaptcha)
+  "fullImplementation"(libs.firebase.ai)
+  "fullImplementation"(libs.firebase.appcheck.recaptcha)
   implementation(libs.kotlinx.coroutines.android)
   implementation(libs.kotlinx.coroutines.core)
   implementation(libs.logging.interceptor)
