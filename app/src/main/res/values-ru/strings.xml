@@ -1,0 +1,246 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">FlexiList</string>
+
+    <!-- Navigation & Common -->
+    <string name="ok">ОК</string>
+    <string name="cancel">Отмена</string>
+    <string name="close">Закрыть</string>
+    <string name="save">Сохранить</string>
+    <string name="delete">Удалить</string>
+    <string name="edit">Редактировать</string>
+    <string name="add">Добавить</string>
+    <string name="search">Поиск…</string>
+    <string name="settings">Настройки</string>
+    <string name="theme_and_language">Тема и язык</string>
+    <string name="appearance_mode">Режим отображения</string>
+    <string name="dark_mode">Темная тема</string>
+    <string name="light_mode">Светлая тема</string>
+    <string name="accent_color">Цвет акцента</string>
+    <string name="language">Язык приложения</string>
+    <string name="back">Назад</string>
+    <string name="clear_selections">Очистить выбор</string>
+    <string name="reset">Сбросить</string>
+
+    <string name="lang_en">English 🇬🇧</string>
+    <string name="lang_tr">Türkçe 🇹🇷</string>
+    <string name="lang_ru">Русский 🇷🇺</string>
+    <string name="lang_de">Deutsch 🇩🇪</string>
+    <string name="lang_es">Español 🇪🇸</string>
+    <string name="lang_fr">Français 🇫🇷</string>
+
+    <!-- Import/Export & Menu -->
+    <string name="import_backup_json">Импортировать бэкап (JSON)</string>
+    <string name="export_backup_json">Экспортировать бэкап (JSON)</string>
+    <string name="cloud_backup_sync">Облачный бэкап и синхронизация</string>
+    <string name="export_csv">Экспортировать таблицу (CSV)</string>
+
+    <!-- Notebooks Screen -->
+    <string name="notebooks_title">Мои блокноты</string>
+    <string name="create_notebook">Создать блокнот</string>
+    <string name="edit_notebook">Редактировать блокнот</string>
+    <string name="notebook_name">Название блокнота</string>
+    <string name="notebook_description">Описание (необязательно)</string>
+    <string name="notebook_type">Тип блокнота</string>
+    <string name="type_standard">Стандартный</string>
+    <string name="type_todo">Список дел</string>
+    <string name="type_shopping">Список покупок</string>
+    <string name="type_habit">Трекер привычек</string>
+    <string name="type_workout">План тренировок</string>
+    <string name="no_notebooks">Блокнотов пока нет. Нажмите +, чтобы создать!</string>
+    <string name="search_notebooks_placeholder">Поиск в блокнотах…</string>
+    <string name="db_status">БАЗА ДАННЫХ</string>
+    <string name="online">ОНЛАЙН</string>
+    <string name="offline">ОФФЛАЙН (ЛОКАЛЬНО)</string>
+    <string name="list_notebooks">БЛОКНОТ</string>
+    <string name="active">АКТИВНЫЙ</string>
+    <string name="speed">СКОРОСТЬ</string>
+    <string name="active_notebooks_header">АКТИВНЫЕ БЛОКНОТЫ</string>
+    <string name="total_suffix">ВСЕГО</string>
+    <string name="no_notebooks_found">Блокноты не найдены</string>
+    <string name="no_notebooks_yet">Блокнотов пока нет</string>
+    <string name="no_notebooks_found_sub">Пожалуйста, измените поисковый запрос.</string>
+    <string name="no_notebooks_yet_sub">"Нажмите кнопку '+' ниже, чтобы создать ваш первый многоцелевой блокнот!"</string>
+
+    <!-- Items Screen & Placeholders -->
+    <string name="search_items_placeholder">Поиск в текущем списке…</string>
+    <string name="list_items">Элементы списка</string>
+    <string name="active_items_count">%1$d активных, %2$d завершено</string>
+    <string name="completion_rate">УРОВЕНЬ ВЫПОЛНЕНИЯ</string>
+    <string name="completed_count">%1$d Завершено</string>
+    <string name="active_count">%1$d Активных</string>
+    <string name="total_items_count">Всего %1$d элементов</string>
+    <string name="no_items_title">Здесь нет элементов</string>
+    <string name="no_items_sub">"Сбросьте поисковый запрос или нажмите '+', чтобы создать новый элемент."</string>
+    <string name="no_workout_plan_title">Нет плана на %1$s</string>
+    <string name="no_workout_plan_sub">На этот день упражнений не запланировано. Вы можете назначить этот день в деталях или выбрать другой день.</string>
+
+    <!-- Filter & Sort Chips -->
+    <string name="starred_filter">★ Избранное</string>
+    <string name="active_filter">Активные</string>
+    <string name="completed_filter">Завершенные</string>
+    <string name="sort_by">⇅ Сортировка: %1$s</string>
+    <string name="sort_manual">Вручную</string>
+    <string name="sort_az">А-Я</string>
+    <string name="sort_za">Я-А</string>
+    <string name="sort_priority">Приоритет</string>
+    <string name="sort_date">Дата</string>
+    <string name="sort_starred">Избранное</string>
+
+    <!-- Bulk Actions -->
+    <string name="complete">Завершить</string>
+    <string name="make_active">Активировать</string>
+    <string name="move">Переместить</string>
+
+    <!-- Workout Planner Tab & Cards -->
+    <string name="exercises">Упражнения</string>
+    <string name="water_tracker">Водный трекер</string>
+    <string name="analytics_report">Анализ и отчет</string>
+    <string name="daily_workout_tracking">Ежедневный трекинг</string>
+    <string name="day_counter">День %1$d</string>
+    <string name="completed_days">Завершено: %1$d дней</string>
+    <string name="success_rate">%1$d%% Успех</string>
+    <string name="today">Сегодня</string>
+    <string name="day_suffix">День %1$d</string>
+    <string name="not_today">Не сегодня</string>
+    <string name="resume">Продолжить</string>
+    <string name="daily_workout_program">Программа ежедневных тренировок</string>
+    <string name="monthly_workout_program">Программа на день %1$s</string>
+    <string name="weekly_workout_program">Программа на %1$s</string>
+    <string name="workout_done_today">Сегодняшняя тренировка завершена! ✓</string>
+    <string name="not_selected_day_monthly">Выбранный день не сегодня (%1$s день)</string>
+    <string name="not_selected_day_weekly">Выбранный день не сегодня (%1$s)</string>
+    <string name="workout_in_progress">Тренировка продолжается (шаг %1$d)</string>
+    <string name="exercises_ready">%1$d упражнений готово</string>
+
+    <!-- Priority Customization -->
+    <string name="customize_priorities">Настройка приоритетов</string>
+    <string name="priority_level">Уровень приоритета</string>
+    <string name="priority_title">Название приоритета</string>
+
+    <!-- Workout Player -->
+    <string name="start_workout">Начать тренировку</string>
+    <string name="complete_set">Завершить сет</string>
+    <string name="rest">Отдых</string>
+    <string name="add_15s">+15с</string>
+    <string name="skip_rest">Пропустить отдых</string>
+    <string name="do_later">Сделать позже</string>
+    <string name="workout_completed">Тренировка завершена! 🎉</string>
+    <string name="completed_status">Завершено ✓</string>
+    <string name="active_muscles">Целевые мышцы</string>
+    <string name="next_up">Следующее упражнение</string>
+    <string name="workout_summary">Итоги тренировки</string>
+
+    <!-- Cloud Sync & Backup -->
+    <string name="cloud_backup">Облачный бэкап</string>
+    <string name="backup_data">Создать резервную копию</string>
+    <string name="restore_data">Восстановить</string>
+    <string name="sync_code">Код синхронизации</string>
+    <string name="sync_code_placeholder">Автоматически, если пусто</string>
+    <string name="upload_success">Резервная копия успешно загружена!</string>
+    <string name="restore_success">Данные успешно восстановлены!</string>
+
+    <!-- Reminder & Settings -->
+    <string name="reminders">Напоминания</string>
+    <string name="reminder_time">Время напоминания</string>
+    <string name="daily_reminder">Ежедневное напоминание</string>
+    <string name="set_time">Установить время</string>
+    <string name="notebook_settings">Настройки блокнота</string>
+
+    <!-- Analytics & Stats -->
+    <string name="statistics">Статистика</string>
+    <string name="stats_analytics">Статистика и анализ</string>
+    <string name="total_items">Всего элементов</string>
+    <string name="completed_items">Завершено</string>
+    <string name="pending_items">В процессе</string>
+
+    <!-- Workout Player Screen Strings -->
+    <string name="no_exercises_in_workout">В тренировке нет упражнений!</string>
+    <string name="add_exercises_first">Пожалуйста, сначала добавьте упражнения и настройки сетов.</string>
+    <string name="workout_saved">Тренировка сохранена!</string>
+    <string name="exercise_postponed">%1$s отложено в конец тренировки!</string>
+    <string name="no_other_exercise_to_postpone">Нет других упражнений для откладывания!</string>
+    <string name="next_exercise_header">СЛЕДУЮЩЕЕ УПРАЖНЕНИЕ</string>
+    <string name="sets_count">СЕТЫ</string>
+    <string name="target_reps">ЦЕЛЬ ПОВТОРОВ</string>
+    <string name="target_time">ЦЕЛЬ ВРЕМЕНИ</string>
+    <string name="weight">ВЕС</string>
+    <string name="get_ready">ПРИГОТОВЬТЕСЬ!</string>
+    <string name="next_label">Далее: %1$s</string>
+    <string name="set_progress">Сет %1$d / %2$d</string>
+    <string name="rest_time">ВРЕМЯ ОТДЫХА</string>
+    <string name="hybrid_superset">ГИБРИДНЫЙ СУПЕРСЕТ (Группа %1$s)</string>
+    <string name="start_exercise_btn">НАЧАТЬ УПРАЖНЕНИЕ (ГОТОВ!)</string>
+    <string name="do_this_later">Сделать позже</string>
+    <string name="skip_countdown">ПРОПУСТИТЬ ОТСЧЕТ</string>
+    <string name="add_15s_rest">+15 сек отдыха</string>
+    <string name="pause">ПАУЗА</string>
+    <string name="resume_start">СТАРТ</string>
+    <string name="skip_complete">ПРОПУСК / ГОТОВО</string>
+    <string name="step_counter">Шаг %1$d / %2$d</string>
+    <string name="finish_workout">Завершить</string>
+
+    <!-- Toasts & Messages -->
+    <string name="title_required">Пожалуйста, введите заголовок!</string>
+    <string name="saved_successfully">Успешно сохранено!</string>
+    <string name="items_moved_successfully">Элементы успешно перемещены!</string>
+    <string name="notebook_updated">Блокнот обновлен!</string>
+    <string name="priorities_updated">Уровни приоритета обновлены!</string>
+    <string name="reminder_set_toast">Напоминание установлено на %1$s!</string>
+    <string name="reminder_cancelled_toast">Напоминание отменено.</string>
+    <string name="workout_start_date_reset">Дата начала тренировок сброшена на сегодня!</string>
+    <string name="workout_schedule_deleted">Расписание тренировок удалено</string>
+    <string name="notebook_deleted">Блокнот удален</string>
+    <string name="backup_exported_success">Резервная копия экспортирована!</string>
+    <string name="export_failed">Ошибка экспорта.</string>
+    <string name="backup_imported_success">Резервная копия импортирована!</string>
+    <string name="import_failed">Ошибка импорта. Проверьте файл.</string>
+    <string name="csv_exported_success">CSV успешно экспортирован!</string>
+    <string name="csv_export_failed">Ошибка экспорта CSV.</string>
+    <string name="sync_code_copied">Код синхронизации скопирован!</string>
+    <string name="data_synced_success">Данные успешно синхронизированы!</string>
+    <string name="cloud_backup_saved">Облачная копия сохранена!</string>
+    <string name="notebook_imported_toast">✅ Блокнот \'%1$s\' и %2$d элементов импортированы!</string>
+    <string name="notebook_import_failed_toast">⚠️ Не удалось импортировать блокнот: %1$s</string>
+
+    <!-- Notebook Settings Dialog Strings -->
+    <string name="workout_planner_assistant">⚡ ПОМОЩНИК ТРЕНИРОВОК</string>
+    <string name="workout_schedule_frequency">ПРОГРАММА И ЧАСТОТА</string>
+    <string name="cycle_daily">📅 ЕЖЕДНЕВНЫЙ ЦИКЛ</string>
+    <string name="cycle_monthly">📆 ЕЖЕМЕСЯЧНАЯ ПРОГРАММА</string>
+    <string name="cycle_weekly">🗓️ ЕЖЕНЕДЕЛЬНАЯ ПРОГРАММА</string>
+    <string name="cycle_period_desc">🔄 Период: %1$d дн. тренировок / %2$d дн. отдыха</string>
+    <string name="selected_month_days">📆 Выбранные дни: %1$s</string>
+    <string name="active_days">🗓️ Активные дни: %1$s</string>
+    <string name="not_selected">Не выбрано</string>
+    <string name="reminder_time_label">Время напоминания: %1$s</string>
+    <string name="workout_operations">ОПЕРАЦИИ С ТРЕНИРОВКОЙ</string>
+    <string name="show_completed_exercises">Показывать завершенные упражнения</string>
+    <string name="move_completed_to_bottom">Завершенные вниз</string>
+    <string name="edit_workout_reminder">Изменить напоминание тренировки</string>
+    <string name="set_workout_reminder">Установить напоминание</string>
+    <string name="edit_program_days">Изменить программу и дни</string>
+    <string name="exercise_stats_reports">Статистика и отчеты</string>
+    <string name="restart_cycle_today">Перезапустить цикл с сегодня</string>
+    <string name="pinned">Закреплено 📌</string>
+    <string name="pin">Закрепить</string>
+    <string name="favorite_star">Избранное ⭐</string>
+    <string name="make_favorite">В избранное</string>
+    <string name="delete_workout_program">Удалить программу тренировок</string>
+    <string name="confirm_delete_workout_program">Вы уверены, что хотите удалить эту программу и все упражнения?</string>
+    <string name="yes_delete">Да, удалить</string>
+    <string name="notebook_options">НАСТРОЙКИ БЛОКНОТА</string>
+    <string name="show_completed_items">Показывать завершенные</string>
+    <string name="show_completed_items_sub">Оставлять завершенные элементы в списке.</string>
+    <string name="move_completed_bottom_sub">Перемещать завершенные элементы вниз.</string>
+    <string name="auto_sort">Автосортировка</string>
+    <string name="auto_sort_sub">Применять правила сортировки мгновенно.</string>
+    <string name="change_reminder_time">Изменить время напоминания</string>
+    <string name="set_reminder">Установить напоминание</string>
+    <string name="edit_name_cover">Изменить название и обложку</string>
+    <string name="customize_priorities_btn">Настроить уровни приоритета</string>
+    <string name="notebook_stats">Статистика блокнота</string>
+    <string name="delete_notebook_all">Удалить блокнот и все элементы</string>
+    <string name="confirm_delete_notebook">Вы уверены, что хотите удалить этот блокнот и все его элементы?</string>
+    <string name="created_date">Создано: %1$s</string>
+</resources>

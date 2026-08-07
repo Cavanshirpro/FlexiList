@@ -33,6 +33,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
+import xyz.younglion.flexilist.R
 import xyz.younglion.flexilist.data.model.ListItemEntity
 import xyz.younglion.flexilist.ui.FlexiViewModel
 import xyz.younglion.flexilist.ui.notebooks.varRemember
@@ -159,10 +161,10 @@ fun ItemDetailScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(if (itemId > 0L) "Görevi Düzenle" else "Yeni Görev Detayı", fontWeight = FontWeight.Bold) },
+                title = { Text(if (itemId > 0L) stringResource(R.string.edit_item_title) else stringResource(R.string.new_item_detail_title), fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Vazgeç")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.discard))
                     }
                 },
                 actions = {
@@ -170,7 +172,7 @@ fun ItemDetailScreen(
                     IconButton(onClick = { starred = !starred }) {
                         Icon(
                             imageVector = if (starred) Icons.Filled.Star else Icons.Filled.StarBorder,
-                            contentDescription = "Yıldızla",
+                            contentDescription = stringResource(R.string.star),
                             tint = if (starred) Color(0xFFFFD600) else MaterialTheme.colorScheme.onSurface
                         )
                     }
@@ -178,7 +180,7 @@ fun ItemDetailScreen(
                     IconButton(
                         onClick = {
                             if (itemTitle.isBlank()) {
-                                Toast.makeText(context, "Lütfen bir başlık girin!", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, context.getString(R.string.title_required), Toast.LENGTH_SHORT).show()
                                 return@IconButton
                             }
                             val finalDescription = if (isWorkoutNotebook) {
@@ -224,12 +226,12 @@ fun ItemDetailScreen(
                                     customFields = customFields
                                 )
                             }
-                            Toast.makeText(context, "Başarıyla kaydedildi!", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, context.getString(R.string.saved_successfully), Toast.LENGTH_SHORT).show()
                             onNavigateBack()
                         },
                         modifier = Modifier.testTag("save_item_button")
                     ) {
-                        Icon(Icons.Default.Check, contentDescription = "Kaydet", tint = MaterialTheme.colorScheme.primary)
+                        Icon(Icons.Default.Check, contentDescription = stringResource(R.string.save), tint = MaterialTheme.colorScheme.primary)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -253,7 +255,7 @@ fun ItemDetailScreen(
                         OutlinedTextField(
                             value = itemTitle,
                             onValueChange = { itemTitle = it },
-                            placeholder = { Text("Egzersiz Adı (Örn: Bench Press) *", fontSize = 18.sp) },
+                            placeholder = { Text(stringResource(R.string.exercise_name_placeholder), fontSize = 18.sp) },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .testTag("item_title_input"),
@@ -276,13 +278,13 @@ fun ItemDetailScreen(
                             modifier = Modifier.padding(14.dp),
                             verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            Text("Egzersiz Detayları", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
+                            Text(stringResource(R.string.exercise_details), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
 
                             // Exercise type
                             Column {
-                                Text("Çalışma Tipi", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold)
+                                Text(stringResource(R.string.workout_type), style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold)
                                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                    listOf("Reps" to "Tekrarlı", "Timer" to "Süreli (Saniye)").forEach { (key, label) ->
+                                    listOf("Reps" to stringResource(R.string.type_reps), "Timer" to stringResource(R.string.type_timer)).forEach { (key, label) ->
                                         FilterChip(
                                             selected = exerciseType == key,
                                             onClick = { exerciseType = key },
@@ -299,7 +301,7 @@ fun ItemDetailScreen(
                                 OutlinedTextField(
                                     value = setsCount.toString(),
                                     onValueChange = { setsCount = it.toIntOrNull() ?: 1 },
-                                    label = { Text("Set Sayısı") },
+                                    label = { Text(stringResource(R.string.sets_count_label)) },
                                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                                     modifier = Modifier.weight(1f)
                                 )
@@ -308,7 +310,7 @@ fun ItemDetailScreen(
                                     OutlinedTextField(
                                         value = targetReps.toString(),
                                         onValueChange = { targetReps = it.toIntOrNull() ?: 1 },
-                                        label = { Text("Tekrar Hedefi") },
+                                        label = { Text(stringResource(R.string.target_reps_label)) },
                                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                                         modifier = Modifier.weight(1f)
                                     )
@@ -316,7 +318,7 @@ fun ItemDetailScreen(
                                     OutlinedTextField(
                                         value = targetTimeSeconds.toString(),
                                         onValueChange = { targetTimeSeconds = it.toIntOrNull() ?: 1 },
-                                        label = { Text("Süre (Saniye)") },
+                                        label = { Text(stringResource(R.string.duration_seconds_label)) },
                                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                                         modifier = Modifier.weight(1f)
                                     )
@@ -330,7 +332,7 @@ fun ItemDetailScreen(
                                 OutlinedTextField(
                                     value = weightKg.toString(),
                                     onValueChange = { weightKg = it.toDoubleOrNull() ?: 0.0 },
-                                    label = { Text("Ağırlık (kg)") },
+                                    label = { Text(stringResource(R.string.weight_kg_label)) },
                                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                                     modifier = Modifier.weight(1f)
                                 )
@@ -338,7 +340,7 @@ fun ItemDetailScreen(
                                 OutlinedTextField(
                                     value = restTimeSeconds.toString(),
                                     onValueChange = { restTimeSeconds = it.toIntOrNull() ?: 1 },
-                                    label = { Text("Dinlenme (Saniye)") },
+                                    label = { Text(stringResource(R.string.rest_seconds_label)) },
                                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                                     modifier = Modifier.weight(1f)
                                 )
@@ -348,30 +350,37 @@ fun ItemDetailScreen(
                             OutlinedTextField(
                                 value = supersetGroupId,
                                 onValueChange = { supersetGroupId = it },
-                                label = { Text("Hibrit Grup ID (Superset için örn. A, B. Boşsa normal)") },
+                                label = { Text(stringResource(R.string.hybrid_group_label)) },
                                 singleLine = true,
                                 modifier = Modifier.fillMaxWidth()
                             )
 
                             // Target muscles
                             Column {
-                                Text("Hedef Kas Grupları", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold)
+                                Text(stringResource(R.string.target_muscle_groups), style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold)
                                 Spacer(modifier = Modifier.height(4.dp))
-                                val musclesList = listOf("Göğüs", "Sırt", "Bacak", "Omuz", "Kollar", "Karın")
+                                val musclesList = listOf(
+                                    "Göğüs" to stringResource(R.string.muscle_chest),
+                                    "Sırt" to stringResource(R.string.muscle_back),
+                                    "Bacak" to stringResource(R.string.muscle_legs),
+                                    "Omuz" to stringResource(R.string.muscle_shoulders),
+                                    "Kollar" to stringResource(R.string.muscle_arms),
+                                    "Karın" to stringResource(R.string.muscle_core)
+                                )
                                 @OptIn(ExperimentalLayoutApi::class)
                                 FlowRow(
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.spacedBy(6.dp),
                                     verticalArrangement = Arrangement.spacedBy(4.dp)
                                 ) {
-                                    musclesList.forEach { muscle ->
-                                        val isSel = targetMuscles.contains(muscle)
+                                    musclesList.forEach { (muscleKey, muscleLabel) ->
+                                        val isSel = targetMuscles.contains(muscleKey)
                                         FilterChip(
                                             selected = isSel,
                                             onClick = {
-                                                targetMuscles = if (isSel) targetMuscles - muscle else targetMuscles + muscle
+                                                targetMuscles = if (isSel) targetMuscles - muscleKey else targetMuscles + muscleKey
                                             },
-                                            label = { Text(muscle, fontSize = 11.sp) }
+                                            label = { Text(muscleLabel, fontSize = 11.sp) }
                                         )
                                     }
                                 }
@@ -379,15 +388,23 @@ fun ItemDetailScreen(
 
                             // Workout Days Selection
                             Column {
-                                Text("Antrenman Günleri (Seçilirse filtrelerde görünür)", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold)
+                                Text(stringResource(R.string.workout_days_label), style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold)
                                 Spacer(modifier = Modifier.height(6.dp))
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.spacedBy(4.dp)
                                 ) {
-                                    val daysMap = listOf("Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz")
-                                    daysMap.forEach { dayName ->
-                                        val isSel = workoutDays.contains(dayName)
+                                    val daysMap = listOf(
+                                        "Pzt" to stringResource(R.string.day_mon_short),
+                                        "Sal" to stringResource(R.string.day_tue_short),
+                                        "Çar" to stringResource(R.string.day_wed_short),
+                                        "Per" to stringResource(R.string.day_thu_short),
+                                        "Cum" to stringResource(R.string.day_fri_short),
+                                        "Cmt" to stringResource(R.string.day_sat_short),
+                                        "Paz" to stringResource(R.string.day_sun_short)
+                                    )
+                                    daysMap.forEach { (dayKey, dayLabel) ->
+                                        val isSel = workoutDays.contains(dayKey)
                                         Box(
                                             modifier = Modifier
                                                 .weight(1f)
@@ -402,12 +419,12 @@ fun ItemDetailScreen(
                                                     shape = CircleShape
                                                 )
                                                 .clickable {
-                                                    workoutDays = if (isSel) workoutDays - dayName else workoutDays + dayName
+                                                    workoutDays = if (isSel) workoutDays - dayKey else workoutDays + dayKey
                                                 },
                                             contentAlignment = Alignment.Center
                                         ) {
                                             Text(
-                                                text = dayName,
+                                                text = dayLabel,
                                                 color = if (isSel) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
                                                 fontWeight = FontWeight.Bold,
                                                 fontSize = 11.sp
@@ -426,7 +443,7 @@ fun ItemDetailScreen(
                         OutlinedTextField(
                             value = itemTitle,
                             onValueChange = { itemTitle = it },
-                            placeholder = { Text("Görev/Liste Ögesi Başlığı *", fontSize = 18.sp) },
+                            placeholder = { Text(stringResource(R.string.item_title_placeholder), fontSize = 18.sp) },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .testTag("item_title_input"),
@@ -440,7 +457,7 @@ fun ItemDetailScreen(
                         OutlinedTextField(
                             value = itemDescription,
                             onValueChange = { itemDescription = it },
-                            placeholder = { Text("Detaylı notlar veya açıklama ekleyin...") },
+                            placeholder = { Text(stringResource(R.string.item_description_placeholder)) },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(80.dp),
@@ -455,7 +472,7 @@ fun ItemDetailScreen(
             // Priority Selection
             item {
                 Column {
-                    Text("Öncelik Derecesi", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.priority_level_label), style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold)
                     val currentNotebook = viewModel.selectedNotebook.collectAsState().value
                     val pOpts = currentNotebook?.getPriorityConfig() ?: NotebookEntity.DEFAULT_PRIORITIES
                     Row(
@@ -506,7 +523,7 @@ fun ItemDetailScreen(
                     OutlinedTextField(
                         value = itemCategory,
                         onValueChange = { itemCategory = it },
-                        label = { Text("Kategori") },
+                        label = { Text(stringResource(R.string.category)) },
                         singleLine = true,
                         modifier = Modifier.weight(1f)
                     )
@@ -514,7 +531,7 @@ fun ItemDetailScreen(
                     OutlinedTextField(
                         value = tagsInput,
                         onValueChange = { tagsInput = it },
-                        label = { Text("Etiketler (virgülle ayırın)") },
+                        label = { Text(stringResource(R.string.tags_hint)) },
                         singleLine = true,
                         modifier = Modifier.weight(1f)
                     )
@@ -529,7 +546,7 @@ fun ItemDetailScreen(
                     border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
                 ) {
                     Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                        Text("Zamanlama & Hatırlatıcı", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                        Text(stringResource(R.string.timing_and_reminder), fontWeight = FontWeight.Bold, fontSize = 14.sp)
                         
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                             // Due Date trigger
@@ -541,7 +558,7 @@ fun ItemDetailScreen(
                                 Icon(Icons.Default.Event, null, modifier = Modifier.size(16.dp))
                                 Spacer(modifier = Modifier.width(6.dp))
                                 Text(
-                                    text = if (dueDate == null) "Bitiş Tarihi" else SimpleDateFormat("dd.MM.yyyy", Locale.getDefault()).format(Date(dueDate!!)),
+                                    text = if (dueDate == null) stringResource(R.string.due_date) else SimpleDateFormat("dd.MM.yyyy", Locale.getDefault()).format(Date(dueDate!!)),
                                     fontSize = 12.sp
                                 )
                             }
@@ -555,7 +572,7 @@ fun ItemDetailScreen(
                                 Icon(Icons.Default.Notifications, null, modifier = Modifier.size(16.dp))
                                 Spacer(modifier = Modifier.width(6.dp))
                                 Text(
-                                    text = if (reminderTime == null) "Hatırlatıcı Kur" else SimpleDateFormat("dd.MM HH:mm", Locale.getDefault()).format(Date(reminderTime!!)),
+                                    text = if (reminderTime == null) stringResource(R.string.set_reminder) else SimpleDateFormat("dd.MM HH:mm", Locale.getDefault()).format(Date(reminderTime!!)),
                                     fontSize = 12.sp
                                 )
                             }
@@ -570,7 +587,7 @@ fun ItemDetailScreen(
                                     isRecurring = false
                                     recurrenceRule = null
                                 }) {
-                                    Text("Zamanları Sıfırla", color = MaterialTheme.colorScheme.error, fontSize = 12.sp)
+                                    Text(stringResource(R.string.reset_times), color = MaterialTheme.colorScheme.error, fontSize = 12.sp)
                                 }
                             }
                         }
@@ -586,7 +603,7 @@ fun ItemDetailScreen(
                             isRecurring = it
                             if (it && recurrenceRule == null) recurrenceRule = "DAILY"
                         })
-                        Text("Tekrarlayan Görev Aktif", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                        Text(stringResource(R.string.recurring_task_active), fontWeight = FontWeight.Bold, fontSize = 14.sp)
                     }
 
                     if (isRecurring) {
@@ -594,7 +611,7 @@ fun ItemDetailScreen(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(6.dp)
                         ) {
-                            listOf("DAILY" to "Günlük", "WEEKDAYS" to "Haftaiçi", "WEEKLY" to "Haftalık", "MONTHLY" to "Aylık").forEach { (rule, label) ->
+                            listOf("DAILY" to stringResource(R.string.recurrence_daily), "WEEKDAYS" to stringResource(R.string.recurrence_weekdays), "WEEKLY" to stringResource(R.string.recurrence_weekly), "MONTHLY" to stringResource(R.string.recurrence_monthly)).forEach { (rule, label) ->
                                 FilterChip(
                                     selected = recurrenceRule == rule,
                                     onClick = { recurrenceRule = rule },
@@ -614,7 +631,7 @@ fun ItemDetailScreen(
                     border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
                 ) {
                     Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text("Alt Görevler (${subtasks.filter { it.completed }.size}/${subtasks.size})", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                        Text(stringResource(R.string.subtasks_header, subtasks.filter { it.completed }.size, subtasks.size), fontWeight = FontWeight.Bold, fontSize = 14.sp)
 
                         // Subtasks list renderer
                         subtasks.forEachIndexed { index, sub ->
@@ -654,7 +671,7 @@ fun ItemDetailScreen(
                             OutlinedTextField(
                                 value = newSubtaskTitle,
                                 onValueChange = { newSubtaskTitle = it },
-                                placeholder = { Text("Alt görev başlığı...") },
+                                placeholder = { Text(stringResource(R.string.subtask_placeholder)) },
                                 singleLine = true,
                                 modifier = Modifier.weight(1f)
                             )
@@ -689,7 +706,7 @@ fun ItemDetailScreen(
                     border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
                 ) {
                     Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                        Text("Özel Dinamik Alanlar", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                        Text(stringResource(R.string.custom_dynamic_fields), fontWeight = FontWeight.Bold, fontSize = 14.sp)
 
                         // Render each dynamic custom field depending on its type
                         customFields.forEachIndexed { index, field ->
@@ -775,7 +792,7 @@ fun ItemDetailScreen(
                             OutlinedTextField(
                                 value = newFieldName,
                                 onValueChange = { newFieldName = it },
-                                placeholder = { Text("Alan İsmi...") },
+                                placeholder = { Text(stringResource(R.string.field_name_placeholder)) },
                                 singleLine = true,
                                 modifier = Modifier.weight(1.5f)
                             )

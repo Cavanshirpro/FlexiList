@@ -1,0 +1,246 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">FlexiList</string>
+
+    <!-- Navigation & Common -->
+    <string name="ok">OK</string>
+    <string name="cancel">Abbrechen</string>
+    <string name="close">Schließen</string>
+    <string name="save">Speichern</string>
+    <string name="delete">Löschen</string>
+    <string name="edit">Bearbeiten</string>
+    <string name="add">Hinzufügen</string>
+    <string name="search">Suchen…</string>
+    <string name="settings">Einstellungen</string>
+    <string name="theme_and_language">Design &amp; Sprache</string>
+    <string name="appearance_mode">Erscheinungsbild</string>
+    <string name="dark_mode">Dunkler Modus</string>
+    <string name="light_mode">Heller Modus</string>
+    <string name="accent_color">Akzentfarbe</string>
+    <string name="language">App-Sprache</string>
+    <string name="back">Zurück</string>
+    <string name="clear_selections">Auswahl aufheben</string>
+    <string name="reset">Zurücksetzen</string>
+
+    <string name="lang_en">English 🇬🇧</string>
+    <string name="lang_tr">Türkçe 🇹🇷</string>
+    <string name="lang_ru">Русский 🇷🇺</string>
+    <string name="lang_de">Deutsch 🇩🇪</string>
+    <string name="lang_es">Español 🇪🇸</string>
+    <string name="lang_fr">Français 🇫🇷</string>
+
+    <!-- Import/Export & Menu -->
+    <string name="import_backup_json">Sicherung importieren (JSON)</string>
+    <string name="export_backup_json">Sicherung exportieren (JSON)</string>
+    <string name="cloud_backup_sync">Cloud-Sicherung &amp; Sync</string>
+    <string name="export_csv">Als Tabelle exportieren (CSV)</string>
+
+    <!-- Notebooks Screen -->
+    <string name="notebooks_title">Meine Notizbücher</string>
+    <string name="create_notebook">Notizbuch erstellen</string>
+    <string name="edit_notebook">Notizbuch bearbeiten</string>
+    <string name="notebook_name">Name des Notizbuchs</string>
+    <string name="notebook_description">Beschreibung (Optional)</string>
+    <string name="notebook_type">Notizbuch-Typ</string>
+    <string name="type_standard">Standard</string>
+    <string name="type_todo">Aufgabenliste</string>
+    <string name="type_shopping">Einkaufsliste</string>
+    <string name="type_habit">Gewohnheiten-Tracker</string>
+    <string name="type_workout">Trainingsplaner</string>
+    <string name="no_notebooks">Noch keine Notizbücher. Tippe auf +, um eines zu erstellen!</string>
+    <string name="search_notebooks_placeholder">Notizbücher durchsuchen…</string>
+    <string name="db_status">DATENBANK</string>
+    <string name="online">ONLINE</string>
+    <string name="offline">OFFLINE (LOKAL)</string>
+    <string name="list_notebooks">NOTIZBÜCHER</string>
+    <string name="active">AKTIV</string>
+    <string name="speed">GESCHWINDIGKEIT</string>
+    <string name="active_notebooks_header">AKTIVE NOTIZBÜCHER</string>
+    <string name="total_suffix">GESAMT</string>
+    <string name="no_notebooks_found">Keine Notizbücher gefunden</string>
+    <string name="no_notebooks_yet">Noch keine Notizbücher</string>
+    <string name="no_notebooks_found_sub">Bitte ändern Sie Ihre Suchanfrage.</string>
+    <string name="no_notebooks_yet_sub">"Tippe unten auf '+', um dein erstes Notizbuch zu erstellen!"</string>
+
+    <!-- Items Screen & Placeholders -->
+    <string name="search_items_placeholder">In aktueller Liste suchen…</string>
+    <string name="list_items">Listenelemente</string>
+    <string name="active_items_count">%1$d Aktiv, %2$d Erledigt</string>
+    <string name="completion_rate">FORTSCHRITT</string>
+    <string name="completed_count">%1$d Erledigt</string>
+    <string name="active_count">%1$d Aktiv</string>
+    <string name="total_items_count">Gesamt: %1$d Elemente</string>
+    <string name="no_items_title">Keine Elemente vorhanden</string>
+    <string name="no_items_sub">"Setze die Suche zurück oder tippe auf '+', um ein neues Element zu erstellen."</string>
+    <string name="no_workout_plan_title">Kein Plan für %1$s</string>
+    <string name="no_workout_plan_sub">Für diesen Tag sind keine Übungen geplant. Du kannst diesen Tag in den Übungsdetails zuweisen.</string>
+
+    <!-- Filter & Sort Chips -->
+    <string name="starred_filter">★ Markiert</string>
+    <string name="active_filter">Aktive</string>
+    <string name="completed_filter">Erledigte</string>
+    <string name="sort_by">⇅ Sortierung: %1$s</string>
+    <string name="sort_manual">Manuell</string>
+    <string name="sort_az">A-Z</string>
+    <string name="sort_za">Z-A</string>
+    <string name="sort_priority">Priorität</string>
+    <string name="sort_date">Datum</string>
+    <string name="sort_starred">Markiert</string>
+
+    <!-- Bulk Actions -->
+    <string name="complete">Abschließen</string>
+    <string name="make_active">Aktivieren</string>
+    <string name="move">Verschieben</string>
+
+    <!-- Workout Planner Tab & Cards -->
+    <string name="exercises">Übungen</string>
+    <string name="water_tracker">Wasser-Tracker</string>
+    <string name="analytics_report">Analyse &amp; Bericht</string>
+    <string name="daily_workout_tracking">Tägliches Tracking</string>
+    <string name="day_counter">Tag %1$d</string>
+    <string name="completed_days">Erledigt: %1$d Tage</string>
+    <string name="success_rate">%1$d%% Erfolg</string>
+    <string name="today">Heute</string>
+    <string name="day_suffix">Tag %1$d</string>
+    <string name="not_today">Nicht heute</string>
+    <string name="resume">Fortsetzen</string>
+    <string name="daily_workout_program">Tägliches Trainingsprogramm</string>
+    <string name="monthly_workout_program">Programm für Tag %1$s</string>
+    <string name="weekly_workout_program">%1$s-Programm</string>
+    <string name="workout_done_today">Heutiges Workout abgeschlossen! ✓</string>
+    <string name="not_selected_day_monthly">Ausgewählter Tag ist nicht heute (Tag %1$s)</string>
+    <string name="not_selected_day_weekly">Ausgewählter Tag ist nicht heute (%1$s)</string>
+    <string name="workout_in_progress">Workout läuft (Schritt %1$d)</string>
+    <string name="exercises_ready">%1$d Übungen bereit</string>
+
+    <!-- Priority Customization -->
+    <string name="customize_priorities">Prioritäten anpassen</string>
+    <string name="priority_level">Prioritätsstufe</string>
+    <string name="priority_title">Prioritätsbezeichnung</string>
+
+    <!-- Workout Player -->
+    <string name="start_workout">Workout starten</string>
+    <string name="complete_set">Satz abschließen</string>
+    <string name="rest">Pause</string>
+    <string name="add_15s">+15s</string>
+    <string name="skip_rest">Pause überspringen</string>
+    <string name="do_later">Später machen</string>
+    <string name="workout_completed">Workout abgeschlossen! 🎉</string>
+    <string name="completed_status">Abgeschlossen ✓</string>
+    <string name="active_muscles">Zielmuskeln</string>
+    <string name="next_up">Nächste Übung</string>
+    <string name="workout_summary">Workout-Zusammenfassung</string>
+
+    <!-- Cloud Sync & Backup -->
+    <string name="cloud_backup">Cloud-Sicherung</string>
+    <string name="backup_data">Daten sichern</string>
+    <string name="restore_data">Wiederherstellen</string>
+    <string name="sync_code">Sync-Code</string>
+    <string name="sync_code_placeholder">Automatisch erzeugt, falls leer</string>
+    <string name="upload_success">Sicherung erfolgreich hochgeladen!</string>
+    <string name="restore_success">Daten erfolgreich wiederhergestellt!</string>
+
+    <!-- Reminder & Settings -->
+    <string name="reminders">Erinnerungen</string>
+    <string name="reminder_time">Erinnerungszeit</string>
+    <string name="daily_reminder">Tägliche Erinnerung</string>
+    <string name="set_time">Zeit einstellen</string>
+    <string name="notebook_settings">Notizbuch-Einstellungen</string>
+
+    <!-- Analytics & Stats -->
+    <string name="statistics">Statistiken</string>
+    <string name="stats_analytics">Statistiken &amp; Analysen</string>
+    <string name="total_items">Gesamt</string>
+    <string name="completed_items">Erledigt</string>
+    <string name="pending_items">Offen</string>
+
+    <!-- Workout Player Screen Strings -->
+    <string name="no_exercises_in_workout">Keine Übungen im Workout!</string>
+    <string name="add_exercises_first">Bitte fügen Sie zuerst Übungen zu diesem Notizbuch hinzu.</string>
+    <string name="workout_saved">Workout gespeichert!</string>
+    <string name="exercise_postponed">%1$s ans Ende des Workouts verschoben!</string>
+    <string name="no_other_exercise_to_postpone">Keine andere Übung zum Verschieben!</string>
+    <string name="next_exercise_header">NÄCHSTE ÜBUNG</string>
+    <string name="sets_count">SÄTZE</string>
+    <string name="target_reps">ZIEL-WDH</string>
+    <string name="target_time">ZIELZEIT</string>
+    <string name="weight">GEWICHT</string>
+    <string name="get_ready">MACH DICH BEREIT!</string>
+    <string name="next_label">Nächste: %1$s</string>
+    <string name="set_progress">Satz %1$d / %2$d</string>
+    <string name="rest_time">PAUSENZEIT</string>
+    <string name="hybrid_superset">HYBRID-SUPERSET (Gruppe %1$s)</string>
+    <string name="start_exercise_btn">ÜBUNG STARTEN (BEREIT!)</string>
+    <string name="do_this_later">Später machen</string>
+    <string name="skip_countdown">COUNTDOWN ÜBERSPRINGEN</string>
+    <string name="add_15s_rest">+15s Pause</string>
+    <string name="pause">PAUSE</string>
+    <string name="resume_start">START</string>
+    <string name="skip_complete">ÜBERSPRINGEN / FERTIG</string>
+    <string name="step_counter">Schritt %1$d / %2$d</string>
+    <string name="finish_workout">Beenden</string>
+
+    <!-- Toasts & Messages -->
+    <string name="title_required">Bitte geben Sie einen Titel ein!</string>
+    <string name="saved_successfully">Erfolgreich gespeichert!</string>
+    <string name="items_moved_successfully">Elemente erfolgreich verschoben!</string>
+    <string name="notebook_updated">Notizbuch aktualisiert!</string>
+    <string name="priorities_updated">Prioritätsstufen aktualisiert!</string>
+    <string name="reminder_set_toast">Erinnerung für %1$s eingestellt!</string>
+    <string name="reminder_cancelled_toast">Erinnerung abgebrochen.</string>
+    <string name="workout_start_date_reset">Startdatum auf heute zurückgesetzt!</string>
+    <string name="workout_schedule_deleted">Trainingsplan gelöscht</string>
+    <string name="notebook_deleted">Notizbuch gelöscht</string>
+    <string name="backup_exported_success">Sicherung erfolgreich exportiert!</string>
+    <string name="export_failed">Export fehlgeschlagen.</string>
+    <string name="backup_imported_success">Sicherung erfolgreich importiert!</string>
+    <string name="import_failed">Import fehlgeschlagen. Datei prüfen.</string>
+    <string name="csv_exported_success">CSV erfolgreich exportiert!</string>
+    <string name="csv_export_failed">CSV-Export fehlgeschlagen.</string>
+    <string name="sync_code_copied">Sync-Code kopiert!</string>
+    <string name="data_synced_success">Daten erfolgreich synchronisiert!</string>
+    <string name="cloud_backup_saved">Cloud-Sicherung erfolgreich gespeichert!</string>
+    <string name="notebook_imported_toast">✅ Notizbuch \'%1$s\' und %2$d Elemente importiert!</string>
+    <string name="notebook_import_failed_toast">⚠️ Notizbuch konnte nicht importiert werden: %1$s</string>
+
+    <!-- Notebook Settings Dialog Strings -->
+    <string name="workout_planner_assistant">⚡ TRAININGSPLANER-ASSISTENT</string>
+    <string name="workout_schedule_frequency">TRAININGSPROGRAMM &amp; HÄUFIGKEIT</string>
+    <string name="cycle_daily">📅 TÄGLICHER ZYKLUS</string>
+    <string name="cycle_monthly">📆 MONATSPROGRAMM</string>
+    <string name="cycle_weekly">🗓️ WOCHENPROGRAMM</string>
+    <string name="cycle_period_desc">🔄 Periode: %1$d Tage Training / %2$d Tage Pause</string>
+    <string name="selected_month_days">📆 Ausgewählte Tage: %1$s</string>
+    <string name="active_days">🗓️ Aktive Tage: %1$s</string>
+    <string name="not_selected">Nicht ausgewählt</string>
+    <string name="reminder_time_label">Erinnerungszeit: %1$s</string>
+    <string name="workout_operations">TRAININGS-OPTIONEN</string>
+    <string name="show_completed_exercises">Erledigte Übungen anzeigen</string>
+    <string name="move_completed_to_bottom">Erledigte nach unten verschieben</string>
+    <string name="edit_workout_reminder">Erinnerung bearbeiten</string>
+    <string name="set_workout_reminder">Erinnerung einstellen</string>
+    <string name="edit_program_days">Programm &amp; Tage bearbeiten</string>
+    <string name="exercise_stats_reports">Übungsstatistiken &amp; Berichte</string>
+    <string name="restart_cycle_today">Zyklus ab heute neu starten</string>
+    <string name="pinned">Angeheftet 📌</string>
+    <string name="pin">Anheften</string>
+    <string name="favorite_star">Favorit ⭐</string>
+    <string name="make_favorite">Als Favorit markieren</string>
+    <string name="delete_workout_program">Trainingsprogramm löschen</string>
+    <string name="confirm_delete_workout_program">Möchten Sie dieses Trainingsprogramm und alle Übungen wirklich löschen?</string>
+    <string name="yes_delete">Ja, löschen</string>
+    <string name="notebook_options">NOTIZBUCH-OPTIONEN</string>
+    <string name="show_completed_items">Erledigte anzeigen</string>
+    <string name="show_completed_items_sub">Erledigte Elemente in der Liste anzeigen.</string>
+    <string name="move_completed_bottom_sub">Erledigte Elemente unten gruppieren.</string>
+    <string name="auto_sort">Automatische Sortierung</string>
+    <string name="auto_sort_sub">Sortierregeln sofort anwenden.</string>
+    <string name="change_reminder_time">Erinnerungszeit ändern</string>
+    <string name="set_reminder">Erinnerung einstellen</string>
+    <string name="edit_name_cover">Name &amp; Cover bearbeiten</string>
+    <string name="customize_priorities_btn">Prioritätsstufen anpassen</string>
+    <string name="notebook_stats">Statistiken &amp; Analysen</string>
+    <string name="delete_notebook_all">Notizbuch &amp; alle Elemente löschen</string>
+    <string name="confirm_delete_notebook">Möchten Sie dieses Notizbuch und alle Elemente wirklich löschen?</string>
+    <string name="created_date">Erstellt: %1$s</string>
+</resources>

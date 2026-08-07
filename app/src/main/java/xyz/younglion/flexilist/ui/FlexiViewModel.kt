@@ -26,6 +26,34 @@ class FlexiViewModel(
 
     private val prefs = application.getSharedPreferences("flexilist_prefs", Context.MODE_PRIVATE)
 
+    // Language state
+    private val _appLanguage = MutableStateFlow(prefs.getString("app_language", "en") ?: "en")
+    val appLanguage: StateFlow<String> = _appLanguage.asStateFlow()
+
+    init {
+        updateLocale(_appLanguage.value)
+    }
+
+    fun setAppLanguage(lang: String) {
+        _appLanguage.value = lang
+        prefs.edit().putString("app_language", lang).apply()
+        updateLocale(lang)
+    }
+
+    private fun updateLocale(lang: String) {
+        try {
+            val locale = java.util.Locale(lang)
+            java.util.Locale.setDefault(locale)
+            val resources = getApplication<Application>().resources
+            val config = resources.configuration
+            config.setLocale(locale)
+            @Suppress("DEPRECATION")
+            resources.updateConfiguration(config, resources.displayMetrics)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
     // Theme state
     private val _isDarkMode = MutableStateFlow(prefs.getBoolean("is_dark_mode", true))
     val isDarkMode: StateFlow<Boolean> = _isDarkMode.asStateFlow()

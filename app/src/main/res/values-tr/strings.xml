@@ -1,0 +1,387 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">FlexiList</string>
+
+    <!-- Navigation & Common -->
+    <string name="ok">Tamam</string>
+    <string name="cancel">İptal</string>
+    <string name="close">Kapat</string>
+    <string name="save">Kaydet</string>
+    <string name="delete">Sil</string>
+    <string name="edit">Düzenle</string>
+    <string name="add">Ekle</string>
+    <string name="search">Ara…</string>
+    <string name="settings">Ayarlar</string>
+    <string name="theme_and_language">Tema &amp; Dil Ayarları</string>
+    <string name="appearance_mode">Görünüm Modu</string>
+    <string name="dark_mode">Koyu Tema</string>
+    <string name="light_mode">Açık Tema</string>
+    <string name="accent_color">Vurgu Rengi</string>
+    <string name="language">Uygulama Dili</string>
+    <string name="back">Geri Dön</string>
+    <string name="clear_selections">Seçimleri Temizle</string>
+    <string name="reset">Sıfırla</string>
+
+    <string name="lang_en">English 🇬🇧</string>
+    <string name="lang_tr">Türkçe 🇹🇷</string>
+    <string name="lang_ru">Русский 🇷🇺</string>
+    <string name="lang_de">Deutsch 🇩🇪</string>
+    <string name="lang_es">Español 🇪🇸</string>
+    <string name="lang_fr">Français 🇫🇷</string>
+
+    <!-- Import/Export & Menu -->
+    <string name="import_backup_json">Yedek Yükle (JSON)</string>
+    <string name="export_backup_json">Yedek Al (JSON)</string>
+    <string name="cloud_backup_sync">Bulut Yedekleme &amp; Senkronizasyon</string>
+    <string name="export_csv">Tablo Olarak Aktar (CSV)</string>
+
+    <!-- Notebooks Screen -->
+    <string name="notebooks_title">Defterlerim</string>
+    <string name="create_notebook">Defter Oluştur</string>
+    <string name="edit_notebook">Defteri Düzenle</string>
+    <string name="notebook_name">Defter Adı</string>
+    <string name="notebook_description">Açıklama (İsteğe Bağlı)</string>
+    <string name="notebook_type">Defter Türü</string>
+    <string name="type_standard">Standart</string>
+    <string name="type_todo">Yapılacaklar</string>
+    <string name="type_shopping">Alışveriş Listesi</string>
+    <string name="type_habit">Alışkanlık Takibi</string>
+    <string name="type_workout">Antrenman Planlayıcı</string>
+    <string name="no_notebooks">Henüz defter yok. Oluşturmak için + simgesine dokunun!</string>
+    <string name="search_notebooks_placeholder">Defterlerinizde arayın…</string>
+    <string name="db_status">VERİ TABANI</string>
+    <string name="online">ÇEVRİMİÇİ</string>
+    <string name="offline">ÇEVRİMDİŞİ (YEREL)</string>
+    <string name="list_notebooks">LİSTE DEFTERİ</string>
+    <string name="active">AKTİF</string>
+    <string name="speed">İŞLEM HIZI</string>
+    <string name="active_notebooks_header">AKTİF LİSTE DEFTERLERİ</string>
+    <string name="total_suffix">TOPLAM</string>
+    <string name="no_notebooks_found">Defter bulunamadı</string>
+    <string name="no_notebooks_yet">Henüz hiç defteriniz yok</string>
+    <string name="no_notebooks_found_sub">Lütfen arama teriminizi değiştirin.</string>
+    <string name="no_notebooks_yet_sub">"Altta bulunan '+' butonuna tıklayarak ilk çok amaçlı liste defterinizi oluşturabilirsiniz!"</string>
+
+    <!-- Items Screen & Placeholders -->
+    <string name="search_items_placeholder">Mevcut listede arayın…</string>
+    <string name="list_items">Liste Öğeleri</string>
+    <string name="active_items_count">%1$d Aktif, %2$d Tamamlandı</string>
+    <string name="completion_rate">TAMAMLANMA ORANI</string>
+    <string name="completed_count">%1$d Tamamlanan</string>
+    <string name="active_count">%1$d Aktif</string>
+    <string name="total_items_count">Toplam %1$d Öğe</string>
+    <string name="no_items_title">Burada gösterilecek öğe yok</string>
+    <string name="no_items_sub">"Arama kriterlerinizi sıfırlayabilir veya sağ alttaki '+' butonu ile yeni bir liste ögesi oluşturabilirsiniz."</string>
+    <string name="no_workout_plan_title">%1$s Günü İçin Plan Yok</string>
+    <string name="no_workout_plan_sub">Bu gün için planlanmış egzersiz bulunmamaktadır. Detaylar ekranından egzersizlerinize bu günü atayabilir veya farklı bir günü filtreleyebilirsiniz.</string>
+
+    <!-- Filter & Sort Chips -->
+    <string name="starred_filter">★ Yıldızlı</string>
+    <string name="active_filter">Etkinler</string>
+    <string name="completed_filter">Tamamlananlar</string>
+    <string name="sort_by">⇅ Sırala: %1$s</string>
+    <string name="sort_manual">Manuel</string>
+    <string name="sort_az">A-Z</string>
+    <string name="sort_za">Z-A</string>
+    <string name="sort_priority">Öncelik</string>
+    <string name="sort_date">Tarih</string>
+    <string name="sort_starred">Yıldızlı</string>
+
+    <!-- Bulk Actions -->
+    <string name="complete">Tamamla</string>
+    <string name="make_active">Aktif Et</string>
+    <string name="move">Taşı</string>
+
+    <!-- Workout Planner Tab & Cards -->
+    <string name="exercises">Egzersizler</string>
+    <string name="water_tracker">Su Takibi</string>
+    <string name="analytics_report">Analiz &amp; Rapor</string>
+    <string name="daily_workout_tracking">Günlük Antrenman Takibi</string>
+    <string name="day_counter">%1$d. Gün</string>
+    <string name="completed_days">Tamamlanan: %1$d Gün</string>
+    <string name="success_rate">%%%1$d Başarı</string>
+    <string name="today">Bugün</string>
+    <string name="day_suffix">%1$d. Gün</string>
+    <string name="not_today">Günü Değil</string>
+    <string name="resume">Devam Et</string>
+    <string name="daily_workout_program">Günlük Antrenman Programı</string>
+    <string name="monthly_workout_program">%1$s. Gün Programı</string>
+    <string name="weekly_workout_program">%1$s Günlük Programı</string>
+    <string name="workout_done_today">Bugünkü antrenman tamamlandı! ✓</string>
+    <string name="not_selected_day_monthly">Seçilen gün bugün değil (%1$s. gün)</string>
+    <string name="not_selected_day_weekly">Seçilen gün bugün değil (%1$s)</string>
+    <string name="workout_in_progress">Antrenman devam ediyor (%1$d. adım)</string>
+    <string name="exercises_ready">%1$d egzersiz hazır</string>
+
+    <!-- Priority Customization -->
+    <string name="customize_priorities">Öncelikleri Özelleştir</string>
+    <string name="priority_level">Öncelik Seviyesi</string>
+    <string name="priority_title">Öncelik Başlığı</string>
+
+    <!-- Workout Player -->
+    <string name="start_workout">Antrenmanı Başlat</string>
+    <string name="complete_set">Seti Tamamla</string>
+    <string name="rest">Dinlenme Molası</string>
+    <string name="add_15s">+15sn</string>
+    <string name="skip_rest">Molayı Atla</string>
+    <string name="do_later">Bunu Sonra Yap</string>
+    <string name="workout_completed">Antrenman Tamamlandı! 🎉</string>
+    <string name="completed_status">Tamamlandı ✓</string>
+    <string name="active_muscles">Hedef Kaslar</string>
+    <string name="next_up">Sıradaki Hareket</string>
+    <string name="workout_summary">Antrenman Özeti</string>
+
+    <!-- Cloud Sync & Backup -->
+    <string name="cloud_backup">Bulut Yedekleme</string>
+    <string name="backup_data">Verileri Yedekle</string>
+    <string name="restore_data">Geri Yükle</string>
+    <string name="sync_code">Senkronizasyon Kodu</string>
+    <string name="sync_code_placeholder">Boş bırakılırsa otomatik üretilir</string>
+    <string name="upload_success">Yedekleme başarıyla yüklendi!</string>
+    <string name="restore_success">Veriler başarıyla geri yüklendi!</string>
+
+    <!-- Reminder & Settings -->
+    <string name="reminders">Hatırlatıcılar</string>
+    <string name="reminder_time">Hatırlatıcı Saati</string>
+    <string name="daily_reminder">Günlük Hatırlatıcı</string>
+    <string name="set_time">Saat Ayarla</string>
+    <string name="notebook_settings">Defter Ayarları</string>
+
+    <!-- Analytics & Stats -->
+    <string name="statistics">İstatistikler</string>
+    <string name="stats_analytics">İstatistikler &amp; Analiz</string>
+    <string name="total_items">Toplam Öğe</string>
+    <string name="completed_items">Tamamlanan</string>
+    <string name="pending_items">Bekleyen</string>
+
+    <!-- Workout Player Screen Strings -->
+    <string name="no_exercises_in_workout">Antrenmanda hiç egzersiz yok!</string>
+    <string name="add_exercises_first">Lütfen önce bu deftere egzersizler ve set ayarları ekleyin.</string>
+    <string name="workout_saved">Antrenman Kaydedildi!</string>
+    <string name="exercise_postponed">%1$s antrenmanın sonuna ertelendi!</string>
+    <string name="no_other_exercise_to_postpone">Ertelenecek başka farklı egzersiz yok!</string>
+    <string name="next_exercise_header">SIRADAKİ EGZERSİZ</string>
+    <string name="sets_count">SET SAYISI</string>
+    <string name="target_reps">HEDEF TEKRAR</string>
+    <string name="target_time">HEDEF SÜRE</string>
+    <string name="weight">AĞIRLIK</string>
+    <string name="get_ready">HAZIRLANIN!</string>
+    <string name="next_label">Sıradaki: %1$s</string>
+    <string name="set_progress">Set %1$d / %2$d</string>
+    <string name="rest_time">DİNLENME SÜRESİ</string>
+    <string name="hybrid_superset">HİBRİT SUPERSET (Grup %1$s)</string>
+    <string name="start_exercise_btn">EGZERSİZE BAŞLA (HAZIRIM!)</string>
+    <string name="do_this_later">Bunu Sonra Yap</string>
+    <string name="skip_countdown">GERİ SAYIMI ATLA</string>
+    <string name="add_15s_rest">+15sn Ekle</string>
+    <string name="pause">DURAKLAT</string>
+    <string name="resume_start">BAŞLAT</string>
+    <string name="skip_complete">GEÇ / TAMAM</string>
+    <string name="step_counter">Adım %1$d / %2$d</string>
+    <string name="finish_workout">Bitir</string>
+
+    <!-- Toasts & Messages -->
+    <string name="title_required">Lütfen bir başlık girin!</string>
+    <string name="saved_successfully">Başarıyla kaydedildi!</string>
+    <string name="items_moved_successfully">Ögeler başarıyla taşındı!</string>
+    <string name="notebook_updated">Defter güncellendi!</string>
+    <string name="priorities_updated">Öncelik seviyeleri güncellendi!</string>
+    <string name="reminder_set_toast">Hatırlatıcı %1$s saatine kuruldu!</string>
+    <string name="reminder_cancelled_toast">Hatırlatıcı iptal edildi.</string>
+    <string name="workout_start_date_reset">Antrenman başlama tarihi bugüne sıfırlandı!</string>
+    <string name="workout_schedule_deleted">Antrenman programı silindi</string>
+    <string name="notebook_deleted">Defter silindi</string>
+    <string name="backup_exported_success">Yedek başarıyla dışa aktarıldı!</string>
+    <string name="export_failed">Dışa aktarma başarısız oldu.</string>
+    <string name="backup_imported_success">Yedek başarıyla içe aktarıldı!</string>
+    <string name="import_failed">İçe aktarma başarısız oldu. Dosyayı kontrol edin.</string>
+    <string name="csv_exported_success">CSV başarıyla dışa aktarıldı!</string>
+    <string name="csv_export_failed">CSV dışa aktarma başarısız oldu.</string>
+    <string name="sync_code_copied">Yedekleme kodu kopyalandı!</string>
+    <string name="data_synced_success">Veriler başarıyla senkronize edildi!</string>
+    <string name="cloud_backup_saved">Bulut yedeği başarıyla kaydedildi!</string>
+    <string name="notebook_imported_toast">✅ \'%1$s\' defteri ve %2$d öğe başarıyla içe aktarıldı!</string>
+    <string name="notebook_import_failed_toast">⚠️ Defter içe aktarılamadı: %1$s</string>
+
+    <!-- Notebook Settings Dialog Strings -->
+    <string name="workout_planner_assistant">⚡ WORKOUT PLANNER ASİSTANI</string>
+    <string name="workout_schedule_frequency">ANTRENMAN PROGRAMI &amp; SIKLIK</string>
+    <string name="cycle_daily">📅 GÜNLÜK DÖNGÜ</string>
+    <string name="cycle_monthly">📆 AYLIK PROGRAM</string>
+    <string name="cycle_weekly">🗓️ HAFTALIK PROGRAM</string>
+    <string name="cycle_period_desc">🔄 Periyot: %1$d Gün Antrenman / %2$d Gün Dinlenme</string>
+    <string name="selected_month_days">📆 Seçili Ay Günleri: %1$s</string>
+    <string name="active_days">🗓️ Aktif Günler: %1$s</string>
+    <string name="not_selected">Seçilmedi</string>
+    <string name="reminder_time_label">Hatırlatıcı Saati: %1$s</string>
+    <string name="workout_operations">ANTRENMAN İŞLEMLERİ</string>
+    <string name="show_completed_exercises">Tamamlanan Egzersizleri Göster</string>
+    <string name="move_completed_to_bottom">Tamamlananları En Alta Taşı</string>
+    <string name="edit_workout_reminder">Antrenman Hatırlatıcısını Düzenle</string>
+    <string name="set_workout_reminder">Antrenman Saati Hatırlatıcısı Kur</string>
+    <string name="edit_program_days">Program &amp; Günleri Düzenle</string>
+    <string name="exercise_stats_reports">Egzersiz İstatistikleri &amp; Raporlar</string>
+    <string name="restart_cycle_today">Döngüyü Bugünden Yeniden Başlat</string>
+    <string name="pinned">İğnelendi 📌</string>
+    <string name="pin">İğnele</string>
+    <string name="favorite_star">Favori ⭐</string>
+    <string name="make_favorite">Favori Yap</string>
+    <string name="delete_workout_program">Antrenman Programını Sil</string>
+    <string name="confirm_delete_workout_program">Bu antrenman programını ve içindeki tüm egzersizleri silmek istediğinize emin misiniz?</string>
+    <string name="yes_delete">Evet, Sil</string>
+    <string name="notebook_options">DEFTER SEÇENEKLERİ</string>
+    <string name="show_completed_items">Tamamlananları Göster</string>
+    <string name="show_completed_items_sub">Tamamlanmış ögeleri listede görünür tut.</string>
+    <string name="move_completed_bottom_sub">Tamamlanmış ögeleri en alta grupla.</string>
+    <string name="auto_sort">Otomatik Sıralama</string>
+    <string name="auto_sort_sub">Sıralama kurallarını anlık olarak uygula.</string>
+    <string name="change_reminder_time">Hatırlatıcı Saatini Değiştir</string>
+    <string name="set_reminder">Hatırlatıcı Kur</string>
+    <string name="edit_name_cover">Defter İsmi &amp; Kapağını Düzenle</string>
+    <string name="customize_priorities_btn">Öncelik Derecelerini Özelleştir</string>
+    <string name="notebook_stats">Defter Analiz &amp; İstatistikleri</string>
+    <string name="delete_notebook_all">Defteri ve Tüm Öğelerini Sil</string>
+    <string name="confirm_delete_notebook">Bu defteri ve içindeki tüm ögeleri silmek istediğinize emin misiniz?</string>
+    <string name="created_date">Olş: %1$s</string>
+
+    <!-- Item Detail & Add Edit Strings -->
+    <string name="edit_item_title">Görevi Düzenle</string>
+    <string name="new_item_detail_title">Yeni Görev Detayı</string>
+    <string name="discard">Vazgeç</string>
+    <string name="star">Yıldızla</string>
+    <string name="exercise_name_placeholder">Egzersiz Adı (Örn: Bench Press) *</string>
+    <string name="exercise_details">Egzersiz Detayları</string>
+    <string name="workout_type">Çalışma Tipi</string>
+    <string name="type_reps">Tekrarlı</string>
+    <string name="type_timer">Süreli (Saniye)</string>
+    <string name="sets_count_label">Set Sayısı</string>
+    <string name="target_reps_label">Tekrar Hedefi</string>
+    <string name="duration_seconds_label">Süre (Saniye)</string>
+    <string name="weight_kg_label">Ağırlık (kg)</string>
+    <string name="rest_seconds_label">Dinlenme (Saniye)</string>
+    <string name="hybrid_group_label">Hibrit Grup ID (Superset için örn. A, B. Boşsa normal)</string>
+    <string name="target_muscle_groups">Hedef Kas Grupları</string>
+    <string name="workout_days_label">Antrenman Günleri (Seçilirse filtrelerde görünür)</string>
+    <string name="item_title_placeholder">Görev/Liste Ögesi Başlığı *</string>
+    <string name="item_description_placeholder">Detaylı notlar veya açıklama ekleyin…</string>
+    <string name="category">Kategori</string>
+    <string name="tags_hint">Etiketler (virgülle ayırın)</string>
+    <string name="timing_and_reminder">Zamanlama &amp; Hatırlatıcı</string>
+    <string name="due_date">Bitiş Tarihi</string>
+    <string name="reset_times">Zamanları Sıfırla</string>
+    <string name="recurring_task_active">Tekrarlayan Görev Aktif</string>
+    <string name="recurrence_daily">Günlük</string>
+    <string name="recurrence_weekdays">Haftaiçi</string>
+    <string name="recurrence_weekly">Haftalık</string>
+    <string name="recurrence_monthly">Aylık</string>
+    <string name="subtasks_header">Alt Görevler (%1$d/%2$d)</string>
+    <string name="subtask_placeholder">Alt görev başlığı…</string>
+    <string name="custom_dynamic_fields">Özel Dinamik Alanlar</string>
+    <string name="field_name_placeholder">Alan İsmi…</string>
+
+    <!-- Additional Items & Notebooks Screen Strings -->
+    <string name="daily_goal">GÜNLÜK HEDEF</string>
+    <string name="quick_add_water">Hızlı Su Ekle</string>
+    <string name="add_ml">+%1$d ml</string>
+    <string name="workout_analytics_chart_title">Antrenman Analitiği &amp; Gelişim Grafiği</string>
+    <string name="workout_history_reports">Antrenman Geçmişi Raporları</string>
+    <string name="no_saved_workout_reports">Kayıtlı antrenman raporu bulunamadı.</string>
+    <string name="quick_add_item_title">Hızlı Görev Ekle</string>
+    <string name="task_title_required">Görev Başlığı *</string>
+    <string name="priority_level_label">Öncelik Seviyesi</string>
+    <string name="add_detailed">Detaylı Ekle</string>
+    <string name="move_items_title">Ögeleri Taşı</string>
+    <string name="select_target_notebook">Seçilen ögelerin taşınacağı defteri seçin:</string>
+    <string name="workout_frequency_setting">Antrenman Sıklığı Ayarı</string>
+    <string name="workout_day">Antrenman Günü</string>
+    <string name="rest_day">Dinlenme Günü</string>
+    <string name="select_days_multiple">Günleri Seçin (Birden Fazla)</string>
+    <string name="select_month_days_multiple">Ayın Günlerini Seçin (Birden Fazla)</string>
+    <string name="notebook_cover_color">Defter Kapağı Rengi</string>
+    <string name="cover_icon_emoji">Kapak Simgesi (Emoji)</string>
+    <string name="degree_name">Derece İsmi</string>
+    <string name="add_new_priority_level">Yeni Öncelik Derecesi Ekle</string>
+    <string name="done">Bitti</string>
+    <string name="sample_button">Buton</string>
+    <string name="sample_label">Etiket</string>
+    <string name="select_time">Saat Seç</string>
+    <string name="save_and_set_reminder">Hatırlatıcıyı Kaydet &amp; Kur</string>
+    <string name="cancel_reminder">Hatırlatıcıyı İptal Et</string>
+    <string name="workout_analytics_title">Antrenman Analitiği &amp; Gelişim Grafiği</string>
+    <string name="metric_sets">Set Sayıları</string>
+    <string name="metric_weekly_tonnage">Haftalık Tonaj</string>
+    <string name="metric_monthly_tonnage">Aylık Tonaj</string>
+    <string name="metric_sets_desc">Son 7 antrenmanda tamamlanan toplam set sayıları</string>
+    <string name="metric_weekly_desc">Haftalık kaldırılan toplam tonaj (kg cinsinden)</string>
+    <string name="metric_monthly_desc">Aylık kaldırılan toplam tonaj (kg cinsinden)</string>
+    <string name="no_workout_reports">Kayıtlı antrenman raporu bulunamadı.</string>
+    <string name="quick_add_title">Hızlı Görev Ekle</string>
+    <string name="item_title_label">Görev Başlığı *</string>
+    <string name="detailed_add">Detaylı Ekle</string>
+    <string name="notebook_analysis">Defter Analizi</string>
+    <string name="stat_completed">Tamamlanan</string>
+    <string name="stat_active">Aktif</string>
+    <string name="stat_starred">Yıldızlı</string>
+    <string name="priority_color_distribution">Öncelik &amp; Renk Dağılımı</string>
+    <string name="no_data_yet">Henüz veri yok.</string>
+    <string name="favorite">Favori</string>
+    <string name="reminder">Hatırlatıcı</string>
+    <string name="customize_priorities_desc">Defterinizdeki öğeler için özel öncelik dereceleri, isimleri ve renklerini özelleştirin.</string>
+    <string name="step_indicator">Adım %1$d / %2$d</string>
+
+    <!-- Muscles -->
+    <string name="muscle_chest">Göğüs</string>
+    <string name="muscle_back">Sırt</string>
+    <string name="muscle_legs">Bacak</string>
+    <string name="muscle_shoulders">Omuz</string>
+    <string name="muscle_arms">Kollar</string>
+    <string name="muscle_core">Karın</string>
+
+    <!-- Days Short -->
+    <string name="day_mon_short">Pzt</string>
+    <string name="day_tue_short">Sal</string>
+    <string name="day_wed_short">Çar</string>
+    <string name="day_thu_short">Per</string>
+    <string name="day_fri_short">Cum</string>
+    <string name="day_sat_short">Cmt</string>
+    <string name="day_sun_short">Paz</string>
+
+    <!-- Priorities -->
+    <string name="priority_levels_title">Öncelik Seviyeleri</string>
+    <string name="priority_none">Yok</string>
+    <string name="priority_low">Düşük</string>
+    <string name="priority_medium">Orta</string>
+    <string name="priority_high">Yüksek</string>
+    <string name="priority_level_format">Derece %1$d</string>
+    <string name="priority_unranked">Derecesiz</string>
+
+    <!-- Accents -->
+    <string name="accent_lavender">Lavanta Moru</string>
+    <string name="accent_emerald">Zümrüt Yeşili</string>
+    <string name="accent_ocean">Nehir Mavisi</string>
+    <string name="accent_amber">Amber Turuncu</string>
+    <string name="accent_cyber_red">Siber Kırmızı</string>
+    <string name="accent_cyber_violet">Siber Mor</string>
+    <string name="accent_turquoise">Turkuaz Esintisi</string>
+    <string name="accent_coral">Mercan Pembe</string>
+
+    <!-- Theme & UI -->
+    <string name="live_theme_preview">Canlı Tema Önizleme</string>
+    <string name="chip">Etiket</string>
+
+    <!-- Cloud Sync -->
+    <string name="cloud_sync_copied">Yedekleme kodu kopyalandı!</string>
+    <string name="cloud_info_title">🌐 BULUT SİSTEMİ BİLGİLENDİRMESİ</string>
+    <string name="cloud_info_desc">• Hangi Bulut Hizmeti?: Verileriniz JSONBlob SSL korumalı küresel REST bulut sunucularında şifreli olarak saklanır.\n• Yedekleme Kodu: \'Buluta Yedekle\'ye bastığınızda size özel benzersiz bir kimlik üretilir.\n• Cihazlar Arası Aktarım: Bu kodu herhangi bir telefonda \'Geri Yükle\' alanına yazarak tüm defter ve listelerinizi anında senkronize edebilirsiniz.</string>
+    <string name="cloud_enter_code_warning">Lütfen geri yüklenecek yedekleme kodunu girin!</string>
+    <string name="cloud_downloading">Yedek indiriliyor ve yükleniyor...</string>
+    <string name="cloud_imported_success">Bulut yedeği başarıyla içe aktarıldı!</string>
+    <string name="cloud_sync_success">Veriler başarıyla senkronize edildi!</string>
+    <string name="cloud_uploading">Verileriniz buluta yükleniyor...</string>
+    <string name="cloud_uploaded_success">Bulut yedeği başarıyla kaydedildi!\nYedek Kodu: %1$s</string>
+    <string name="cloud_uploaded_toast">Bulut yedeği başarıyla kaydedildi!</string>
+    <string name="restore">Geri Yükle</string>
+    <string name="backup_to_cloud">Buluta Yedekle</string>
+    <string name="generate_code">Kod Üret</string>
+    <string name="copy_code">Kodu Kopyala</string>
+</resources>

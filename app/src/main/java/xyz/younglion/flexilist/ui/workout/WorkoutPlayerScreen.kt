@@ -27,10 +27,12 @@ import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import xyz.younglion.flexilist.R
 import xyz.younglion.flexilist.data.model.ListItemEntity
 import xyz.younglion.flexilist.data.notifications.SystemSoundAndNotificationHelper
 import xyz.younglion.flexilist.ui.FlexiViewModel
@@ -134,21 +136,21 @@ fun WorkoutPlayerScreen(
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
-                    "Antrenmanda hiç egzersiz yok!",
+                    stringResource(R.string.no_exercises_in_workout),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onBackground
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    "Lütfen önce bu deftere egzersizler ve set ayarları ekleyin.",
+                    stringResource(R.string.add_exercises_first),
                     textAlign = TextAlign.Center,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
                 )
                 Spacer(modifier = Modifier.height(24.dp))
                 Button(onClick = onDismiss) {
-                    Text("Geri Dön")
+                    Text(stringResource(R.string.back))
                 }
             }
         }
@@ -248,7 +250,7 @@ fun WorkoutPlayerScreen(
         viewModel.resetWorkoutStepIndex(notebookId)
 
         SystemSoundAndNotificationHelper.dismissWorkoutNotification(context)
-        Toast.makeText(context, "Antrenman Kaydedildi!", Toast.LENGTH_LONG).show()
+        Toast.makeText(context, context.getString(R.string.workout_saved), Toast.LENGTH_LONG).show()
         onDismiss()
     }
 
@@ -300,9 +302,9 @@ fun WorkoutPlayerScreen(
                 secondsRemaining = if (newStep.exercise.type == "Timer") newStep.exercise.targetTimeSeconds else 0
             }
             
-            Toast.makeText(context, "${step.exercise.name} antrenmanın sonuna ertelendi!", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, context.getString(R.string.exercise_postponed, step.exercise.name), Toast.LENGTH_SHORT).show()
         } else {
-            Toast.makeText(context, "Ertelenecek başka farklı egzersiz yok!", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, context.getString(R.string.no_other_exercise_to_postpone), Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -429,7 +431,7 @@ fun WorkoutPlayerScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 IconButton(onClick = onDismiss) {
-                    Icon(Icons.Default.Close, "Kapat", tint = Color.White.copy(alpha = 0.6f))
+                    Icon(Icons.Default.Close, stringResource(R.string.close), tint = Color.White.copy(alpha = 0.6f))
                 }
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
@@ -439,13 +441,13 @@ fun WorkoutPlayerScreen(
                         fontSize = 18.sp
                     )
                     Text(
-                        "Adım ${currentStepIndex + 1} / ${executionQueue.size}",
+                        stringResource(R.string.step_indicator, currentStepIndex + 1, executionQueue.size),
                         color = Color.White.copy(alpha = 0.5f),
                         fontSize = 12.sp
                     )
                 }
                 IconButton(onClick = { finishWorkout() }) {
-                    Icon(Icons.Default.DoneAll, "Bitir", tint = MaterialTheme.colorScheme.primary)
+                    Icon(Icons.Default.DoneAll, stringResource(R.string.finish_workout), tint = MaterialTheme.colorScheme.primary)
                 }
             }
 
@@ -473,7 +475,7 @@ fun WorkoutPlayerScreen(
                 ) {
                     if (isAwaitingConfirmation) {
                         Text(
-                            "SIRADAKİ EGZERSİZ",
+                            stringResource(R.string.next_exercise_header),
                             fontWeight = FontWeight.ExtraBold,
                             color = MaterialTheme.colorScheme.primary,
                             fontSize = 14.sp,
@@ -502,30 +504,30 @@ fun WorkoutPlayerScreen(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Text("SET SAYISI", color = Color.White.copy(alpha = 0.5f), fontSize = 11.sp)
+                                Text(stringResource(R.string.sets_count), color = Color.White.copy(alpha = 0.5f), fontSize = 11.sp)
                                 Text("${ex.setsCount}", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Black)
                             }
                             Box(modifier = Modifier.width(1.dp).height(24.dp).background(Color.White.copy(alpha = 0.1f)))
                             if (ex.type == "Reps") {
                                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                    Text("HEDEF TEKRAR", color = Color.White.copy(alpha = 0.5f), fontSize = 11.sp)
+                                    Text(stringResource(R.string.target_reps), color = Color.White.copy(alpha = 0.5f), fontSize = 11.sp)
                                     Text("${ex.targetReps}", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Black)
                                 }
                             } else {
                                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                    Text("HEDEF SÜRE", color = Color.White.copy(alpha = 0.5f), fontSize = 11.sp)
+                                    Text(stringResource(R.string.target_time), color = Color.White.copy(alpha = 0.5f), fontSize = 11.sp)
                                     Text("${ex.targetTimeSeconds}s", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Black)
                                 }
                             }
                             Box(modifier = Modifier.width(1.dp).height(24.dp).background(Color.White.copy(alpha = 0.1f)))
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Text("AĞIRLIK", color = Color.White.copy(alpha = 0.5f), fontSize = 11.sp)
+                                Text(stringResource(R.string.weight), color = Color.White.copy(alpha = 0.5f), fontSize = 11.sp)
                                 Text("${ex.weightKg} kg", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Black)
                             }
                         }
                     } else if (isPrepState) {
                         Text(
-                            "HAZIRLANIN!",
+                            stringResource(R.string.get_ready),
                             fontWeight = FontWeight.ExtraBold,
                             color = Color(0xFFF59E0B), // Vibrant amber gold
                             fontSize = 18.sp,
@@ -548,21 +550,21 @@ fun WorkoutPlayerScreen(
                         }
                         Spacer(modifier = Modifier.height(20.dp))
                         Text(
-                            "Sıradaki: ${ex.name}",
+                            stringResource(R.string.next_label, ex.name),
                             color = Color.White.copy(alpha = 0.9f),
                             fontSize = 18.sp,
                             fontWeight = FontWeight.Bold,
                             textAlign = TextAlign.Center
                         )
                         Text(
-                            "Set ${currentStep.setNumber} / ${ex.setsCount}",
+                            stringResource(R.string.set_progress, currentStep.setNumber, ex.setsCount),
                             color = Color.White.copy(alpha = 0.6f),
                             fontSize = 14.sp,
                             textAlign = TextAlign.Center
                         )
                     } else if (isRestingState) {
                         Text(
-                            "DİNLENME SÜRESİ",
+                            stringResource(R.string.rest_time),
                             fontWeight = FontWeight.ExtraBold,
                             color = MaterialTheme.colorScheme.secondary,
                             fontSize = 14.sp,
@@ -576,7 +578,7 @@ fun WorkoutPlayerScreen(
                             color = Color.White
                         )
                         Text(
-                            "Sıradaki: ${ex.name} (Set ${currentStep.setNumber})",
+                            stringResource(R.string.next_label, "${ex.name} (${stringResource(R.string.set_progress, currentStep.setNumber, ex.setsCount)})"),
                             color = Color.White.copy(alpha = 0.7f),
                             fontSize = 14.sp,
                             textAlign = TextAlign.Center
@@ -604,7 +606,7 @@ fun WorkoutPlayerScreen(
                                 Icon(Icons.Default.Sync, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(14.dp))
                                 Spacer(modifier = Modifier.width(4.dp))
                                 Text(
-                                    "HIBRİT HİPER SUPERSET (Grup ${ex.supersetGroupId})",
+                                    stringResource(R.string.hybrid_superset, ex.supersetGroupId),
                                     color = MaterialTheme.colorScheme.primary,
                                     fontSize = 10.sp,
                                     fontWeight = FontWeight.Bold
@@ -620,26 +622,26 @@ fun WorkoutPlayerScreen(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Text("SET", color = Color.White.copy(alpha = 0.5f), fontSize = 11.sp)
+                                Text(stringResource(R.string.sets_count), color = Color.White.copy(alpha = 0.5f), fontSize = 11.sp)
                                 Text("${currentStep.setNumber} / ${ex.setsCount}", color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.Black)
                             }
                             Box(modifier = Modifier.width(1.dp).height(32.dp).background(Color.White.copy(alpha = 0.1f)))
                             
                             if (ex.type == "Reps") {
                                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                    Text("HEDEF TEKRAR", color = Color.White.copy(alpha = 0.5f), fontSize = 11.sp)
+                                    Text(stringResource(R.string.target_reps), color = Color.White.copy(alpha = 0.5f), fontSize = 11.sp)
                                     Text("${ex.targetReps}", color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.Black)
                                 }
                             } else {
                                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                    Text("SÜRE", color = Color.White.copy(alpha = 0.5f), fontSize = 11.sp)
+                                    Text(stringResource(R.string.target_time), color = Color.White.copy(alpha = 0.5f), fontSize = 11.sp)
                                     Text("${secondsRemaining}s", color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.Black)
                                 }
                             }
                             Box(modifier = Modifier.width(1.dp).height(32.dp).background(Color.White.copy(alpha = 0.1f)))
                             
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Text("AĞIRLIK", color = Color.White.copy(alpha = 0.5f), fontSize = 11.sp)
+                                Text(stringResource(R.string.weight), color = Color.White.copy(alpha = 0.5f), fontSize = 11.sp)
                                 Text("${currentExerciseWeight} kg", color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.Black)
                             }
                         }
@@ -684,7 +686,7 @@ fun WorkoutPlayerScreen(
                             ) {
                                 Icon(Icons.Default.PlayArrow, null)
                                 Spacer(modifier = Modifier.width(8.dp))
-                                Text("EGZERSİZE BAŞLA (HAZIRIM!)", fontWeight = FontWeight.ExtraBold, fontSize = 16.sp)
+                                Text(stringResource(R.string.start_exercise_btn), fontWeight = FontWeight.ExtraBold, fontSize = 16.sp)
                             }
 
                             OutlinedButton(
@@ -699,7 +701,7 @@ fun WorkoutPlayerScreen(
                             ) {
                                 Icon(Icons.Default.Schedule, null, modifier = Modifier.size(18.dp), tint = Color.White)
                                 Spacer(modifier = Modifier.width(8.dp))
-                                Text("Bunu Sonra Yap", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                                Text(stringResource(R.string.do_this_later), fontWeight = FontWeight.Bold, fontSize = 14.sp)
                             }
                         }
                     } else if (isPrepState) {
@@ -722,7 +724,7 @@ fun WorkoutPlayerScreen(
                         ) {
                             Icon(Icons.Default.SkipNext, null)
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text("GERİ SAYIMI ATLA", fontWeight = FontWeight.ExtraBold, fontSize = 16.sp)
+                            Text(stringResource(R.string.skip_countdown), fontWeight = FontWeight.ExtraBold, fontSize = 16.sp)
                         }
                     } else if (isRestingState) {
                         // Rest screen quick action buttons
@@ -731,7 +733,7 @@ fun WorkoutPlayerScreen(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             TextButton(onClick = { secondsRemaining += 15 }) {
-                                Text("+15sn Ekle", color = MaterialTheme.colorScheme.primary)
+                                Text(stringResource(R.string.add_15s_rest), color = MaterialTheme.colorScheme.primary)
                             }
                             Button(
                                 onClick = {
@@ -739,7 +741,7 @@ fun WorkoutPlayerScreen(
                                 },
                                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
                             ) {
-                                Text("Molayı Atla", fontWeight = FontWeight.Bold)
+                                Text(stringResource(R.string.skip_rest), fontWeight = FontWeight.Bold)
                             }
                         }
                     } else {
@@ -763,7 +765,7 @@ fun WorkoutPlayerScreen(
                             ) {
                                 Icon(Icons.Default.Check, null)
                                 Spacer(modifier = Modifier.width(8.dp))
-                                Text("SETİ TAMAMLA", fontWeight = FontWeight.ExtraBold, fontSize = 16.sp)
+                                Text(stringResource(R.string.complete_set), fontWeight = FontWeight.ExtraBold, fontSize = 16.sp)
                             }
                         } else {
                             // Timer control buttons
@@ -784,7 +786,7 @@ fun WorkoutPlayerScreen(
                                 ) {
                                     Icon(if (isTimerRunning) Icons.Default.Pause else Icons.Default.PlayArrow, null)
                                     Spacer(modifier = Modifier.width(8.dp))
-                                    Text(if (isTimerRunning) "DURAKLAT" else "BAŞLAT", fontWeight = FontWeight.ExtraBold)
+                                    Text(if (isTimerRunning) stringResource(R.string.pause) else stringResource(R.string.resume_start), fontWeight = FontWeight.ExtraBold)
                                 }
 
                                 Button(
@@ -802,7 +804,7 @@ fun WorkoutPlayerScreen(
                                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary),
                                     shape = RoundedCornerShape(16.dp)
                                 ) {
-                                    Text("GEÇ / TAMAM", fontWeight = FontWeight.Bold)
+                                    Text(stringResource(R.string.skip_complete), fontWeight = FontWeight.Bold)
                                 }
                             }
                         }
@@ -897,13 +899,13 @@ fun MuscleGroupVisualizer(targetMuscles: List<String>) {
         // 3. Render High-fidelity Muscle Zones with translucent active fills & vibrant glows
         targetMuscles.forEach { muscle ->
             val cleanMuscle = muscle.trim()
-            val colorToken = when (cleanMuscle) {
-                "Göğüs" -> Color(0xFFEF4444) // Vibrant Neon Red
-                "Sırt" -> Color(0xFF3B82F6)  // Bright Cobalt Blue
-                "Bacak" -> Color(0xFF10B981)  // Neon Emerald Green
-                "Omuz" -> Color(0xFFF59E0B)  // Vivid Amber
-                "Kollar" -> Color(0xFFD946EF) // Laser Magenta
-                "Karın" -> Color(0xFF06B6D4)  // Cyan Tech Blue
+            val colorToken = when (cleanMuscle.lowercase()) {
+                "göğüs", "chest" -> Color(0xFFEF4444) // Vibrant Neon Red
+                "sırt", "back" -> Color(0xFF3B82F6)  // Bright Cobalt Blue
+                "bacak", "legs" -> Color(0xFF10B981)  // Neon Emerald Green
+                "omuz", "shoulders" -> Color(0xFFF59E0B)  // Vivid Amber
+                "kollar", "arms" -> Color(0xFFD946EF) // Laser Magenta
+                "karın", "abs", "core" -> Color(0xFF06B6D4)  // Cyan Tech Blue
                 else -> Color(0xFF38BDF8)
             }
 
@@ -914,8 +916,8 @@ fun MuscleGroupVisualizer(targetMuscles: List<String>) {
                 center = Offset(cx, cy)
             )
 
-            when (cleanMuscle) {
-                "Göğüs" -> {
+            when (cleanMuscle.lowercase()) {
+                "göğüs", "chest" -> {
                     // Left Chest Plate
                     drawRoundRect(
                         color = colorToken.copy(alpha = 0.35f),
@@ -945,7 +947,7 @@ fun MuscleGroupVisualizer(targetMuscles: List<String>) {
                         style = Stroke(width = 2.dp.toPx())
                     )
                 }
-                "Sırt" -> {
+                "sırt", "back" -> {
                     // Massive Upper Back Wing Traps Left
                     val leftTrap = Path().apply {
                         moveTo(cx - 4.dp.toPx(), cy - 42.dp.toPx())
@@ -966,7 +968,7 @@ fun MuscleGroupVisualizer(targetMuscles: List<String>) {
                     drawPath(rightTrap, color = colorToken.copy(alpha = 0.35f))
                     drawPath(rightTrap, color = colorToken, style = Stroke(width = 2.dp.toPx()))
                 }
-                "Bacak" -> {
+                "bacak", "legs" -> {
                     // Left Quad
                     drawRoundRect(
                         color = colorToken.copy(alpha = 0.35f),
@@ -1025,7 +1027,7 @@ fun MuscleGroupVisualizer(targetMuscles: List<String>) {
                         style = Stroke(width = 1.5.dp.toPx())
                     )
                 }
-                "Omuz" -> {
+                "omuz", "shoulders" -> {
                     // Left Deltoid Cap
                     drawCircle(
                         color = colorToken.copy(alpha = 0.4f),
@@ -1051,7 +1053,7 @@ fun MuscleGroupVisualizer(targetMuscles: List<String>) {
                         style = Stroke(width = 2.dp.toPx())
                     )
                 }
-                "Kollar" -> {
+                "kollar", "arms" -> {
                     // Left Upper Arm
                     drawLine(
                         color = colorToken,
@@ -1086,7 +1088,7 @@ fun MuscleGroupVisualizer(targetMuscles: List<String>) {
                         cap = StrokeCap.Round
                     )
                 }
-                "Karın" -> {
+                "karın", "abs", "core" -> {
                     // Tech Core Abdominal Wall
                     drawRoundRect(
                         color = colorToken.copy(alpha = 0.3f),

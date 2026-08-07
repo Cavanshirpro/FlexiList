@@ -1,15 +1,15 @@
-## 📌 Açıklama
-Bu Pull Request ne tür bir değişiklik/özellik içeriyor?
+## 📌 Description
+What kind of change does this Pull Request introduce?
 
-- [ ] 🐛 Hata Düzeltmesi (Bug Fix)
-- [ ] 🚀 Yeni Özellik (Feature)
-- [ ] 🎨 Arayüz / Tasarım İyileştirmesi (UI/UX)
-- [ ] ⚡ Performans / Optimizasyon
-- [ ] 📝 Dokümantasyon Güncellemesi
+- [ ] 🐛 Bug Fix
+- [ ] 🚀 New Feature
+- [ ] 🎨 UI/UX Improvement
+- [ ] ⚡ Performance Optimization
+- [ ] 📝 Documentation Update
 
-## 🧪 Test Edildi mi?
-- [ ] Evet, yerel ortamda `./gradlew assembleDebug` ve testler çalıştırıldı.
-- [ ] Cihaz/Emülatör üzerinde test edildi.
+## 🧪 Tested?
+- [ ] Yes, verified locally with `./gradlew assembleDebug` and unit tests.
+- [ ] Tested on a physical device / emulator.
 
-## 📸 Ekran Görüntüleri (Opsiyonel)
-Görsel veya Arayüz değişiklikleri varsa buraya ekleyin.
+## 📸 Screenshots (Optional)
+Attach screenshots if UI changes were introduced.

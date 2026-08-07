@@ -1,45 +1,45 @@
-# 🤝 Katkıda Bulunma Kılavuzu (Contributing Guidelines)
+# 🤝 Contribution Guidelines
 
-**FlexiList** açık kaynaklı bir projedir ve topluluktan gelen her türlü katkıyı memnuniyetle karşılıyoruz!
-
----
-
-## 🚀 Katkıda Bulunma Yolları
-
-1. **Hata Bildirimi (Bug Report)**: Karşılaştığınız hataları ayrıntılı bir şekilde [Issues](https://github.com/username/flexilist/issues) sayfasında bildirebilirsiniz.
-2. **Yeni Özellik Önerisi (Feature Request)**: Eklenmesini istediğiniz mantıklı özellikleri öneri olarak açabilirsiniz.
-3. **Kod Katkısı (Pull Request)**: Yeni bir özellik geliştirebilir veya mevcut hataları düzeltebilirsiniz.
+Thank you for your interest in contributing to **FlexiList**! We welcome contributions from developers of all skill levels.
 
 ---
 
-## 🛠️ Kodlama Kuralları ve Standartlar
+## 🚀 Ways to Contribute
 
-- **Dil**: Tüm yeni geliştirmeler **Kotlin** dili ve **Jetpack Compose** kullanılarak yazılmalıdır.
-- **Mimari**: Proje MVVM ve Clean Architecture prensiplerini takip eder.
-- **Biçimlendirme**: Kotlin kod biçimlendirme kurallarına (`ktlint` / Android Studio varsayılan stili) uyunuz.
-- **Derleme**: Gönderdiğiniz kodların sorunsuz derlendiğinden ve testleri geçtiğinden emin olunuz (`./gradlew testDebugUnitTest`).
+1. **Bug Reports**: Report bugs in detail on the [Issues](https://github.com/username/flexilist/issues) page.
+2. **Feature Requests**: Suggest new features or improvements.
+3. **Pull Requests**: Implement new features or fix open bugs.
 
 ---
 
-## 🔄 Pull Request (PR) Süreci
+## 🛠️ Code Standards & Guidelines
 
-1. Repoyu kendi hesabınıza çatallayın (**Fork**).
-2. Ana daldan (`main`) yeni bir geliştirme dalı açın:
+- **Language**: All new code must be written in **Kotlin** using **Jetpack Compose**.
+- **Architecture**: Follow MVVM and Clean Architecture principles.
+- **Formatting**: Adhere to standard Kotlin code formatting (`ktlint` / Android Studio default code style).
+- **Compilation**: Ensure your changes compile without warnings and pass existing tests (`./gradlew testDebugUnitTest`).
+
+---
+
+## 🔄 Pull Request (PR) Workflow
+
+1. Fork the repository.
+2. Create a new branch from `main`:
    ```bash
-   git checkout -b feature/yeni-ozellik
+   git checkout -b feature/my-new-feature
    ```
-3. Değişikliklerinizi yapın ve açıklayıcı commit mesajları yazın:
+3. Commit your changes with descriptive messages:
    ```bash
-   git commit -m "feat: Antrenman sayacına yeni ses efekti eklendi"
+   git commit -m "feat: Add sound effect to workout timer"
    ```
-4. Değişikliklerinizi kendi reponuza itin:
+4. Push your branch:
    ```bash
-   git push origin feature/yeni-ozellik
+   git push origin feature/my-new-feature
    ```
-5. Ana depoya yönelik bir **Pull Request (PR)** açın ve şablonu eksiksiz doldurun.
+5. Open a Pull Request on the main repository.
 
 ---
 
-## 📜 Lisans Bilgisi
+## 📜 License
 
-Projeye yaptığınız tüm katkıların **GNU General Public License v3.0 (GPLv3)** lisansı altında lisanslanacağını kabul etmiş olursunuz.
+By contributing, you agree that your contributions will be licensed under the **GNU General Public License v3.0 (GPLv3)**.

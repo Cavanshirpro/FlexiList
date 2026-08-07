@@ -1,0 +1,21 @@
+FlexiList is an ultra-fast, offline-first, modern, and flexible multi-purpose list management and workout assistant application built with Kotlin, Jetpack Compose, and SQLite-based Room Database.
+
+Key Features:
+
+1. Advanced Workout Assistant (Workout Planner):
+- Smart DSL Parsing for exercise descriptions (sets, reps/timers, weight, rest duration, target muscle groups).
+- Superset support with visual connection badges.
+- Distraction-Free Full-Screen Player with preparation countdown, automatic rest timer, and anatomical Muscle Group Visualizer.
+- Daily & Monthly program routines.
+- Detailed workout session reports and tonnage analytics.
+
+2. Multi-Purpose Notebook & List Management:
+- Standard, To-Do, Shopping, Habit Tracker, and Workout Planner notebooks.
+- Drag & drop reordering, priority level customization, and bulk selection mode.
+- Tag and category filtering.
+
+3. Privacy & Open Source:
+- 100% offline-first local Room database storage.
+- Zero analytics, trackers, or proprietary ad SDKs. F-Droid compliant.
+- SSL-encrypted zero-config cloud sync with unique sync keys.
+- Multi-language support (English, Turkish, Russian, German, Spanish, French).

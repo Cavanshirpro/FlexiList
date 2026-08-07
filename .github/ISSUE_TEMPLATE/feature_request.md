@@ -1,20 +1,20 @@
 ---
-name: Özellik Önerisi (Feature Request)
-about: FlexiList için yeni bir fikir veya özellik önerin
+name: Feature Request
+about: Suggest an idea or feature for FlexiList
 title: '[FEAT] '
 labels: enhancement
 assignees: ''
 
 ---
 
-**Öneri Özeti**
-Eklenmesini istediğiniz özellik nedir?
+**Feature Description**
+A clear description of the feature you are proposing.
 
-**Kullanım Senaryosu / Probleminiz**
-Bu özellik ne tür bir problemi çözüyor veya neye yardımcı olacak?
+**Problem / Use Case**
+What problem does this feature solve or what improvement does it provide?
 
-**Çözüm Önerisi**
-Nasıl bir arayüz veya davranış hayal ediyorsunuz?
+**Proposed Solution**
+Describe how you imagine this feature working or looking.
 
-**Alternatifler**
-Düşündüğünüz alternatif çözümler var mı?
+**Alternatives Considered**
+Describe any alternative solutions or features you've considered.

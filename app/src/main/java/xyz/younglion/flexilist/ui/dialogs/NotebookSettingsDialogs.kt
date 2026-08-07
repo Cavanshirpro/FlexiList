@@ -23,11 +23,13 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import xyz.younglion.flexilist.R
 import xyz.younglion.flexilist.data.model.NotebookEntity
 import xyz.younglion.flexilist.ui.FlexiViewModel
 import xyz.younglion.flexilist.ui.theme.NotebookColors
@@ -107,7 +109,7 @@ fun WorkoutPlannerSettingsDialog(
                                     overflow = TextOverflow.Ellipsis
                                 )
                                 Text(
-                                    text = "⚡ WORKOUT PLANNER ASİSTANI",
+                                    text = stringResource(R.string.workout_planner_assistant),
                                     fontSize = 10.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = MaterialTheme.colorScheme.primary,
@@ -117,7 +119,7 @@ fun WorkoutPlannerSettingsDialog(
                         }
 
                         IconButton(onClick = onDismiss) {
-                            Icon(Icons.Default.Close, contentDescription = "Kapat", tint = MaterialTheme.colorScheme.onSurface)
+                            Icon(Icons.Default.Close, contentDescription = stringResource(R.string.close), tint = MaterialTheme.colorScheme.onSurface)
                         }
                     }
                 }
@@ -141,7 +143,7 @@ fun WorkoutPlannerSettingsDialog(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = "ANTRENMAN PROGRAMI & SIKLIK",
+                                text = stringResource(R.string.workout_schedule_frequency),
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.primary,
@@ -155,9 +157,9 @@ fun WorkoutPlannerSettingsDialog(
                             ) {
                                 Text(
                                     text = when (workoutConfig.frequency) {
-                                        "Daily" -> "📅 GÜNLÜK DÖNGÜ"
-                                        "Monthly" -> "📆 AYLIK PROGRAM"
-                                        else -> "🗓️ HAFTALIK PROGRAM"
+                                        "Daily" -> stringResource(R.string.cycle_daily)
+                                        "Monthly" -> stringResource(R.string.cycle_monthly)
+                                        else -> stringResource(R.string.cycle_weekly)
                                     },
                                     fontSize = 10.sp,
                                     fontWeight = FontWeight.Bold,
@@ -172,7 +174,7 @@ fun WorkoutPlannerSettingsDialog(
                         when (workoutConfig.frequency) {
                             "Daily" -> {
                                 Text(
-                                    text = "🔄 Periyot: ${workoutConfig.workoutDurationDays} Gün Antrenman / ${workoutConfig.restDurationDays} Gün Dinlenme",
+                                    text = stringResource(R.string.cycle_period_desc, workoutConfig.workoutDurationDays, workoutConfig.restDurationDays),
                                     fontSize = 12.sp,
                                     fontWeight = FontWeight.Medium,
                                     color = MaterialTheme.colorScheme.onSurface
@@ -180,7 +182,7 @@ fun WorkoutPlannerSettingsDialog(
                             }
                             "Monthly" -> {
                                 Text(
-                                    text = "📆 Seçili Ay Günleri: ${workoutConfig.monthlyDays.sorted().joinToString(", ")}",
+                                    text = stringResource(R.string.selected_month_days, workoutConfig.monthlyDays.sorted().joinToString(", ")),
                                     fontSize = 12.sp,
                                     fontWeight = FontWeight.Medium,
                                     color = MaterialTheme.colorScheme.onSurface
@@ -190,7 +192,7 @@ fun WorkoutPlannerSettingsDialog(
                                 val daysNameMap = mapOf(1 to "Pzt", 2 to "Sal", 3 to "Çar", 4 to "Per", 5 to "Cum", 6 to "Cmt", 7 to "Paz")
                                 val activeDaysStr = workoutConfig.weeklyDays.sorted().mapNotNull { daysNameMap[it] }.joinToString(", ")
                                 Text(
-                                    text = "🗓️ Aktif Günler: ${activeDaysStr.ifEmpty { "Seçilmedi" }}",
+                                    text = stringResource(R.string.active_days, activeDaysStr.ifEmpty { stringResource(R.string.not_selected) }),
                                     fontSize = 12.sp,
                                     fontWeight = FontWeight.Medium,
                                     color = MaterialTheme.colorScheme.onSurface
@@ -207,7 +209,7 @@ fun WorkoutPlannerSettingsDialog(
                             ) {
                                 Icon(Icons.Default.NotificationsActive, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(14.dp))
                                 Text(
-                                    text = "Hatırlatıcı Saati: $formattedTime",
+                                    text = stringResource(R.string.reminder_time_label, formattedTime),
                                     fontSize = 11.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = MaterialTheme.colorScheme.primary
@@ -218,7 +220,7 @@ fun WorkoutPlannerSettingsDialog(
                 }
 
                 Text(
-                    text = "ANTRENMAN İŞLEMLERİ",
+                    text = stringResource(R.string.workout_operations),
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -237,7 +239,7 @@ fun WorkoutPlannerSettingsDialog(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Text("Tamamlanan Egzersizleri Göster", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+                            Text(stringResource(R.string.show_completed_exercises), fontSize = 12.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
                             Switch(
                                 checked = notebook.showCompleted,
                                 onCheckedChange = { viewModel.updateNotebook(notebook.copy(showCompleted = it)) }
@@ -248,7 +250,7 @@ fun WorkoutPlannerSettingsDialog(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Text("Tamamlananları En Alta Taşı", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+                            Text(stringResource(R.string.move_completed_to_bottom), fontSize = 12.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
                             Switch(
                                 checked = notebook.moveCompletedToBottom,
                                 onCheckedChange = { viewModel.updateNotebook(notebook.copy(moveCompletedToBottom = it)) }
@@ -271,7 +273,7 @@ fun WorkoutPlannerSettingsDialog(
                         Icon(Icons.Default.Alarm, null, modifier = Modifier.size(18.dp))
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = if (reminderTime != null) "Antrenman Hatırlatıcısını Düzenle" else "Antrenman Saati Hatırlatıcısı Kur",
+                            text = if (reminderTime != null) stringResource(R.string.edit_workout_reminder) else stringResource(R.string.set_workout_reminder),
                             fontWeight = FontWeight.Bold,
                             fontSize = 12.sp
                         )
@@ -288,7 +290,7 @@ fun WorkoutPlannerSettingsDialog(
                     ) {
                         Icon(Icons.Default.EditCalendar, null, modifier = Modifier.size(18.dp))
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Program & Günleri Düzenle", fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                        Text(stringResource(R.string.edit_program_days), fontWeight = FontWeight.Bold, fontSize = 12.sp)
                     }
 
                     // Workout Statistics / Analysis Button
@@ -302,7 +304,7 @@ fun WorkoutPlannerSettingsDialog(
                     ) {
                         Icon(Icons.Default.PieChart, null, modifier = Modifier.size(18.dp))
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Egzersiz İstatistikleri & Raporlar", fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                        Text(stringResource(R.string.exercise_stats_reports), fontWeight = FontWeight.Bold, fontSize = 12.sp)
                     }
 
                     // Reset Workout Cycle/Days Button
@@ -311,7 +313,7 @@ fun WorkoutPlannerSettingsDialog(
                             val newConfig = workoutConfig.copy(startDate = System.currentTimeMillis())
                             val newDesc = "[WORKOUT_CFG]frequency=${newConfig.frequency}|workoutDays=${newConfig.workoutDurationDays}|restDays=${newConfig.restDurationDays}|startDate=${newConfig.startDate}|weekly=${newConfig.weeklyDays.joinToString(",")}|monthly=${newConfig.monthlyDays.joinToString(",")}"
                             viewModel.updateNotebook(notebook.copy(description = newDesc, updatedAt = System.currentTimeMillis()))
-                            Toast.makeText(context, "Antrenman başlama tarihi bugüne sıfırlandı!", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, context.getString(R.string.workout_start_date_reset), Toast.LENGTH_SHORT).show()
                             onDismiss()
                         },
                         modifier = Modifier.fillMaxWidth(),
@@ -319,7 +321,7 @@ fun WorkoutPlannerSettingsDialog(
                     ) {
                         Icon(Icons.Default.RestartAlt, null, modifier = Modifier.size(18.dp))
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Döngüyü Bugünden Yeniden Başlat", fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                        Text(stringResource(R.string.restart_cycle_today), fontWeight = FontWeight.Bold, fontSize = 12.sp)
                     }
 
                     // Quick Toggle Pin / Favorite
@@ -332,7 +334,7 @@ fun WorkoutPlannerSettingsDialog(
                             onClick = {
                                 viewModel.updateNotebook(notebook.copy(pinned = !notebook.pinned))
                             },
-                            label = { Text(if (notebook.pinned) "İğnelendi 📌" else "İğnele", fontSize = 11.sp) },
+                            label = { Text(if (notebook.pinned) stringResource(R.string.pinned) else stringResource(R.string.pin), fontSize = 11.sp) },
                             modifier = Modifier.weight(1f)
                         )
                         FilterChip(
@@ -340,7 +342,7 @@ fun WorkoutPlannerSettingsDialog(
                             onClick = {
                                 viewModel.updateNotebook(notebook.copy(favorite = !notebook.favorite))
                             },
-                            label = { Text(if (notebook.favorite) "Favori ⭐" else "Favori Yap", fontSize = 11.sp) },
+                            label = { Text(if (notebook.favorite) stringResource(R.string.favorite_star) else stringResource(R.string.make_favorite), fontSize = 11.sp) },
                             modifier = Modifier.weight(1f)
                         )
                     }
@@ -357,7 +359,7 @@ fun WorkoutPlannerSettingsDialog(
                     ) {
                         Icon(Icons.Default.DeleteForever, null, modifier = Modifier.size(18.dp))
                         Spacer(modifier = Modifier.width(6.dp))
-                        Text("Antrenman Programını Sil", fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.delete_workout_program), fontWeight = FontWeight.Bold)
                     }
                 } else {
                     Card(
@@ -370,7 +372,7 @@ fun WorkoutPlannerSettingsDialog(
                             verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             Text(
-                                text = "Bu antrenman programını ve içindeki tüm egzersizleri silmek istediğinize emin misiniz?",
+                                text = stringResource(R.string.confirm_delete_workout_program),
                                 fontSize = 11.sp,
                                 color = MaterialTheme.colorScheme.onErrorContainer,
                                 fontWeight = FontWeight.Bold
@@ -381,17 +383,17 @@ fun WorkoutPlannerSettingsDialog(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 TextButton(onClick = { showDeleteConfirm = false }) {
-                                    Text("İptal", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    Text(stringResource(R.string.cancel), color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 }
                                 Button(
                                     onClick = {
                                         viewModel.deleteNotebook(notebook)
-                                        Toast.makeText(context, "Antrenman programı silindi", Toast.LENGTH_SHORT).show()
+                                        Toast.makeText(context, context.getString(R.string.workout_schedule_deleted), Toast.LENGTH_SHORT).show()
                                         onDismiss()
                                     },
                                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
                                 ) {
-                                    Text("Evet, Sil", fontWeight = FontWeight.Bold)
+                                    Text(stringResource(R.string.yes_delete), fontWeight = FontWeight.Bold)
                                 }
                             }
                         }
@@ -492,7 +494,7 @@ fun StandardListSettingsDialog(
                                         )
                                     }
                                     Text(
-                                        text = "• Olş: $createdDateStr",
+                                        text = "• ${stringResource(R.string.created_date, createdDateStr)}",
                                         fontSize = 11.sp,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
@@ -501,7 +503,7 @@ fun StandardListSettingsDialog(
                         }
 
                         IconButton(onClick = onDismiss) {
-                            Icon(Icons.Default.Close, contentDescription = "Kapat")
+                            Icon(Icons.Default.Close, contentDescription = stringResource(R.string.close))
                         }
                     }
                 }
@@ -534,7 +536,7 @@ fun StandardListSettingsDialog(
                         ) {
                             Icon(Icons.Filled.NotificationsActive, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                             Text(
-                                text = "Günlük Hatırlatıcı Saati: $formattedTime",
+                                text = stringResource(R.string.reminder_time_label, formattedTime),
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onSurface
@@ -544,7 +546,7 @@ fun StandardListSettingsDialog(
                 }
 
                 Text(
-                    text = "DEFTER SEÇENEKLERİ",
+                    text = stringResource(R.string.notebook_options),
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -564,8 +566,8 @@ fun StandardListSettingsDialog(
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Column(modifier = Modifier.weight(1f)) {
-                                Text("Tamamlananları Göster", fontWeight = FontWeight.Bold, fontSize = 13.sp)
-                                Text("Tamamlanmış ögeleri listede görünür tut.", style = MaterialTheme.typography.bodySmall)
+                                Text(stringResource(R.string.show_completed_items), fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                                Text(stringResource(R.string.show_completed_items_sub), style = MaterialTheme.typography.bodySmall)
                             }
                             Switch(
                                 checked = notebook.showCompleted,
@@ -578,8 +580,8 @@ fun StandardListSettingsDialog(
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Column(modifier = Modifier.weight(1f)) {
-                                Text("Tamamlananları Alta Taşı", fontWeight = FontWeight.Bold, fontSize = 13.sp)
-                                Text("Tamamlanmış ögeleri en alta grupla.", style = MaterialTheme.typography.bodySmall)
+                                Text(stringResource(R.string.move_completed_to_bottom), fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                                Text(stringResource(R.string.move_completed_bottom_sub), style = MaterialTheme.typography.bodySmall)
                             }
                             Switch(
                                 checked = notebook.moveCompletedToBottom,
@@ -592,8 +594,8 @@ fun StandardListSettingsDialog(
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Column(modifier = Modifier.weight(1f)) {
-                                Text("Otomatik Sıralama", fontWeight = FontWeight.Bold, fontSize = 13.sp)
-                                Text("Sıralama kurallarını anlık olarak uygula.", style = MaterialTheme.typography.bodySmall)
+                                Text(stringResource(R.string.auto_sort), fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                                Text(stringResource(R.string.auto_sort_sub), style = MaterialTheme.typography.bodySmall)
                             }
                             Switch(
                                 checked = notebook.autoSort,
@@ -616,7 +618,7 @@ fun StandardListSettingsDialog(
                     ) {
                         Icon(Icons.Default.Notifications, null, modifier = Modifier.size(18.dp))
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text(if (reminderTime != null) "Hatırlatıcı Saatini Değiştir" else "Hatırlatıcı Kur", fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                        Text(if (reminderTime != null) stringResource(R.string.change_reminder_time) else stringResource(R.string.set_reminder), fontWeight = FontWeight.Bold, fontSize = 12.sp)
                     }
 
                     // Edit Details
@@ -630,7 +632,7 @@ fun StandardListSettingsDialog(
                     ) {
                         Icon(Icons.Default.Edit, null, modifier = Modifier.size(18.dp))
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Defter İsmi & Kapağını Düzenle", fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                        Text(stringResource(R.string.edit_name_cover), fontWeight = FontWeight.Bold, fontSize = 12.sp)
                     }
 
                     // Priority Customization
@@ -644,7 +646,7 @@ fun StandardListSettingsDialog(
                     ) {
                         Icon(Icons.Default.Tune, null, modifier = Modifier.size(18.dp))
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Öncelik Derecelerini Özelleştir", fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                        Text(stringResource(R.string.customize_priorities_btn), fontWeight = FontWeight.Bold, fontSize = 12.sp)
                     }
 
                     // Statistics & Analytics
@@ -658,7 +660,7 @@ fun StandardListSettingsDialog(
                     ) {
                         Icon(Icons.Default.PieChart, null, modifier = Modifier.size(18.dp))
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Defter Analiz & İstatistikleri", fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                        Text(stringResource(R.string.notebook_stats), fontWeight = FontWeight.Bold, fontSize = 12.sp)
                     }
 
                     // Pin & Favorite Toggle
@@ -671,7 +673,7 @@ fun StandardListSettingsDialog(
                             onClick = {
                                 viewModel.updateNotebook(notebook.copy(pinned = !notebook.pinned))
                             },
-                            label = { Text(if (notebook.pinned) "İğnelendi 📌" else "İğnele", fontSize = 11.sp) },
+                            label = { Text(if (notebook.pinned) stringResource(R.string.pinned) else stringResource(R.string.pin), fontSize = 11.sp) },
                             modifier = Modifier.weight(1f)
                         )
                         FilterChip(
@@ -679,7 +681,7 @@ fun StandardListSettingsDialog(
                             onClick = {
                                 viewModel.updateNotebook(notebook.copy(favorite = !notebook.favorite))
                             },
-                            label = { Text(if (notebook.favorite) "Favori ⭐" else "Favori Yap", fontSize = 11.sp) },
+                            label = { Text(if (notebook.favorite) stringResource(R.string.favorite_star) else stringResource(R.string.make_favorite), fontSize = 11.sp) },
                             modifier = Modifier.weight(1f)
                         )
                     }
@@ -696,7 +698,7 @@ fun StandardListSettingsDialog(
                     ) {
                         Icon(Icons.Default.Delete, null, modifier = Modifier.size(18.dp))
                         Spacer(modifier = Modifier.width(6.dp))
-                        Text("Defteri ve Tüm Öğelerini Sil", fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.delete_notebook_all), fontWeight = FontWeight.Bold)
                     }
                 } else {
                     Card(
@@ -709,7 +711,7 @@ fun StandardListSettingsDialog(
                             verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             Text(
-                                text = "Bu defteri ve içindeki tüm yapılacakları silmek istediğinize emin misiniz?",
+                                text = stringResource(R.string.confirm_delete_notebook),
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onErrorContainer
@@ -720,17 +722,17 @@ fun StandardListSettingsDialog(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 TextButton(onClick = { showDeleteConfirm = false }) {
-                                    Text("İptal")
+                                    Text(stringResource(R.string.cancel))
                                 }
                                  Button(
                                     onClick = {
                                         viewModel.deleteNotebook(notebook)
-                                        Toast.makeText(context, "Defter silindi", Toast.LENGTH_SHORT).show()
+                                        Toast.makeText(context, context.getString(R.string.notebook_deleted), Toast.LENGTH_SHORT).show()
                                         onDismiss()
                                     },
                                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
                                 ) {
-                                    Text("Evet, Sil", fontWeight = FontWeight.Bold)
+                                    Text(stringResource(R.string.yes_delete), fontWeight = FontWeight.Bold)
                                 }
                             }
                         }
@@ -782,9 +784,9 @@ fun PriorityCustomizationDialog(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text("Öncelik Seviyelerini Ayarla", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.priority_levels_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                     IconButton(onClick = onDismiss) {
-                        Icon(Icons.Default.Close, contentDescription = "Kapat")
+                        Icon(Icons.Default.Close, contentDescription = stringResource(R.string.close))
                     }
                 }
 
@@ -817,8 +819,11 @@ fun PriorityCustomizationDialog(
                                             .clip(CircleShape)
                                             .background(chipColor)
                                     )
+                                    val optionLocalizedName = option.getLocalizedName()
+                                    val levelFormat = stringResource(R.string.priority_level_format, option.level)
+                                    val unrankedText = stringResource(R.string.priority_unranked)
                                     Text(
-                                        text = if (option.level == 0) "Derecesiz (${option.name})" else "${option.name} (Derece ${option.level})",
+                                        text = if (option.level == 0) "$unrankedText ($optionLocalizedName)" else "$optionLocalizedName ($levelFormat)",
                                         fontWeight = FontWeight.Bold,
                                         fontSize = 13.sp
                                     )
@@ -837,7 +842,7 @@ fun PriorityCustomizationDialog(
                                         },
                                         modifier = Modifier.size(28.dp)
                                     ) {
-                                        Icon(if (isEditing) Icons.Default.Check else Icons.Default.Edit, contentDescription = "Düzenle", modifier = Modifier.size(16.dp))
+                                        Icon(if (isEditing) Icons.Default.Check else Icons.Default.Edit, contentDescription = stringResource(R.string.edit), modifier = Modifier.size(16.dp))
                                     }
                                 }
                             }
@@ -846,7 +851,7 @@ fun PriorityCustomizationDialog(
                                 OutlinedTextField(
                                     value = editName,
                                     onValueChange = { editName = it },
-                                    label = { Text("Öncelik Adı") },
+                                    label = { Text(stringResource(R.string.degree_name)) },
                                     singleLine = true,
                                     modifier = Modifier.fillMaxWidth()
                                 )

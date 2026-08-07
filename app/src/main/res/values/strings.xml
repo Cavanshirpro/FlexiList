@@ -1,3 +1,387 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">FlexiList</string>
+
+    <!-- Navigation & Common -->
+    <string name="ok">OK</string>
+    <string name="cancel">Cancel</string>
+    <string name="close">Close</string>
+    <string name="save">Save</string>
+    <string name="delete">Delete</string>
+    <string name="edit">Edit</string>
+    <string name="add">Add</string>
+    <string name="search">Search…</string>
+    <string name="settings">Settings</string>
+    <string name="theme_and_language">Theme &amp; Language</string>
+    <string name="appearance_mode">Appearance Mode</string>
+    <string name="dark_mode">Dark Mode</string>
+    <string name="light_mode">Light Mode</string>
+    <string name="accent_color">Accent Color</string>
+    <string name="language">Language</string>
+    <string name="back">Back</string>
+    <string name="clear_selections">Clear Selections</string>
+    <string name="reset">Reset</string>
+
+    <string name="lang_en">English 🇬🇧</string>
+    <string name="lang_tr">Türkçe 🇹🇷</string>
+    <string name="lang_ru">Русский 🇷🇺</string>
+    <string name="lang_de">Deutsch 🇩🇪</string>
+    <string name="lang_es">Español 🇪🇸</string>
+    <string name="lang_fr">Français 🇫🇷</string>
+
+    <!-- Import/Export & Menu -->
+    <string name="import_backup_json">Import Backup (JSON)</string>
+    <string name="export_backup_json">Export Backup (JSON)</string>
+    <string name="cloud_backup_sync">Cloud Backup &amp; Sync</string>
+    <string name="export_csv">Export Table (CSV)</string>
+
+    <!-- Notebooks Screen -->
+    <string name="notebooks_title">My Notebooks</string>
+    <string name="create_notebook">Create Notebook</string>
+    <string name="edit_notebook">Edit Notebook</string>
+    <string name="notebook_name">Notebook Name</string>
+    <string name="notebook_description">Description (Optional)</string>
+    <string name="notebook_type">Notebook Type</string>
+    <string name="type_standard">Standard</string>
+    <string name="type_todo">To-Do List</string>
+    <string name="type_shopping">Shopping List</string>
+    <string name="type_habit">Habit Tracker</string>
+    <string name="type_workout">Workout Planner</string>
+    <string name="no_notebooks">No notebooks yet. Tap + to create one!</string>
+    <string name="search_notebooks_placeholder">Search notebooks…</string>
+    <string name="db_status">DATABASE</string>
+    <string name="online">ONLINE</string>
+    <string name="offline">OFFLINE (LOCAL)</string>
+    <string name="list_notebooks">NOTEBOOKS</string>
+    <string name="active">ACTIVE</string>
+    <string name="speed">SPEED</string>
+    <string name="active_notebooks_header">ACTIVE NOTEBOOKS</string>
+    <string name="total_suffix">TOTAL</string>
+    <string name="no_notebooks_found">No notebooks found</string>
+    <string name="no_notebooks_yet">No notebooks yet</string>
+    <string name="no_notebooks_found_sub">Please change your search query.</string>
+    <string name="no_notebooks_yet_sub">"Tap the '+' button below to create your first multi-purpose notebook!"</string>
+
+    <!-- Items Screen & Placeholders -->
+    <string name="search_items_placeholder">Search current list…</string>
+    <string name="list_items">List Items</string>
+    <string name="active_items_count">%1$d Active, %2$d Completed</string>
+    <string name="completion_rate">COMPLETION RATE</string>
+    <string name="completed_count">%1$d Completed</string>
+    <string name="active_count">%1$d Active</string>
+    <string name="total_items_count">Total %1$d Items</string>
+    <string name="no_items_title">No items to show here</string>
+    <string name="no_items_sub">"Reset your search criteria or tap '+' button to create a new list item."</string>
+    <string name="no_workout_plan_title">No Plan For %1$s</string>
+    <string name="no_workout_plan_sub">No exercises scheduled for this day. You can assign this day in exercise details or filter another day.</string>
+
+    <!-- Filter & Sort Chips -->
+    <string name="starred_filter">★ Starred</string>
+    <string name="active_filter">Active</string>
+    <string name="completed_filter">Completed</string>
+    <string name="sort_by">⇅ Sort: %1$s</string>
+    <string name="sort_manual">Manual</string>
+    <string name="sort_az">A-Z</string>
+    <string name="sort_za">Z-A</string>
+    <string name="sort_priority">Priority</string>
+    <string name="sort_date">Date</string>
+    <string name="sort_starred">Starred</string>
+
+    <!-- Bulk Actions -->
+    <string name="complete">Complete</string>
+    <string name="make_active">Activate</string>
+    <string name="move">Move</string>
+
+    <!-- Workout Planner Tab & Cards -->
+    <string name="exercises">Exercises</string>
+    <string name="water_tracker">Water Tracker</string>
+    <string name="analytics_report">Analytics &amp; Report</string>
+    <string name="daily_workout_tracking">Daily Workout Tracking</string>
+    <string name="day_counter">Day %1$d</string>
+    <string name="completed_days">Completed: %1$d Days</string>
+    <string name="success_rate">%1$d%% Success</string>
+    <string name="today">Today</string>
+    <string name="day_suffix">Day %1$d</string>
+    <string name="not_today">Not Today</string>
+    <string name="resume">Resume</string>
+    <string name="daily_workout_program">Daily Workout Program</string>
+    <string name="monthly_workout_program">Day %1$s Program</string>
+    <string name="weekly_workout_program">%1$s Workout Program</string>
+    <string name="workout_done_today">Today\'s workout completed! ✓</string>
+    <string name="not_selected_day_monthly">Selected day is not today (Day %1$s)</string>
+    <string name="not_selected_day_weekly">Selected day is not today (%1$s)</string>
+    <string name="workout_in_progress">Workout in progress (Step %1$d)</string>
+    <string name="exercises_ready">%1$d exercises ready</string>
+
+    <!-- Priority Customization -->
+    <string name="customize_priorities">Customize Priorities</string>
+    <string name="priority_level">Priority Level</string>
+    <string name="priority_title">Priority Title</string>
+
+    <!-- Workout Player -->
+    <string name="start_workout">Start Workout</string>
+    <string name="complete_set">Complete Set</string>
+    <string name="rest">Rest</string>
+    <string name="add_15s">+15s</string>
+    <string name="skip_rest">Skip Rest</string>
+    <string name="do_later">Do Later</string>
+    <string name="workout_completed">Workout Completed! 🎉</string>
+    <string name="completed_status">Completed ✓</string>
+    <string name="active_muscles">Target Muscles</string>
+    <string name="next_up">Next Up</string>
+    <string name="workout_summary">Workout Summary</string>
+
+    <!-- Cloud Sync & Backup -->
+    <string name="cloud_backup">Cloud Backup</string>
+    <string name="backup_data">Backup Data</string>
+    <string name="restore_data">Restore Data</string>
+    <string name="sync_code">Sync Code</string>
+    <string name="sync_code_placeholder">Auto-generated if left empty</string>
+    <string name="upload_success">Backup uploaded successfully!</string>
+    <string name="restore_success">Data restored successfully!</string>
+
+    <!-- Reminder & Settings -->
+    <string name="reminders">Reminders</string>
+    <string name="reminder_time">Reminder Time</string>
+    <string name="daily_reminder">Daily Reminder</string>
+    <string name="set_time">Set Time</string>
+    <string name="notebook_settings">Notebook Settings</string>
+
+    <!-- Analytics & Stats -->
+    <string name="statistics">Statistics</string>
+    <string name="stats_analytics">Statistics &amp; Analytics</string>
+    <string name="total_items">Total Items</string>
+    <string name="completed_items">Completed</string>
+    <string name="pending_items">Pending</string>
+
+    <!-- Workout Player Screen Strings -->
+    <string name="no_exercises_in_workout">No exercises in workout!</string>
+    <string name="add_exercises_first">Please add exercises and set configurations to this notebook first.</string>
+    <string name="workout_saved">Workout Saved!</string>
+    <string name="exercise_postponed">%1$s postponed to the end of workout!</string>
+    <string name="no_other_exercise_to_postpone">No other exercise to postpone!</string>
+    <string name="next_exercise_header">NEXT EXERCISE</string>
+    <string name="sets_count">SETS</string>
+    <string name="target_reps">TARGET REPS</string>
+    <string name="target_time">TARGET TIME</string>
+    <string name="weight">WEIGHT</string>
+    <string name="get_ready">GET READY!</string>
+    <string name="next_label">Next: %1$s</string>
+    <string name="set_progress">Set %1$d / %2$d</string>
+    <string name="rest_time">REST TIME</string>
+    <string name="hybrid_superset">HYBRID SUPERSET (Group %1$s)</string>
+    <string name="start_exercise_btn">START EXERCISE (READY!)</string>
+    <string name="do_this_later">Do This Later</string>
+    <string name="skip_countdown">SKIP COUNTDOWN</string>
+    <string name="add_15s_rest">+15s Rest</string>
+    <string name="pause">PAUSE</string>
+    <string name="resume_start">START</string>
+    <string name="skip_complete">SKIP / DONE</string>
+    <string name="step_counter">Step %1$d / %2$d</string>
+    <string name="finish_workout">Finish</string>
+
+    <!-- Toasts & Messages -->
+    <string name="title_required">Please enter a title!</string>
+    <string name="saved_successfully">Saved successfully!</string>
+    <string name="items_moved_successfully">Items moved successfully!</string>
+    <string name="notebook_updated">Notebook updated!</string>
+    <string name="priorities_updated">Priority levels updated!</string>
+    <string name="reminder_set_toast">Reminder set for %1$s!</string>
+    <string name="reminder_cancelled_toast">Reminder cancelled.</string>
+    <string name="workout_start_date_reset">Workout start date reset to today!</string>
+    <string name="workout_schedule_deleted">Workout schedule deleted</string>
+    <string name="notebook_deleted">Notebook deleted</string>
+    <string name="backup_exported_success">Backup exported successfully!</string>
+    <string name="export_failed">Export failed.</string>
+    <string name="backup_imported_success">Backup imported successfully!</string>
+    <string name="import_failed">Import failed. Check the file.</string>
+    <string name="csv_exported_success">CSV exported successfully!</string>
+    <string name="csv_export_failed">CSV export failed.</string>
+    <string name="sync_code_copied">Sync code copied!</string>
+    <string name="data_synced_success">Data synced successfully!</string>
+    <string name="cloud_backup_saved">Cloud backup saved successfully!</string>
+    <string name="notebook_imported_toast">✅ \'%1$s\' notebook and %2$d items imported!</string>
+    <string name="notebook_import_failed_toast">⚠️ Could not import notebook: %1$s</string>
+
+    <!-- Notebook Settings Dialog Strings -->
+    <string name="workout_planner_assistant">⚡ WORKOUT PLANNER ASSISTANT</string>
+    <string name="workout_schedule_frequency">WORKOUT PROGRAM &amp; FREQUENCY</string>
+    <string name="cycle_daily">📅 DAILY CYCLE</string>
+    <string name="cycle_monthly">📆 MONTHLY PROGRAM</string>
+    <string name="cycle_weekly">🗓️ WEEKLY PROGRAM</string>
+    <string name="cycle_period_desc">🔄 Period: %1$d Days Workout / %2$d Days Rest</string>
+    <string name="selected_month_days">📆 Selected Days: %1$s</string>
+    <string name="active_days">🗓️ Active Days: %1$s</string>
+    <string name="not_selected">Not Selected</string>
+    <string name="reminder_time_label">Reminder Time: %1$s</string>
+    <string name="workout_operations">WORKOUT OPERATIONS</string>
+    <string name="show_completed_exercises">Show Completed Exercises</string>
+    <string name="move_completed_to_bottom">Move Completed to Bottom</string>
+    <string name="edit_workout_reminder">Edit Workout Reminder</string>
+    <string name="set_workout_reminder">Set Workout Reminder</string>
+    <string name="edit_program_days">Edit Program &amp; Days</string>
+    <string name="exercise_stats_reports">Exercise Stats &amp; Reports</string>
+    <string name="restart_cycle_today">Restart Cycle From Today</string>
+    <string name="pinned">Pinned 📌</string>
+    <string name="pin">Pin</string>
+    <string name="favorite_star">Favorite ⭐</string>
+    <string name="make_favorite">Make Favorite</string>
+    <string name="delete_workout_program">Delete Workout Program</string>
+    <string name="confirm_delete_workout_program">Are you sure you want to delete this workout program and all its exercises?</string>
+    <string name="yes_delete">Yes, Delete</string>
+    <string name="notebook_options">NOTEBOOK OPTIONS</string>
+    <string name="show_completed_items">Show Completed Items</string>
+    <string name="show_completed_items_sub">Keep completed items visible in the list.</string>
+    <string name="move_completed_bottom_sub">Group completed items at the bottom.</string>
+    <string name="auto_sort">Auto Sort</string>
+    <string name="auto_sort_sub">Apply sorting rules instantaneously.</string>
+    <string name="change_reminder_time">Change Reminder Time</string>
+    <string name="set_reminder">Set Reminder</string>
+    <string name="edit_name_cover">Edit Notebook Name &amp; Cover</string>
+    <string name="customize_priorities_btn">Customize Priority Levels</string>
+    <string name="notebook_stats">Notebook Stats &amp; Analytics</string>
+    <string name="delete_notebook_all">Delete Notebook &amp; All Items</string>
+    <string name="confirm_delete_notebook">Are you sure you want to delete this notebook and all its items?</string>
+    <string name="created_date">Created: %1$s</string>
+
+    <!-- Item Detail & Add Edit Strings -->
+    <string name="edit_item_title">Edit Task</string>
+    <string name="new_item_detail_title">New Task Detail</string>
+    <string name="discard">Discard</string>
+    <string name="star">Star</string>
+    <string name="exercise_name_placeholder">Exercise Name (e.g. Bench Press) *</string>
+    <string name="exercise_details">Exercise Details</string>
+    <string name="workout_type">Workout Type</string>
+    <string name="type_reps">Reps</string>
+    <string name="type_timer">Timer (Seconds)</string>
+    <string name="sets_count_label">Number of Sets</string>
+    <string name="target_reps_label">Target Reps</string>
+    <string name="duration_seconds_label">Duration (Seconds)</string>
+    <string name="weight_kg_label">Weight (kg)</string>
+    <string name="rest_seconds_label">Rest (Seconds)</string>
+    <string name="hybrid_group_label">Hybrid Group ID (for superset e.g. A, B. Empty if normal)</string>
+    <string name="target_muscle_groups">Target Muscle Groups</string>
+    <string name="workout_days_label">Workout Days (visible in filters if selected)</string>
+    <string name="item_title_placeholder">Task/Item Title *</string>
+    <string name="item_description_placeholder">Add detailed notes or description…</string>
+    <string name="category">Category</string>
+    <string name="tags_hint">Tags (comma separated)</string>
+    <string name="timing_and_reminder">Timing &amp; Reminder</string>
+    <string name="due_date">Due Date</string>
+    <string name="reset_times">Reset Times</string>
+    <string name="recurring_task_active">Recurring Task Active</string>
+    <string name="recurrence_daily">Daily</string>
+    <string name="recurrence_weekdays">Weekdays</string>
+    <string name="recurrence_weekly">Weekly</string>
+    <string name="recurrence_monthly">Monthly</string>
+    <string name="subtasks_header">Subtasks (%1$d/%2$d)</string>
+    <string name="subtask_placeholder">Subtask title…</string>
+    <string name="custom_dynamic_fields">Custom Dynamic Fields</string>
+    <string name="field_name_placeholder">Field Name…</string>
+
+    <!-- Additional Items & Notebooks Screen Strings -->
+    <string name="daily_goal">DAILY GOAL</string>
+    <string name="quick_add_water">Add Water</string>
+    <string name="add_ml">+%1$d ml</string>
+    <string name="workout_analytics_chart_title">Workout Analytics &amp; Growth Chart</string>
+    <string name="workout_history_reports">Workout History Reports</string>
+    <string name="no_saved_workout_reports">No saved workout reports found.</string>
+    <string name="quick_add_item_title">Quick Add Task</string>
+    <string name="task_title_required">Task Title *</string>
+    <string name="priority_level_label">Priority Level</string>
+    <string name="add_detailed">Add Detailed</string>
+    <string name="move_items_title">Move Items</string>
+    <string name="select_target_notebook">Select the target notebook to move selected items:</string>
+    <string name="workout_frequency_setting">Workout Frequency Setting</string>
+    <string name="workout_day">Workout Day</string>
+    <string name="rest_day">Rest Day</string>
+    <string name="select_days_multiple">Select Days (Multiple)</string>
+    <string name="select_month_days_multiple">Select Days of Month (Multiple)</string>
+    <string name="notebook_cover_color">Notebook Cover Color</string>
+    <string name="cover_icon_emoji">Cover Icon (Emoji)</string>
+    <string name="degree_name">Priority Name</string>
+    <string name="add_new_priority_level">Add New Priority Level</string>
+    <string name="done">Done</string>
+    <string name="sample_button">Button</string>
+    <string name="sample_label">Label</string>
+    <string name="select_time">Select Time</string>
+    <string name="save_and_set_reminder">Save &amp; Set Reminder</string>
+    <string name="cancel_reminder">Cancel Reminder</string>
+    <string name="workout_analytics_title">Workout Analytics &amp; Growth Chart</string>
+    <string name="metric_sets">Set Counts</string>
+    <string name="metric_weekly_tonnage">Weekly Tonnage</string>
+    <string name="metric_monthly_tonnage">Monthly Tonnage</string>
+    <string name="metric_sets_desc">Total sets completed in last 7 workouts</string>
+    <string name="metric_weekly_desc">Total tonnage lifted weekly (in kg)</string>
+    <string name="metric_monthly_desc">Total tonnage lifted monthly (in kg)</string>
+    <string name="no_workout_reports">No saved workout reports found.</string>
+    <string name="quick_add_title">Quick Add Task</string>
+    <string name="item_title_label">Task Title *</string>
+    <string name="detailed_add">Add Detailed</string>
+    <string name="notebook_analysis">Notebook Analysis</string>
+    <string name="stat_completed">Completed</string>
+    <string name="stat_active">Active</string>
+    <string name="stat_starred">Starred</string>
+    <string name="priority_color_distribution">Priority &amp; Color Distribution</string>
+    <string name="no_data_yet">No data yet.</string>
+    <string name="favorite">Favorite</string>
+    <string name="reminder">Reminder</string>
+    <string name="customize_priorities_desc">Customize priority levels, names, and colors for items in your notebook.</string>
+    <string name="step_indicator">Step %1$d / %2$d</string>
+
+    <!-- Muscles -->
+    <string name="muscle_chest">Chest</string>
+    <string name="muscle_back">Back</string>
+    <string name="muscle_legs">Legs</string>
+    <string name="muscle_shoulders">Shoulders</string>
+    <string name="muscle_arms">Arms</string>
+    <string name="muscle_core">Core / Abs</string>
+
+    <!-- Days Short -->
+    <string name="day_mon_short">Mon</string>
+    <string name="day_tue_short">Tue</string>
+    <string name="day_wed_short">Wed</string>
+    <string name="day_thu_short">Thu</string>
+    <string name="day_fri_short">Fri</string>
+    <string name="day_sat_short">Sat</string>
+    <string name="day_sun_short">Sun</string>
+
+    <!-- Priorities -->
+    <string name="priority_levels_title">Priority Levels</string>
+    <string name="priority_none">None</string>
+    <string name="priority_low">Low</string>
+    <string name="priority_medium">Medium</string>
+    <string name="priority_high">High</string>
+    <string name="priority_level_format">Level %1$d</string>
+    <string name="priority_unranked">Unranked</string>
+
+    <!-- Accents -->
+    <string name="accent_lavender">Lavender Purple</string>
+    <string name="accent_emerald">Emerald Green</string>
+    <string name="accent_ocean">Ocean Blue</string>
+    <string name="accent_amber">Amber Orange</string>
+    <string name="accent_cyber_red">Cyber Red</string>
+    <string name="accent_cyber_violet">Cyber Violet</string>
+    <string name="accent_turquoise">Turquoise Breeze</string>
+    <string name="accent_coral">Coral Pink</string>
+
+    <!-- Theme & UI -->
+    <string name="live_theme_preview">Live Theme Preview</string>
+    <string name="chip">Chip</string>
+
+    <!-- Cloud Sync -->
+    <string name="cloud_sync_copied">Backup code copied to clipboard!</string>
+    <string name="cloud_info_title">🌐 CLOUD SYSTEM INFO</string>
+    <string name="cloud_info_desc">• Cloud Service: Your data is encrypted and securely stored on JSONBlob SSL global REST servers.\n• Backup Code: A unique ID is generated when you tap \'Backup to Cloud\'.\n• Cross-Device Transfer: Enter this code in \'Restore\' on any phone to instantly sync all your notebooks and items.</string>
+    <string name="cloud_enter_code_warning">Please enter the backup code to restore!</string>
+    <string name="cloud_downloading">Downloading and restoring backup…</string>
+    <string name="cloud_imported_success">Cloud backup successfully imported!</string>
+    <string name="cloud_sync_success">Data successfully synchronized!</string>
+    <string name="cloud_uploading">Uploading your data to the cloud…</string>
+    <string name="cloud_uploaded_success">Cloud backup successfully saved!\nBackup Code: %1$s</string>
+    <string name="cloud_uploaded_toast">Cloud backup successfully saved!</string>
+    <string name="restore">Restore</string>
+    <string name="backup_to_cloud">Backup to Cloud</string>
+    <string name="generate_code">Generate Code</string>
+    <string name="copy_code">Copy Code</string>
 </resources>

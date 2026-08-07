@@ -1,127 +1,121 @@
-# FlexiList — Proje Özeti ve Gelişim Takip Raporu
+# FlexiList — Project Summary & Development Progress Report
 
-Bu dosya, **FlexiList** projesinin mevcut durumunu, antrenman (workout) sisteminin işleyişini, yapılan geliştirmeleri ve gelecek planlarını detaylandırmak üzere hazırlanmış resmi bir kılavuzdur.
-
----
-
-## 1. Proje Özeti
-
-**FlexiList**, Kotlin, Jetpack Compose ve SQLite tabanlı Room Veritabanı mimarisi kullanılarak geliştirilmiş, ultra hızlı, çevrimdışı öncelikli (offline-first), modern ve esnek bir çok amaçlı liste yönetim uygulamasıdır. 
-
-Uygulama, sıradan yapılacaklar listelerinden farklı olarak dinamik liste türlerini (ToDo, Alışveriş, Alışkanlık Takibi ve Antrenman Planlayıcı gibi) tek bir çatı altında birleştirir. Material Design 3 tasarım yönergelerine tam uyumlu, karanlık oda odaklı (Distraction-Free Dark Slate Space) temasıyla hem estetik hem de ergonomik bir kullanıcı deneyimi sunar.
+This file serves as an official technical guide detailing the current architecture, workout system workflow, implemented features, and roadmap for **FlexiList**.
 
 ---
 
-## 2. Antrenman (Workout) Sistemi Detaylı Anlatımı
+## 1. Project Overview
 
-FlexiList içindeki en güçlü modüllerden biri, esnek egzersiz listelerini tam teşekküllü bir antrenman asistanına dönüştüren **Workout Planner** sistemidir.
+**FlexiList** is an ultra-fast, offline-first, modern, and flexible multi-purpose list management application built using Kotlin, Jetpack Compose, and SQLite-based Room Database architecture. 
 
-### Egzersiz Yapılandırması ve Ayrıştırma (Parsing)
-Antrenman listelerindeki her bir öğe, açıklama kısmında gizli bir DSL (Domain Specific Language) formatında egzersiz yapılandırma verilerini taşır. Bu veriler anında ayrıştırılarak UI'da görsel pill'lere (etiketlere) dönüştürülür:
-- **Set Sayısı**: Kaç set yapılacağını belirtir.
-- **Egzersiz Türü (Reps / Timer)**: Egzersizin tekrar tabanlı (ör. 10 Tekrar) veya süre tabanlı (ör. 60 saniye) olduğunu belirler.
-- **Ağırlık (kg)**: Egzersizde kullanılacak hedef ağırlığı gösterir.
-- **Dinlenme Süresi (sn)**: Setler arasında yapılacak mola süresini tanımlar.
-- **Hedef Kas Grupları**: Göğüs, Sırt, Omuz, Kollar, Bacaklar, Karın gibi kas gruplarını dinamik ve renk kodlu etiketlerle listeler.
-- **Süperset Desteği**: Aynı gruba ait egzersizleri birbirine bağlayan "⚡ SÜPERSET" etiketiyle görsel gruplama sunar.
-
-### Antrenman Oynatıcı Ekranı (Workout Player Overlay)
-Antrenman başlatıldığında, dikkati dağıtacak tüm dış unsurları gizleyen tam ekran bir **Distraction-Free** oynatıcı devreye girer:
-- **Hazırlık Geri Sayımı (Prep State)**: Egzersize başlamadan önce kullanıcıya 5 saniyelik bir konsantrasyon süresi verir.
-- **Aktif Egzersiz Ekranı**:
-  - Süre tabanlı egzersizlerde otomatik geri sayım sayacı çalışır.
-  - Tekrar tabanlı egzersizlerde net ve anlaşılır "SETİ TAMAMLA" butonu gösterilir.
-  - Cyberpunk esintili dinamik bir insan anatomisi simülatörü (**Muscle Group Visualizer**) üzerinde çalıştırılan kas grupları görsel olarak parlar.
-- **Dinlenme Ekranı (Rest State)**:
-  - Set tamamlandığında otomatik olarak başlar.
-  - "+15sn Ekle" seçeneği ile mola süresi esnetilebilir.
-  - **Molayı Atla** butonu ile mola doğrudan sonlandırılarak bir sonraki aşamaya geçilir.
-- **Bunu Sonra Yap (Skip) Mantığı**: Başlama ekranında o an hazır olunmayan bir egzersiz antrenmanın en sonuna ertelenebilir.
-- **Otomatik Durum Senkronizasyonu**: Antrenman bittiğinde, o antrenmana ait tüm egzersiz listesi veritabanında otomatik olarak **"tamamlandı"** işaretlenir ve bu durum ana ekrandaki listeye anında yansır.
-- **Antrenman Günlüğü**: Tamamlanan tüm antrenmanlar; süre, yapılan set sayısı, kaldırılan toplam tonaj ve istatistiklerle yerel veritabanına kaydedilir.
+Unlike traditional to-do list applications, FlexiList unifies dynamic list types (such as To-Do, Shopping List, Habit Tracker, and Workout Planner) under a single cohesive framework. It offers a Material Design 3 compliant, distraction-free dark slate canvas designed for aesthetic appeal and high usability.
 
 ---
 
-## 3. Gelişim Takip Listesi (To-Do List)
+## 2. Workout System Technical Details
 
-Aşağıdaki liste, FlexiList projesinin başlangıcından bugüne kadarki gelişim adımlarını, eksiklerini ve gelecek planlarını listeler.
+One of FlexiList's core features is its **Workout Planner**, which transforms flexible exercise lists into an interactive workout assistant.
 
-### [A] Notebook ve Temel Liste Yönetimi
-- `[+]` Room veritabanı mimarisi ve veri tablosu şemalarının oluşturulması
-- `[+]` Farklı liste türlerine (Normal, ToDo, Workout vb.) göre notebook oluşturabilme
-- `[+]` Sürükle-bırak yöntemiyle manuel liste sıralama (Drag & Drop) ve animasyonlar
-- `[+]` Çoklu seçim (Bulk Mode) ve toplu silme/taşıma işlemleri
-- `[+]` Yıldızlama (Starring) ve öncelik seviyelerine göre filtreleme
-- `[+]` Kategori ve etiket (Tag) yönetimi
+### Exercise Configuration & Parsing DSL
+Each item in a workout list contains inline metadata formatted in a mini Domain Specific Language (DSL) within its description. This data is dynamically parsed into visual UI chips/pills:
+- **Set Count**: Number of sets to perform.
+- **Exercise Type (Reps / Timer)**: Determines whether an exercise is rep-based (e.g. 10 Reps) or duration-based (e.g. 60 seconds).
+- **Weight (kg)**: Target weight for the exercise.
+- **Rest Duration (s)**: Rest time between sets.
+- **Target Muscle Groups**: Dynamic, color-coded tags for muscle groups (Chest, Back, Shoulders, Arms, Legs, Core, etc.).
+- **Superset Support**: Visual grouping with a "⚡ SUPERSET" badge connecting linked exercises.
 
-### [B] Workout Planlayıcı ve Egzersiz Yapılandırması
-- `[+]` Egzersiz açıklama metinlerinden (Description) parametre ayrıştırma motoru
-- `[+]` Egzersiz kartlarında özelleştirilmiş parametre pill tasarımları (Set, Tekrar/Süre, Mola, Ağırlık)
-- `[+]` Hedef kas grupları için otomatik renk kodlu etiket tasarımı
-- `[+]` Süperset (Superset) görsel bağlantı etiketleri ve ayrıştırması
-- `[+]` **[Geliştirildi]** Antrenman periyodu "Günlük" seçildiğinde haftanın günleri yerine başlangıçtan beri kaçıncı günde olunduğunu ve yapılan antrenman gün sayısını gösteren ilerleme çubuklu (Progress Bar) sayaç kartı gösterimi
-- `[+]` **[Geliştirildi]** Antrenman periyodu "Aylık" seçildiğinde ayın günlerinin (1..31) yatay kaydırılabilir (LazyRow) çip tasarımıyla sorunsuz gösterimi
-- `[+]` Günlük filtreleme sistemi (Pzt, Sal, Çar vb. günlere göre antrenman programı gösterme)
-
-### [C] Workout Oynatıcı ve Akış Yönetimi
-- `[+]` Tam ekran Distraction-Free antrenman oynatıcı arayüzü
-- `[+]` Egzersiz kas grubu görselleştiricisi (Muscle Group Visualizer) tuval çizimleri
-- `[+]` 5 saniyelik başlangıç hazırlık geri sayımı (Prep Countdown) ve atlama seçeneği
-- `[+]` Süre tabanlı egzersizler için otomatik countdown mekanizması
-- `[+]` Tekrar tabanlı egzersizlerde "Seti Tamamla" butonu
-- `[+]` Set aralarında otomatik dinlenme molası (Rest State) tetiklenmesi
-- `[+]` Dinlenme molasını esnetmek için "+15sn Ekle" seçeneği
-- `[+]` **[Geliştirildi]** Antrenman başlatıldıktan sonra çıkış butonuna basıldığında veya telefon kapanıp açıldığında durumun kalıcı olarak (SharedPreferences) saklanması, kaldığı yerden "Devam Et" butonu ile sürdürülmesi
-- `[+]` **[Geliştirildi]** Antrenman filtre çiplerinden "Hepsi" seçeneğinin kaldırılması ve doğrudan haftanın günlerine odaklanılması
-- `[+]` **[Geliştirildi]** Workout Planner defterlerinden "Defter Analizi" düğmesinin kaldırılması
-- `[+]` **[Geliştirildi]** Defter oluşturma/düzenleme pencerelerinde ("Aylık" seçimi vb.) diyalog boyutu sabitlemesi ve dikey kaydırma (vertical scroll) entegrasyonu
-- `[+]` **[Geliştirildi]** Sadece bugünün gününe ait antrenman programının başlatılabilmesi; diğer günlerde başlat butonunun pasifleştirilmesi ve durum bilgilendirmesi yapılması
-- `[+]` **[Geliştirildi]** Antrenman tamamlandığında "Başla" butonunun "Tamamlandı ✓" durumuna geçerek pasifleşmesi
-- `[+]` **[Geliştirildi]** Gün değiştiğinde geçmiş güne ait tamamlandı işaretlerinin otomatik sıfırlanması
-- `[+]` **[Geliştirildi]** Antrenman başlatıldığında yüzen ekleme butonunun (+ FAB) gizlenmesi
-- `[+]` **[Geliştirildi]** Workout kartlarında tamamlama oranı bileşenlerinin ve arama altı öncelik filtrelerinin kaldırılması
-- `[+]` **[Geliştirildi]** Antrenman başlatma kartının modern ve yüksek kontrastlı GUI tasarımı ile yenilenmesi
-
-### [D] Ses, Sistem Bildirimleri ve Otomasyon
-- `[+]` Geri sayımlarda son 3 saniye tikleme sesi (Tick) ve bitiş gong sesi (Ding) entegrasyonu
-- `[+]` Arka planda veya ekran kilitliyken takip edilebilmesi için sistem bildirim çubuğu entegrasyonu
-- `[+]` **[Eklendi]** Defter ve antrenman listeleri için `AlarmManager` ve `NotificationManager` tabanlı yerel bildirim/hatırlatıcı (Local Notification / Reminder) kurma sistemi
-- `[+]` **[Geliştirildi]** Antrenman bittiğinde tüm antrenman egzersizlerinin veritabanında otomatik olarak tamamlandı durumuna geçirilmesi
-- `[+]` **[Geliştirildi]** Antrenman tamamlandığında ana listedeki egzersizlerin anında tamamlandı olarak işaretlenip arayüze gecikmesiz yansıması
-
-### [E] Raporlama, İstatistikler ve Günlük Kayıtları
-- `[+]` Antrenman raporlarının (süre, tamamlanan set, toplam kaldırılan ağırlık) detaylı analitik json olarak kaydedilmesi
-- `[+]` Geçmiş raporların listelendiği Rapor Sayfası arayüzü ve rapor silme desteği
-- `[+]` Antrenman istatistikleri için görsel grafikler ve kas gelişim haritası çizimleri
-- `[+]` Haftalık ve aylık kaldırılan toplam tonaj grafikleri ve gelişim raporları
-- `[+]` Defter İstatistik ve Analiz Paneli (`NotebookStatisticsDialog`): Halkalı Tamamlama Oranı (Donut Gauge) grafiği ve Öncelik/Renk Dağılım çubuğu
-
-### [F] Genel GUI, Hata Fixleri ve Optimizasyonlar
-- `[+]` Dinlenme ekranındaki "Sıradaki Set" bilgisinin gerçek sonraki seti doğru göstermesi
-- `[+]` Edge-to-Edge ekran tasarımı ve Android 12+ dinamik renk uyumluluğu
-- `[+]` **[Eklendi]** Gelişmiş Tema & Vurgu Rengi Özelleştirme Ayarları (`ThemeCustomizationDialog`): Koyu/Açık tema geçişi ve el yapımı renk paleti seçenekleri (Flexi Cyan, Neon Emerald, Electric Violet, Sunset Crimson, Cyber Gold, Deep Ocean)
-- `[+]` Özelleştirilebilir Öncelik Seviyeleri (Priority Customization Dialog): Dinamik öncelik ekleme, silme, derece ismi ve renk paleti belirleme
-- `[+]` Workout Planlayıcı defterlerinden gereksiz Öncelik Seviyesi Ayarları düğmesinin kaldırılması (Ana liste ve Defter Ayarları)
-- `[+]` Liste Kartlarında Renkli Öncelik Görselleştirmesi: Öncelikli öğelerde özel arka plan tonlaması, sol dikey renk çubuğu ve öncelik rozeti (badge) gösterimi
-- `[+]` Öğe Ekleme/Düzenleme Ekranlarında Yatay Kaydırma (Horizontal Scroll): Dar ekranlarda öncelik çiplerinin taşmasını engelleyen UX düzeltmesi
-- `[+]` **[Geliştirildi]** Workout planlayıcıdaki haftanın günleri seçici barının dar ekranlarda kırılmasını önleyen yatay kaydırılabilir (`LazyRow`) çip tasarımı
-- `[+]` **[Geliştirildi]** Egzersiz kartlarındaki parametre pill'lerinin (Set, Tekrar/Süre, Ağırlık, Mola) ve hedef kas etiketlerinin tüm ekran boyutları ve çözünürlüklerde taşmasını engelleyen esnek düzen (`FlowRow`) entegrasyonu
-- `[+]` **[Geliştirildi]** Antrenman oyuncusu tam ekran arayüzünün (`WorkoutPlayerScreen`) küçük ve dikey kısıtlı ekranlarda kaydırılabilir (`verticalScroll`) hale getirilmesi
-- `[+]` **[Düzeltildi]** Paylaşılan `.flexi` defter dosyalarının ve metinlerinin FlexiList ile açıldığında otomatik algılanıp veritabanına sorunsuz içe aktarılması (`ACTION_VIEW` & `ACTION_SEND` Intent filtreleri)
-- `[+]` Dokunsal Geri Bildirim Entegrasyonu (Haptic Feedback): Öğe tamamlama, yıldızlama ve seçme işlemlerinde `LocalHapticFeedback` titreşim geribildirimi
-- `[+]` Tüm Derleme ve Lint İkazlarının (Deprecation Warnings) Temizlenmesi
-- `[ ]` Tamamlanan egzersizlerin otomatik olarak listenin en altına taşınması animasyonu optimizasyonu
-- `[ ]` Arka plan servislerinin daha kararlı çalışması için WakeLock iyileştirmeleri
-
-### [G] Bulut Depolama, Yedekleme ve Senkronizasyon
-- `[+]` Sıfır konfigürasyonlu, kullanıcı dostu Bulut Yedekleme ve Senkronizasyon mimarisi
-- `[+]` `CloudSyncManager` üzerinden `JSONBlob` SSL korumalı küresel REST API entegrasyonu (OkHttp tabanlı)
-- `[+]` Her yedek için otomatik ve rastgele üretilebilen yüksek güvenlikli senkronizasyon kodları (`FLX-XXXXXX`)
-- `[+]` Buluttan tek dokunuşla geri yükleme (Download & Restore) ve yerel SQLite veritabanı ile otomatik veri birleştirme
-- `[+]` AndroidManifest.xml'de güvenli `INTERNET` izinlerinin yapılandırılması
-- `[+]` Yedekleme ve geri yükleme durumları için görsel yükleme göstergeleri (Progress Indicators) ve tost bildirimleri
-
+### Workout Player Overlay
+When a workout starts, a full-screen **Distraction-Free** overlay activates:
+- **Prep Countdown**: A 5-second preparation timer before beginning the workout.
+- **Active Exercise View**:
+  - Auto-counting timer for duration-based exercises.
+  - Clear "COMPLETE SET" action button for rep-based exercises.
+  - Cyberpunk-inspired dynamic **Muscle Group Visualizer** highlighting active muscles on an anatomical body model.
+- **Rest State View**:
+  - Automatically triggers when a set is completed.
+  - "+15s Rest" option to extend break duration.
+  - "Skip Rest" button to immediately jump to the next set/exercise.
+- **"Do Later" (Skip Exercise) Logic**: Postpones an unready exercise to the end of the current session.
+- **Automatic Status Sync**: Upon completing a workout, all corresponding items are automatically marked as completed in the Room database and instantly reflected in the main view.
+- **Workout Logging**: Session duration, total completed sets, and total tonnage lifted are saved to local database history logs.
 
 ---
 
-*Not: FlexiList gelişim süreci bu dosya üzerinden anlık olarak güncellenecektir.*
+## 3. Feature & Progress Tracker
+
+The following checklist tracks development milestones, completed features, and future plans for FlexiList.
+
+### [A] Notebook & Base List Management
+- `[+]` Room database architecture and schema setup.
+- `[+]` Support for various notebook types (Standard, To-Do, Shopping, Habit, Workout).
+- `[+]` Drag & Drop list reordering with smooth animations.
+- `[+]` Bulk Selection Mode for batch delete and batch move operations.
+- `[+]` Starring & priority level filtering.
+- `[+]` Category and Tag management.
+
+### [B] Workout Planner & Exercise Configuration
+- `[+]` Parameter parsing engine for exercise description strings.
+- `[+]` Custom parameter pills on exercise cards (Sets, Reps/Timer, Rest, Weight).
+- `[+]` Color-coded badges for target muscle groups.
+- `[+]` Superset visual connection badges and parsing.
+- `[+]` Progress bar counter card for Daily workout frequency mode showing active days and streak counts.
+- `[+]` Horizontal scrollable (`LazyRow`) chip bar for Monthly workout frequency mode (days 1..31).
+- `[+]` Day-of-week filtering system (Mon, Tue, Wed, etc.).
+
+### [C] Workout Player & Execution Flow
+- `[+]` Full-screen Distraction-Free workout player UI.
+- `[+]` Canvas drawing for Muscle Group Visualizer.
+- `[+]` 5-second prep countdown with skip option.
+- `[+]` Automatic countdown mechanism for duration-based exercises.
+- `[+]` "Complete Set" button for rep-based exercises.
+- `[+]` Automatic Rest State activation between sets.
+- `[+]` "+15s Rest" extension button.
+- `[+]` State persistence (`SharedPreferences`) on app exit or phone reboot, enabling "Resume Workout" capability.
+- `[+]` Cleaner day filter bar with direct focus on weekdays.
+- `[+]` Dialog scrollability and layout fixes for small screens.
+- `[+]` Day-restricted workout activation (only active day program can be started).
+- `[+]` "Start" button transitions to disabled "Completed ✓" state upon session completion.
+- `[+]` Daily auto-reset of completion checkmarks at midnight.
+- `[+]` Floating Action Button (+ FAB) hidden during active workout playback.
+- `[+]` Modernized, high-contrast GUI for workout activation card.
+
+### [D] Audio, System Notifications & Automation
+- `[+]` Audio feedback with last 3-second tick sound and completion gong sound.
+- `[+]` System notification bar integration for background and lock-screen tracking.
+- `[+]` Local notification and reminder system powered by `AlarmManager` and `NotificationManager`.
+- `[+]` Automatic background DB mark-as-completed for all session items upon workout completion.
+
+### [E] Analytics, Statistics & Logs
+- `[+]` Detailed JSON workout session report saving (duration, completed sets, volume lifted).
+- `[+]` Workout history log screen with report deletion support.
+- `[+]` Analytical charts and muscle development visual mapping.
+- `[+]` Weekly and monthly total tonnage graphs.
+- `[+]` `NotebookStatisticsDialog` featuring Donut Gauge completion charts and priority distribution bars.
+
+### [F] GUI Polish, Bug Fixes & Optimizations
+- `[+]` Corrected "Next Set" preview info during rest state.
+- `[+]` Edge-to-Edge display support with Android 12+ dynamic color compatibility.
+- `[+]` Multi-language support (English `en`, Turkish `tr`, Russian `ru`) with dynamic runtime switching via `attachBaseContext` and `recreate()`.
+- `[+]` `ThemeCustomizationDialog`: Dark/Light theme toggle and accent palette options (*Flexi Cyan, Neon Emerald, Electric Violet, Sunset Crimson, Cyber Gold, Deep Ocean*).
+- `[+]` `PriorityCustomizationDialog`: Dynamic priority creation, deletion, custom titles, and color pickers.
+- `[+]` Color-accented priority cards with left vertical indicator bars and priority badges.
+- `[+]` Horizontal scroll (`LazyRow`/`FlowRow`) integration across exercise parameter pills and day chips to prevent overflow on narrow screens.
+- `[+]` Full-screen `WorkoutPlayerScreen` vertical scrollability for small screen heights.
+- `[+]` Automatic `.flexi` file import handling via `ACTION_VIEW` & `ACTION_SEND` intent filters.
+- `[+]` Tactile haptic feedback (`LocalHapticFeedback`) for item completion, starring, and selection.
+- `[+]` Resolved all compilation and deprecation warnings.
+- `[ ]` Smooth animation optimization for moving completed items to bottom.
+- `[ ]` Background service WakeLock stability enhancements.
+
+### [G] Cloud Backup & Sync
+- `[+]` Zero-configuration, user-friendly cloud backup architecture.
+- `[+]` SSL-secured global REST API integration via `CloudSyncManager` (using OkHttp & JSONBlob).
+- `[+]` High-security auto-generated sync codes (`FLX-XXXXXX`).
+- `[+]` One-tap download & restore with local SQLite database merge.
+- `[+]` Configured `INTERNET` permissions in AndroidManifest.xml.
+- `[+]` Progress indicators and toast notifications for backup/restore states.
+
+---
+
+*Note: This progress report is updated alongside major release milestones.*

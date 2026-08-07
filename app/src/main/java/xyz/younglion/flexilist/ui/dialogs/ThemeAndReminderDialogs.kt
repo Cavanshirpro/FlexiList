@@ -6,6 +6,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -24,6 +25,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.res.stringResource
+import xyz.younglion.flexilist.R
 import xyz.younglion.flexilist.data.model.NotebookEntity
 import xyz.younglion.flexilist.ui.FlexiViewModel
 import xyz.younglion.flexilist.ui.theme.ThemeAccentOptions
@@ -37,6 +40,7 @@ fun ThemeCustomizationDialog(
 ) {
     val isDarkMode by viewModel.isDarkMode.collectAsState()
     val selectedAccentIndex by viewModel.selectedAccentIndex.collectAsState()
+    val currentLanguage by viewModel.appLanguage.collectAsState()
 
     Dialog(onDismissRequest = onDismiss) {
         Card(
@@ -81,21 +85,55 @@ fun ThemeCustomizationDialog(
                             }
                         }
                         Text(
-                            text = "Tema & Renk Ayarları",
+                            text = stringResource(R.string.theme_and_language),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold
                         )
                     }
                     IconButton(onClick = onDismiss) {
-                        Icon(Icons.Default.Close, contentDescription = "Kapat")
+                        Icon(Icons.Default.Close, contentDescription = stringResource(R.string.close))
                     }
                 }
 
                 HorizontalDivider()
 
+                // Language Selection Section
+                Text(
+                    text = stringResource(R.string.language),
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    val languages = listOf(
+                        "en" to "English 🇬🇧",
+                        "tr" to "Türkçe 🇹🇷",
+                        "ru" to "Русский 🇷🇺",
+                        "de" to "Deutsch 🇩🇪",
+                        "es" to "Español 🇪🇸",
+                        "fr" to "Français 🇫🇷"
+                    )
+                    languages.forEach { (code, label) ->
+                        val isSelected = currentLanguage == code
+                        FilterChip(
+                            selected = isSelected,
+                            onClick = { viewModel.setAppLanguage(code) },
+                            label = { Text(label, fontSize = 11.sp) }
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(2.dp))
+
                 // Dark/Light Mode Toggle
                 Text(
-                    text = "Görünüm Modu",
+                    text = stringResource(R.string.appearance_mode),
                     style = MaterialTheme.typography.labelLarge,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary
@@ -108,14 +146,14 @@ fun ThemeCustomizationDialog(
                     FilterChip(
                         selected = isDarkMode,
                         onClick = { if (!isDarkMode) viewModel.toggleTheme() },
-                        label = { Text("Karanlık Mod (Dark)") },
+                        label = { Text(stringResource(R.string.dark_mode)) },
                         leadingIcon = { Icon(Icons.Default.DarkMode, null, modifier = Modifier.size(16.dp)) },
                         modifier = Modifier.weight(1f)
                     )
                     FilterChip(
                         selected = !isDarkMode,
                         onClick = { if (isDarkMode) viewModel.toggleTheme() },
-                        label = { Text("Aydınlık Mod (Light)") },
+                        label = { Text(stringResource(R.string.light_mode)) },
                         leadingIcon = { Icon(Icons.Default.LightMode, null, modifier = Modifier.size(16.dp)) },
                         modifier = Modifier.weight(1f)
                     )
@@ -125,7 +163,7 @@ fun ThemeCustomizationDialog(
 
                 // Accent Color Options Grid
                 Text(
-                    text = "Uygulama Vurgu Rengi",
+                    text = stringResource(R.string.accent_color),
                     style = MaterialTheme.typography.labelLarge,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary
@@ -179,7 +217,7 @@ fun ThemeCustomizationDialog(
                                             }
                                         }
                                         Text(
-                                            text = accent.name,
+                                            text = accent.getDisplayName(),
                                             fontSize = 12.sp,
                                             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
                                             color = MaterialTheme.colorScheme.onSurface
@@ -205,7 +243,7 @@ fun ThemeCustomizationDialog(
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Text(
-                            text = "Canlı Tema Önizleme",
+                            text = stringResource(R.string.live_theme_preview),
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -220,12 +258,12 @@ fun ThemeCustomizationDialog(
                                 shape = RoundedCornerShape(8.dp),
                                 modifier = Modifier.weight(1f)
                             ) {
-                                Text("Buton", fontSize = 11.sp)
+                                Text(stringResource(R.string.sample_button), fontSize = 11.sp)
                             }
                             FilterChip(
                                 selected = true,
                                 onClick = {},
-                                label = { Text("Etiket", fontSize = 11.sp) }
+                                label = { Text(stringResource(R.string.chip), fontSize = 11.sp) }
                             )
                         }
                     }
@@ -236,7 +274,7 @@ fun ThemeCustomizationDialog(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp)
                 ) {
-                    Text("Tamam", fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.ok), fontWeight = FontWeight.Bold)
                 }
             }
         }

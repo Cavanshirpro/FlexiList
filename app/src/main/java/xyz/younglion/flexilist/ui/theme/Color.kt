@@ -2,6 +2,10 @@ package xyz.younglion.flexilist.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.res.stringResource
+import xyz.younglion.flexilist.R
+
 // Brand Core Colors - Elegant Dark Theme Default
 val ElegantPrimary = Color(0xFFD0BCFF)         // Light Lavender Primary
 val ElegantOnPrimary = Color(0xFF381E72)       // Deep Violet
@@ -22,7 +26,22 @@ data class ThemeAccentOption(
     val onPrimaryContainer: Color,
     val secondary: Color,
     val tertiary: Color
-)
+) {
+    @Composable
+    fun getDisplayName(): String {
+        return when (id) {
+            0 -> stringResource(R.string.accent_lavender)
+            1 -> stringResource(R.string.accent_emerald)
+            2 -> stringResource(R.string.accent_ocean)
+            3 -> stringResource(R.string.accent_amber)
+            4 -> stringResource(R.string.accent_cyber_red)
+            5 -> stringResource(R.string.accent_cyber_violet)
+            6 -> stringResource(R.string.accent_turquoise)
+            7 -> stringResource(R.string.accent_coral)
+            else -> name
+        }
+    }
+}
 
 val ThemeAccentOptions = listOf(
     ThemeAccentOption(

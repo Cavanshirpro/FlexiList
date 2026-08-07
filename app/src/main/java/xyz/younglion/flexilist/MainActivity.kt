@@ -28,10 +28,33 @@ import xyz.younglion.flexilist.ui.theme.MyApplicationTheme
 
 import android.content.Intent
 import android.widget.Toast
+import androidx.activity.compose.LocalActivityResultRegistryOwner
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.key
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalConfiguration
+import java.util.Locale
+import android.content.res.Configuration
 import xyz.younglion.flexilist.data.backup.NotebookShareManager
+
+import android.content.Context
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.ProvidedValue
 
 class MainActivity : ComponentActivity() {
     private var mainViewModel: FlexiViewModel? = null
+
+    override fun attachBaseContext(newBase: Context) {
+        val prefs = newBase.getSharedPreferences("flexilist_prefs", Context.MODE_PRIVATE)
+        val lang = prefs.getString("app_language", "en") ?: "en"
+        val locale = Locale(lang)
+        Locale.setDefault(locale)
+        val config = Configuration(newBase.resources.configuration)
+        config.setLocale(locale)
+        val context = newBase.createConfigurationContext(config)
+        super.attachBaseContext(context)
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -58,21 +81,54 @@ class MainActivity : ComponentActivity() {
         setContent {
             val isDarkMode by viewModel.isDarkMode.collectAsState()
             val accentIndex by viewModel.selectedAccentIndex.collectAsState()
+            val appLanguage by viewModel.appLanguage.collectAsState()
 
-            MyApplicationTheme(
-                darkTheme = isDarkMode,
-                accentIndex = accentIndex
-            ) {
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
+            LaunchedEffect(appLanguage) {
+                val currentLang = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+                    resources.configuration.locales.get(0)?.language ?: "en"
+                } else {
+                    @Suppress("DEPRECATION")
+                    resources.configuration.locale?.language ?: "en"
+                }
+                if (currentLang != appLanguage) {
+                    recreate()
+                }
+            }
+
+            val baseContext = LocalContext.current
+            val activityResultRegistryOwner = LocalActivityResultRegistryOwner.current
+            val localizedContext = remember(appLanguage) {
+                val locale = Locale(appLanguage)
+                Locale.setDefault(locale)
+                val config = Configuration(baseContext.resources.configuration)
+                config.setLocale(locale)
+                @Suppress("DEPRECATION")
+                baseContext.resources.updateConfiguration(config, baseContext.resources.displayMetrics)
+                @Suppress("DEPRECATION")
+                applicationContext.resources.updateConfiguration(config, applicationContext.resources.displayMetrics)
+                baseContext.createConfigurationContext(config)
+            }
+
+            key(appLanguage) {
+                CompositionLocalProvider(
+                    LocalContext provides localizedContext,
+                    LocalConfiguration provides localizedContext.resources.configuration,
+                    LocalActivityResultRegistryOwner provides this@MainActivity
                 ) {
-                    val navController = rememberNavController()
-
-                    NavHost(
-                        navController = navController,
-                        startDestination = "notebooks"
+                    MyApplicationTheme(
+                        darkTheme = isDarkMode,
+                        accentIndex = accentIndex
                     ) {
+                        Surface(
+                            modifier = Modifier.fillMaxSize(),
+                            color = MaterialTheme.colorScheme.background
+                        ) {
+                            val navController = rememberNavController()
+
+                            NavHost(
+                                navController = navController,
+                                startDestination = "notebooks"
+                            ) {
                         // 1. Notebooks Screen Destination
                         composable("notebooks") {
                             NotebooksScreen(
@@ -114,6 +170,8 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+}
     }
 
     override fun onNewIntent(intent: Intent) {

@@ -1,27 +1,27 @@
 ---
-name: Hata Bildirimi (Bug Report)
-about: Karşılaştığınız bir hatayı bildirin
+name: Bug Report
+about: Report a bug to help us improve
 title: '[BUG] '
 labels: bug
 assignees: ''
 
 ---
 
-**Hata Açıklaması**
-Karşılaştığınız hatayı net bir şekilde açıklayın.
+**Describe the Bug**
+A clear and concise description of what the bug is.
 
-**Yeniden Üretme Adımları**
-1. '...' sekmesine gidin
-2. '...' düğmesine dokunun
-3. '...' hatasını görün
+**Steps to Reproduce**
+1. Go to '...'
+2. Tap on '...'
+3. See error
 
-**Beklenen Davranış**
-Ne olmasını bekliyordunuz?
+**Expected Behavior**
+A clear description of what you expected to happen.
 
-**Ekran Görüntüleri**
-Varsa ekran görüntülerini ekleyin.
+**Screenshots**
+If applicable, add screenshots to help explain your problem.
 
-**Cihaz Bilgileri:**
- - Cihaz: [ör. Samsung Galaxy S23]
- - Android Sürümü: [ör. Android 14]
- - FlexiList Sürümü: [ör. 1.0.0]
+**Device Information:**
+ - Device: [e.g. Samsung Galaxy S23]
+ - Android Version: [e.g. Android 14]
+ - FlexiList Version: [e.g. 1.0.1]

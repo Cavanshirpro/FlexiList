@@ -47,6 +47,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import xyz.younglion.flexilist.data.model.NotebookEntity
 import xyz.younglion.flexilist.data.model.WorkoutScheduleConfig
+import androidx.compose.ui.res.stringResource
+import xyz.younglion.flexilist.R
 import xyz.younglion.flexilist.ui.FlexiViewModel
 import xyz.younglion.flexilist.ui.dialogs.ListReminderDialog
 import xyz.younglion.flexilist.ui.dialogs.NotebookStatisticsDialog
@@ -78,6 +80,7 @@ fun NotebooksScreen(
     var showMenu by varRemember { mutableStateOf(false) }
     var showCloudSyncDialog by varRemember { mutableStateOf(false) }
     var showThemeDialog by varRemember { mutableStateOf(false) }
+    var showLanguageMenu by varRemember { mutableStateOf(false) }
     var notebookForPriorityCustomization by varRemember { mutableStateOf<NotebookEntity?>(null) }
     var notebookForStats by varRemember { mutableStateOf<NotebookEntity?>(null) }
 
@@ -159,6 +162,67 @@ fun NotebooksScreen(
                     }
                 },
                 actions = {
+                    // Language Selector Dropdown Button
+                    Box {
+                        IconButton(
+                            onClick = { showLanguageMenu = !showLanguageMenu },
+                            modifier = Modifier.testTag("language_selector_button")
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Language,
+                                contentDescription = stringResource(R.string.language)
+                            )
+                        }
+
+                        DropdownMenu(
+                            expanded = showLanguageMenu,
+                            onDismissRequest = { showLanguageMenu = false }
+                        ) {
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.lang_en)) },
+                                onClick = {
+                                    viewModel.setAppLanguage("en")
+                                    showLanguageMenu = false
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.lang_tr)) },
+                                onClick = {
+                                    viewModel.setAppLanguage("tr")
+                                    showLanguageMenu = false
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.lang_ru)) },
+                                onClick = {
+                                    viewModel.setAppLanguage("ru")
+                                    showLanguageMenu = false
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.lang_de)) },
+                                onClick = {
+                                    viewModel.setAppLanguage("de")
+                                    showLanguageMenu = false
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.lang_es)) },
+                                onClick = {
+                                    viewModel.setAppLanguage("es")
+                                    showLanguageMenu = false
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.lang_fr)) },
+                                onClick = {
+                                    viewModel.setAppLanguage("fr")
+                                    showLanguageMenu = false
+                                }
+                            )
+                        }
+                    }
+
                     // Theme Customization Palette Button
                     IconButton(
                         onClick = { showThemeDialog = true },
@@ -166,7 +230,7 @@ fun NotebooksScreen(
                     ) {
                         Icon(
                             imageVector = Icons.Default.Palette,
-                            contentDescription = "Tema & Renk Ayarları"
+                            contentDescription = stringResource(R.string.theme_and_language)
                         )
                     }
 
@@ -174,13 +238,13 @@ fun NotebooksScreen(
                     IconButton(onClick = { viewModel.toggleTheme() }) {
                         Icon(
                             imageVector = if (isDarkMode) Icons.Default.LightMode else Icons.Default.DarkMode,
-                            contentDescription = "Tema Modu Değiştir"
+                            contentDescription = stringResource(R.string.appearance_mode)
                         )
                     }
 
                     // Import/Export Dropdown Trigger
                     IconButton(onClick = { showMenu = !showMenu }) {
-                        Icon(Icons.Default.MoreVert, contentDescription = "Menü")
+                        Icon(Icons.Default.MoreVert, contentDescription = stringResource(R.string.settings))
                     }
 
                     DropdownMenu(
@@ -188,7 +252,7 @@ fun NotebooksScreen(
                         onDismissRequest = { showMenu = false }
                     ) {
                         DropdownMenuItem(
-                            text = { Text("Yedek Yükle (JSON)") },
+                            text = { Text(stringResource(R.string.import_backup_json)) },
                             leadingIcon = { Icon(Icons.Default.Upload, null) },
                             onClick = {
                                 showMenu = false
@@ -196,7 +260,7 @@ fun NotebooksScreen(
                             }
                         )
                         DropdownMenuItem(
-                            text = { Text("Yedek Al (JSON)") },
+                            text = { Text(stringResource(R.string.export_backup_json)) },
                             leadingIcon = { Icon(Icons.Default.Download, null) },
                             onClick = {
                                 showMenu = false
@@ -204,7 +268,7 @@ fun NotebooksScreen(
                             }
                         )
                         DropdownMenuItem(
-                            text = { Text("Bulut Yedekleme & Senkronizasyon") },
+                            text = { Text(stringResource(R.string.cloud_backup_sync)) },
                             leadingIcon = { Icon(Icons.Default.Cloud, null) },
                             onClick = {
                                 showMenu = false
@@ -213,7 +277,7 @@ fun NotebooksScreen(
                         )
                         HorizontalDivider()
                         DropdownMenuItem(
-                            text = { Text("Tablo Olarak Aktar (CSV)") },
+                            text = { Text(stringResource(R.string.export_csv)) },
                             leadingIcon = { Icon(Icons.Default.TableChart, null) },
                             onClick = {
                                 showMenu = false
@@ -237,7 +301,7 @@ fun NotebooksScreen(
                     .testTag("add_notebook_button")
                     .padding(8.dp)
             ) {
-                Icon(Icons.Default.Add, contentDescription = "Yeni Defter", modifier = Modifier.size(28.dp))
+                Icon(Icons.Default.Add, contentDescription = stringResource(R.string.create_notebook), modifier = Modifier.size(28.dp))
             }
         },
         containerColor = MaterialTheme.colorScheme.background
@@ -255,7 +319,7 @@ fun NotebooksScreen(
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 8.dp)
                     .testTag("notebook_search_input"),
-                placeholder = { Text("Defterlerinizde arayın...") },
+                placeholder = { Text(stringResource(R.string.search_notebooks_placeholder)) },
                 leadingIcon = { Icon(Icons.Default.Search, null) },
                 trailingIcon = {
                     if (searchNotebookQuery.isNotEmpty()) {
@@ -298,19 +362,19 @@ fun NotebooksScreen(
                 horizontalArrangement = Arrangement.spacedBy(24.dp)
             ) {
                 Column {
-                    Text("VERİ TABANI", fontSize = 9.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant, letterSpacing = 0.5.sp)
+                    Text(stringResource(R.string.db_status), fontSize = 9.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant, letterSpacing = 0.5.sp)
                     if (isOnline) {
-                        Text("ÇEVRİMİÇİ", fontSize = 11.sp, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Monospace, color = Color(0xFF4CAF50))
+                        Text(stringResource(R.string.online), fontSize = 11.sp, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Monospace, color = Color(0xFF4CAF50))
                     } else {
-                        Text("ÇEVRİMDİŞİ (YEREL)", fontSize = 11.sp, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Monospace, color = Color(0xFFFF9800))
+                        Text(stringResource(R.string.offline), fontSize = 11.sp, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Monospace, color = Color(0xFFFF9800))
                     }
                 }
                 Column {
-                    Text("LİSTE DEFTERİ", fontSize = 9.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant, letterSpacing = 0.5.sp)
-                    Text("${notebooks.size} AKTİF", fontSize = 11.sp, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Monospace)
+                    Text(stringResource(R.string.list_notebooks), fontSize = 9.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant, letterSpacing = 0.5.sp)
+                    Text("${notebooks.size} ${stringResource(R.string.active)}", fontSize = 11.sp, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Monospace)
                 }
                 Column {
-                    Text("İŞLEM HIZI", fontSize = 9.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant, letterSpacing = 0.5.sp)
+                    Text(stringResource(R.string.speed), fontSize = 9.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant, letterSpacing = 0.5.sp)
                     Text("0.02s", fontSize = 11.sp, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Monospace, color = Color(0xFF4CAF50))
                 }
             }
@@ -339,13 +403,13 @@ fun NotebooksScreen(
                         )
                         Spacer(modifier = Modifier.height(16.dp))
                         Text(
-                            text = if (searchNotebookQuery.isNotEmpty()) "Defter bulunamadı" else "Henüz hiç defteriniz yok",
+                            text = if (searchNotebookQuery.isNotEmpty()) stringResource(R.string.no_notebooks_found) else stringResource(R.string.no_notebooks_yet),
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = if (searchNotebookQuery.isNotEmpty()) "Lütfen arama teriminizi değiştirin." else "Altta bulunan '+' butonuna tıklayarak ilk çok amaçlı liste defterinizi oluşturabilirsiniz!",
+                            text = if (searchNotebookQuery.isNotEmpty()) stringResource(R.string.no_notebooks_found_sub) else stringResource(R.string.no_notebooks_yet_sub),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             textAlign = androidx.compose.ui.text.style.TextAlign.Center
@@ -361,14 +425,14 @@ fun NotebooksScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "AKTİF LİSTE DEFTERLERİ",
+                        text = stringResource(R.string.active_notebooks_header),
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.primary,
                         letterSpacing = 0.5.sp
                     )
                     Text(
-                        text = "${filteredNotebooks.size} TOPLAM",
+                        text = "${filteredNotebooks.size} ${stringResource(R.string.total_suffix)}",
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -673,7 +737,7 @@ fun NotebookCard(
                         ) {
                             Icon(
                                 imageVector = if (notebook.favorite) Icons.Filled.Star else Icons.Outlined.StarBorder,
-                                contentDescription = "Favori",
+                                contentDescription = stringResource(R.string.favorite),
                                 tint = if (notebook.favorite) Color(0xFFFFD600) else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
                                 modifier = Modifier.size(18.dp)
                             )
@@ -684,7 +748,7 @@ fun NotebookCard(
                         ) {
                             Icon(
                                 imageVector = if (notebook.pinned) Icons.Filled.PushPin else Icons.Outlined.PushPin,
-                                contentDescription = "İğnele",
+                                contentDescription = stringResource(R.string.pin),
                                 tint = if (notebook.pinned) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
                                 modifier = Modifier.size(18.dp)
                             )
@@ -697,7 +761,7 @@ fun NotebookCard(
                         ) {
                             Icon(
                                 imageVector = if (reminderTime != null) Icons.Filled.NotificationsActive else Icons.Outlined.Notifications,
-                                contentDescription = "Hatırlatıcı",
+                                contentDescription = stringResource(R.string.reminder),
                                 tint = if (reminderTime != null) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
                                 modifier = Modifier.size(18.dp)
                             )
@@ -781,7 +845,7 @@ fun NotebookDialog(
                 verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
                 Text(
-                    text = if (notebook == null) "Yeni Liste Defteri" else "Defteri Düzenle",
+                    text = if (notebook == null) stringResource(R.string.create_notebook) else stringResource(R.string.edit_notebook),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary
@@ -790,7 +854,7 @@ fun NotebookDialog(
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },
-                    label = { Text("Defter İsmi *") },
+                    label = { Text(stringResource(R.string.notebook_name)) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -798,13 +862,13 @@ fun NotebookDialog(
                 OutlinedTextField(
                     value = description,
                     onValueChange = { description = it },
-                    label = { Text("Açıklama") },
+                    label = { Text(stringResource(R.string.notebook_description)) },
                     modifier = Modifier.fillMaxWidth()
                 )
 
                 // Notebook Type Selection
                 Column {
-                    Text("Defter Türü", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.notebook_type), style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold)
                     FlowRow(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -831,7 +895,7 @@ fun NotebookDialog(
                     ) {
                         Icon(Icons.Default.Tune, contentDescription = null, modifier = Modifier.size(18.dp))
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Öncelik Seviyelerini Özelleştir (${priorityOptions.filter { it.level > 0 }.size} Derece)", fontSize = 11.sp)
+                        Text("${stringResource(R.string.customize_priorities)} (${priorityOptions.filter { it.level > 0 }.size})", fontSize = 11.sp)
                     }
 
                     if (showPriorityCustomizationDialog) {
@@ -852,13 +916,13 @@ fun NotebookDialog(
                         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
                     ) {
                         Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Text("Antrenman Sıklığı Ayarı", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold)
+                            Text(stringResource(R.string.workout_frequency_setting), style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold)
                             @OptIn(ExperimentalLayoutApi::class)
                             FlowRow(
                                 horizontalArrangement = Arrangement.spacedBy(6.dp),
                                 verticalArrangement = Arrangement.spacedBy(4.dp)
                             ) {
-                                listOf("Daily" to "Günlük", "Weekly" to "Haftalık", "Monthly" to "Aylık").forEach { (key, label) ->
+                                listOf("Daily" to stringResource(R.string.recurrence_daily), "Weekly" to stringResource(R.string.recurrence_weekly), "Monthly" to stringResource(R.string.recurrence_monthly)).forEach { (key, label) ->
                                     FilterChip(
                                         selected = frequency == key,
                                         onClick = { frequency = key },
@@ -873,19 +937,19 @@ fun NotebookDialog(
                                         OutlinedTextField(
                                             value = consecutiveWorkoutDays.toString(),
                                             onValueChange = { consecutiveWorkoutDays = it.toIntOrNull() ?: 1 },
-                                            label = { Text("Antrenman Günü") },
+                                            label = { Text(stringResource(R.string.workout_day)) },
                                             modifier = Modifier.weight(1f)
                                         )
                                         OutlinedTextField(
                                             value = consecutiveRestDays.toString(),
                                             onValueChange = { consecutiveRestDays = it.toIntOrNull() ?: 0 },
-                                            label = { Text("Dinlenme Günü") },
+                                            label = { Text(stringResource(R.string.rest_day)) },
                                             modifier = Modifier.weight(1f)
                                         )
                                     }
                                 }
                                 "Weekly" -> {
-                                    Text("Günleri Seçin (Birden Fazla)", style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(bottom = 4.dp))
+                                    Text(stringResource(R.string.select_days_multiple), style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(bottom = 4.dp))
                                     Row(
                                         modifier = Modifier.fillMaxWidth(),
                                         horizontalArrangement = Arrangement.spacedBy(4.dp)
@@ -922,7 +986,7 @@ fun NotebookDialog(
                                     }
                                 }
                                 "Monthly" -> {
-                                    Text("Ayın Günlerini Seçin (Birden Fazla)", style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(bottom = 4.dp))
+                                    Text(stringResource(R.string.select_month_days_multiple), style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(bottom = 4.dp))
                                     FlowRow(
                                         maxItemsInEachRow = 7,
                                         modifier = Modifier
@@ -963,7 +1027,7 @@ fun NotebookDialog(
 
                 // Quick Color Cover Picker
                 Column {
-                    Text("Defter Kapağı Rengi", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.notebook_cover_color), style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold)
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -989,7 +1053,7 @@ fun NotebookDialog(
 
                 // Quick Emoji Picker
                 Column {
-                    Text("Kapak Simgesi (Emoji)", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.cover_icon_emoji), style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold)
                     FlowRow(
                         maxItemsInEachRow = 7,
                         modifier = Modifier
@@ -1023,7 +1087,7 @@ fun NotebookDialog(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     TextButton(onClick = onDismiss) {
-                        Text("Vazgeç")
+                        Text(stringResource(R.string.cancel))
                     }
                     Spacer(modifier = Modifier.width(8.dp))
                     Button(
@@ -1040,7 +1104,7 @@ fun NotebookDialog(
                         },
                         enabled = name.isNotBlank()
                     ) {
-                        Text("Kaydet")
+                        Text(stringResource(R.string.save))
                     }
                 }
             }
@@ -1088,7 +1152,7 @@ fun CloudSyncDialog(
                 Spacer(modifier = Modifier.height(8.dp))
                 
                 Text(
-                    text = "Bulut Depolama & Senkronizasyon",
+                    text = stringResource(R.string.cloud_backup_sync),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface
@@ -1097,7 +1161,7 @@ fun CloudSyncDialog(
                 Spacer(modifier = Modifier.height(4.dp))
                 
                 Text(
-                    text = "JSONBlob Bulut Kasası (SSL Korumalı REST Deposu)",
+                    text = "JSONBlob Cloud Vault (SSL REST Store)",
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.primary,
                     fontWeight = FontWeight.SemiBold,
@@ -1110,8 +1174,8 @@ fun CloudSyncDialog(
                 OutlinedTextField(
                     value = syncCode,
                     onValueChange = { syncCode = it.trim() },
-                    label = { Text("Yedekleme Kodu / Kimliği") },
-                    placeholder = { Text("Boş bırakılırsa otomatik üretilir") },
+                    label = { Text(stringResource(R.string.sync_code)) },
+                    placeholder = { Text(stringResource(R.string.sync_code_placeholder)) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
@@ -1122,16 +1186,16 @@ fun CloudSyncDialog(
                                     val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
                                     val clip = android.content.ClipData.newPlainText("FlexiList Sync Code", syncCode)
                                     clipboard.setPrimaryClip(clip)
-                                    Toast.makeText(context, "Yedekleme kodu kopyalandı!", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(context, context.getString(R.string.cloud_sync_copied), Toast.LENGTH_SHORT).show()
                                 }) {
-                                    Icon(Icons.Default.ContentCopy, contentDescription = "Kodu Kopyala", tint = MaterialTheme.colorScheme.primary)
+                                    Icon(Icons.Default.ContentCopy, contentDescription = stringResource(R.string.copy_code), tint = MaterialTheme.colorScheme.primary)
                                 }
                             }
                             IconButton(onClick = {
                                 val chars = ('a'..'f') + ('0'..'9')
                                 syncCode = (1..12).map { chars.random() }.joinToString("")
                             }) {
-                                Icon(Icons.Default.Refresh, contentDescription = "Kod Üret", tint = MaterialTheme.colorScheme.primary)
+                                Icon(Icons.Default.Refresh, contentDescription = stringResource(R.string.generate_code), tint = MaterialTheme.colorScheme.primary)
                             }
                         }
                     }
@@ -1139,7 +1203,7 @@ fun CloudSyncDialog(
 
                 Spacer(modifier = Modifier.height(10.dp))
 
-                // Informative explanation box (Requests 1 & 2 Fixes)
+                // Informative explanation box
                 Card(
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.25f)),
                     shape = RoundedCornerShape(12.dp),
@@ -1150,13 +1214,13 @@ fun CloudSyncDialog(
                         verticalArrangement = Arrangement.spacedBy(3.dp)
                     ) {
                         Text(
-                            text = "🌐 BULUT SİSTEMİ BİLGİLENDİRMESİ",
+                            text = stringResource(R.string.cloud_info_title),
                             fontWeight = FontWeight.Bold,
                             fontSize = 11.sp,
                             color = MaterialTheme.colorScheme.primary
                         )
                         Text(
-                            text = "• Hangi Bulut Hizmeti?: Verileriniz JSONBlob SSL korumalı küresel REST bulut sunucularında şifreli olarak saklanır.\n• Yedekleme Kodu: 'Buluta Yedekle'ye bastığınızda size özel benzersiz bir kimlik üretilir.\n• Cihazlar Arası Aktarım: Bu kodu herhangi bir telefonda 'Geri Yükle' alanına yazarak tüm defter ve listelerinizi anında senkronize edebilirsiniz.",
+                            text = stringResource(R.string.cloud_info_desc),
                             fontSize = 10.sp,
                             lineHeight = 14.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -1188,20 +1252,28 @@ fun CloudSyncDialog(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
+                        val enterCodeWarn = stringResource(R.string.cloud_enter_code_warning)
+                        val downloadingMsg = stringResource(R.string.cloud_downloading)
+                        val importedSuccessMsg = stringResource(R.string.cloud_imported_success)
+                        val syncSuccessMsg = stringResource(R.string.cloud_sync_success)
+                        val uploadingMsg = stringResource(R.string.cloud_uploading)
+                        val uploadedSuccessMsg = stringResource(R.string.cloud_uploaded_success)
+                        val uploadedToastMsg = stringResource(R.string.cloud_uploaded_toast)
+
                         OutlinedButton(
                             onClick = {
                                 if (syncCode.isBlank()) {
-                                    statusMessage = "Lütfen geri yüklenecek yedekleme kodunu girin!"
+                                    statusMessage = enterCodeWarn
                                     return@OutlinedButton
                                 }
                                 isDownloading = true
-                                statusMessage = "Yedek indiriliyor ve yükleniyor..."
+                                statusMessage = downloadingMsg
                                 viewModel.downloadBackupFromCloud(
                                     syncCode = syncCode,
                                     onSuccess = {
                                         isDownloading = false
-                                        statusMessage = "Bulut yedeği başarıyla içe aktarıldı!"
-                                        Toast.makeText(context, "Veriler başarıyla senkronize edildi!", Toast.LENGTH_SHORT).show()
+                                        statusMessage = importedSuccessMsg
+                                        Toast.makeText(context, syncSuccessMsg, Toast.LENGTH_SHORT).show()
                                         onDismiss()
                                     },
                                     onError = { error ->
@@ -1215,20 +1287,20 @@ fun CloudSyncDialog(
                         ) {
                             Icon(Icons.Default.Download, null, modifier = Modifier.size(16.dp))
                             Spacer(modifier = Modifier.width(4.dp))
-                            Text("Geri Yükle", fontSize = 12.sp)
+                            Text(stringResource(R.string.restore), fontSize = 12.sp)
                         }
 
                         Button(
                             onClick = {
                                 isUploading = true
-                                statusMessage = "Verileriniz buluta yükleniyor..."
+                                statusMessage = uploadingMsg
                                 viewModel.uploadBackupToCloud(
                                     syncCode = syncCode,
                                     onSuccess = { newCode ->
                                         isUploading = false
                                         syncCode = newCode
-                                        statusMessage = "Bulut yedeği başarıyla kaydedildi!\nYedek Kodu: $newCode"
-                                        Toast.makeText(context, "Bulut yedeği başarıyla kaydedildi!", Toast.LENGTH_SHORT).show()
+                                        statusMessage = String.format(uploadedSuccessMsg, newCode)
+                                        Toast.makeText(context, uploadedToastMsg, Toast.LENGTH_SHORT).show()
                                     },
                                     onError = { error ->
                                         isUploading = false
@@ -1241,7 +1313,7 @@ fun CloudSyncDialog(
                         ) {
                             Icon(Icons.Default.Upload, null, modifier = Modifier.size(16.dp))
                             Spacer(modifier = Modifier.width(4.dp))
-                            Text("Buluta Yedekle", fontSize = 12.sp)
+                            Text(stringResource(R.string.backup_to_cloud), fontSize = 12.sp)
                         }
                     }
                 }
@@ -1249,7 +1321,7 @@ fun CloudSyncDialog(
                 Spacer(modifier = Modifier.height(12.dp))
 
                 TextButton(onClick = onDismiss) {
-                    Text("Kapat")
+                    Text(stringResource(R.string.close))
                 }
             }
         }
@@ -1314,12 +1386,12 @@ fun PriorityCustomizationDialog(
                         )
                     }
                     IconButton(onClick = onDismiss) {
-                        Icon(Icons.Default.Close, contentDescription = "Kapat")
+                        Icon(Icons.Default.Close, contentDescription = stringResource(R.string.close))
                     }
                 }
 
                 Text(
-                    text = "Defterinizdeki öğeler için özel öncelik dereceleri, isimleri ve renklerini özelleştirin.",
+                    text = stringResource(R.string.customize_priorities_desc),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(bottom = 8.dp)

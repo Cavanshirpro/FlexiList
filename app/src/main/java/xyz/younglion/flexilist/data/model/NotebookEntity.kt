@@ -1,7 +1,11 @@
 package xyz.younglion.flexilist.data.model
 
+import android.content.Context
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.res.stringResource
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import xyz.younglion.flexilist.R
 
 @Entity(tableName = "notebooks")
 data class NotebookEntity(
@@ -29,7 +33,28 @@ data class NotebookEntity(
         val name: String,
         val colorHex: String,
         val enabled: Boolean = true
-    )
+    ) {
+        fun getLocalizedName(context: Context): String {
+            return when {
+                level == 0 || name.lowercase() in listOf("yok", "none", "derecesiz") -> context.getString(R.string.priority_none)
+                level == 1 && name.lowercase() in listOf("düşük", "low") -> context.getString(R.string.priority_low)
+                level == 2 && name.lowercase() in listOf("orta", "medium") -> context.getString(R.string.priority_medium)
+                level == 3 && name.lowercase() in listOf("yüksek", "high") -> context.getString(R.string.priority_high)
+                else -> name
+            }
+        }
+
+        @Composable
+        fun getLocalizedName(): String {
+            return when {
+                level == 0 || name.lowercase() in listOf("yok", "none", "derecesiz") -> stringResource(R.string.priority_none)
+                level == 1 && name.lowercase() in listOf("düşük", "low") -> stringResource(R.string.priority_low)
+                level == 2 && name.lowercase() in listOf("orta", "medium") -> stringResource(R.string.priority_medium)
+                level == 3 && name.lowercase() in listOf("yüksek", "high") -> stringResource(R.string.priority_high)
+                else -> name
+            }
+        }
+    }
 
     companion object {
         val DEFAULT_PRIORITIES = listOf(

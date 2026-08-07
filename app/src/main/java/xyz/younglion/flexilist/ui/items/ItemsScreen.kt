@@ -49,6 +49,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.res.stringResource
+import xyz.younglion.flexilist.R
 import xyz.younglion.flexilist.data.model.ListItemEntity
 import xyz.younglion.flexilist.data.model.NotebookEntity
 import xyz.younglion.flexilist.ui.FlexiViewModel
@@ -162,14 +164,14 @@ fun ItemsScreen(
                         Text(notebook?.emoji ?: "📝", fontSize = 24.sp, modifier = Modifier.padding(end = 8.dp))
                         Column {
                             Text(
-                                text = notebook?.name ?: "Liste Öğeleri",
+                                text = notebook?.name ?: stringResource(R.string.list_items),
                                 fontWeight = FontWeight.Bold,
                                 style = MaterialTheme.typography.titleMedium,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis
                             )
                             Text(
-                                text = "${items.filter { !it.completed }.size} Aktif, ${items.filter { it.completed }.size} Tamamlandı",
+                                text = stringResource(R.string.active_items_count, items.filter { !it.completed }.size, items.filter { it.completed }.size),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -178,13 +180,13 @@ fun ItemsScreen(
                 },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Geri Dön")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
                     }
                 },
                 actions = {
                     if (isBulkMode) {
                         IconButton(onClick = { viewModel.clearSelections() }) {
-                            Icon(Icons.Default.Close, contentDescription = "Seçimleri Temizle", tint = MaterialTheme.colorScheme.error)
+                            Icon(Icons.Default.Close, contentDescription = stringResource(R.string.clear_selections), tint = MaterialTheme.colorScheme.error)
                         }
                     } else {
                         notebook?.let { nb ->
@@ -192,18 +194,18 @@ fun ItemsScreen(
                                 val reminderTime = viewModel.getNotebookReminderTime(nb.id)
                                 Icon(
                                     imageVector = if (reminderTime != null) Icons.Filled.NotificationsActive else Icons.Outlined.Notifications,
-                                    contentDescription = "Hatırlatıcı Saati",
+                                    contentDescription = stringResource(R.string.reminder_time),
                                     tint = if (reminderTime != null) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
                                 )
                             }
                         }
                         if (!isWorkout) {
                             IconButton(onClick = { showStatsDialog = true }) {
-                                Icon(Icons.Default.PieChart, contentDescription = "İstatistikler & Analiz", tint = MaterialTheme.colorScheme.primary)
+                                Icon(Icons.Default.PieChart, contentDescription = stringResource(R.string.stats_analytics), tint = MaterialTheme.colorScheme.primary)
                             }
                         }
                         IconButton(onClick = { showNotebookSettingsDialog = true }) {
-                            Icon(Icons.Default.Settings, contentDescription = "Defter Ayarları")
+                            Icon(Icons.Default.Settings, contentDescription = stringResource(R.string.notebook_settings))
                         }
                     }
                 },
@@ -228,7 +230,7 @@ fun ItemsScreen(
                     shape = RoundedCornerShape(16.dp),
                     modifier = Modifier.padding(8.dp)
                 ) {
-                    Icon(Icons.Default.Add, contentDescription = "Ekle")
+                    Icon(Icons.Default.Add, contentDescription = stringResource(R.string.add))
                 }
             }
         },
@@ -251,30 +253,30 @@ fun ItemsScreen(
                     ) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             IconButton(onClick = { viewModel.bulkComplete(true) }) {
-                                Icon(Icons.Default.CheckCircle, "Tamamla", tint = MaterialTheme.colorScheme.primary)
+                                Icon(Icons.Default.CheckCircle, stringResource(R.string.complete), tint = MaterialTheme.colorScheme.primary)
                             }
-                            Text("Tamamla", fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                            Text(stringResource(R.string.complete), fontSize = 10.sp, fontWeight = FontWeight.Bold)
                         }
 
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             IconButton(onClick = { viewModel.bulkComplete(false) }) {
-                                Icon(Icons.Default.RadioButtonUnchecked, "Aktif Yap")
+                                Icon(Icons.Default.RadioButtonUnchecked, stringResource(R.string.make_active))
                             }
-                            Text("Aktif Et", fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                            Text(stringResource(R.string.make_active), fontSize = 10.sp, fontWeight = FontWeight.Bold)
                         }
 
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             IconButton(onClick = { showBulkMoveDialog = true }) {
-                                Icon(Icons.AutoMirrored.Filled.DriveFileMove, "Taşı")
+                                Icon(Icons.AutoMirrored.Filled.DriveFileMove, stringResource(R.string.move))
                             }
-                            Text("Taşı", fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                            Text(stringResource(R.string.move), fontSize = 10.sp, fontWeight = FontWeight.Bold)
                         }
 
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             IconButton(onClick = { viewModel.bulkDelete() }) {
-                                Icon(Icons.Default.Delete, "Sil", tint = MaterialTheme.colorScheme.error)
+                                Icon(Icons.Default.Delete, stringResource(R.string.delete), tint = MaterialTheme.colorScheme.error)
                             }
-                            Text("Sil", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.error)
+                            Text(stringResource(R.string.delete), fontSize = 10.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.error)
                         }
                     }
                 }
@@ -299,19 +301,19 @@ fun ItemsScreen(
                     Tab(
                         selected = selectedWorkoutTab == 0,
                         onClick = { selectedWorkoutTab = 0 },
-                        text = { Text("Egzersizler", fontWeight = FontWeight.Bold, fontSize = 12.sp) },
+                        text = { Text(stringResource(R.string.exercises), fontWeight = FontWeight.Bold, fontSize = 12.sp) },
                         icon = { Icon(Icons.Default.FitnessCenter, null, modifier = Modifier.size(18.dp)) }
                     )
                     Tab(
                         selected = selectedWorkoutTab == 1,
                         onClick = { selectedWorkoutTab = 1 },
-                        text = { Text("Su Takibi", fontWeight = FontWeight.Bold, fontSize = 12.sp) },
+                        text = { Text(stringResource(R.string.water_tracker), fontWeight = FontWeight.Bold, fontSize = 12.sp) },
                         icon = { Icon(Icons.Default.LocalCafe, null, modifier = Modifier.size(18.dp)) }
                     )
                     Tab(
                         selected = selectedWorkoutTab == 2,
                         onClick = { selectedWorkoutTab = 2 },
-                        text = { Text("Analiz & Rapor", fontWeight = FontWeight.Bold, fontSize = 12.sp) },
+                        text = { Text(stringResource(R.string.analytics_report), fontWeight = FontWeight.Bold, fontSize = 12.sp) },
                         icon = { Icon(Icons.Default.Assessment, null, modifier = Modifier.size(18.dp)) }
                     )
                 }
@@ -364,7 +366,7 @@ fun ItemsScreen(
                                             )
                                             Spacer(modifier = Modifier.width(8.dp))
                                             Text(
-                                                text = "Günlük Antrenman Takibi",
+                                                text = stringResource(R.string.daily_workout_tracking),
                                                 fontWeight = FontWeight.Bold,
                                                 style = MaterialTheme.typography.titleSmall,
                                                 color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -375,7 +377,7 @@ fun ItemsScreen(
                                             shape = RoundedCornerShape(8.dp)
                                         ) {
                                             Text(
-                                                text = "$daysSinceStart. Gün",
+                                                text = stringResource(R.string.day_counter, daysSinceStart),
                                                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                                                 fontSize = 11.sp,
                                                 fontWeight = FontWeight.Bold,
@@ -390,12 +392,12 @@ fun ItemsScreen(
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
                                         Text(
-                                            text = "Tamamlanan: $completedWorkoutDays Gün",
+                                            text = stringResource(R.string.completed_days, completedWorkoutDays),
                                             fontSize = 12.sp,
                                             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
                                         )
                                         Text(
-                                            text = "%$progressPercent Başarı",
+                                            text = stringResource(R.string.success_rate, progressPercent),
                                             fontSize = 12.sp,
                                             fontWeight = FontWeight.Bold,
                                             color = MaterialTheme.colorScheme.primary
@@ -417,6 +419,8 @@ fun ItemsScreen(
                         "Monthly" -> {
                             // Requirement 3: Monthly mode days of month filter chips (1..31) cleanly in LazyRow
                             val todayDayNum = remember { Calendar.getInstance().get(Calendar.DAY_OF_MONTH) }
+                            val todayText = stringResource(R.string.today)
+                            val dayText = stringResource(R.string.day_suffix, 0).replace("0", "").trim()
                             LazyRow(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -433,7 +437,7 @@ fun ItemsScreen(
                                         onClick = { selectedMonthlyDayFilter = dayStr },
                                         label = {
                                             Text(
-                                                text = if (isToday) "$day (Bugün)" else "$day. Gün",
+                                                text = if (isToday) "$day ($todayText)" else stringResource(R.string.day_suffix, day),
                                                 fontWeight = if (isSelected || isToday) FontWeight.Bold else FontWeight.Normal,
                                                 fontSize = 11.sp
                                             )
@@ -448,20 +452,22 @@ fun ItemsScreen(
                         }
                         else -> {
                             // "Weekly" - Days of week filter bar (Horizontally scrollable LazyRow)
+                            val dayNames = listOf("Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz")
+                            val todayText = stringResource(R.string.today)
                             LazyRow(
                                 modifier = Modifier.fillMaxWidth(),
                                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
                                 horizontalArrangement = Arrangement.spacedBy(6.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                items(listOf("Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz")) { dayName ->
+                                items(dayNames) { dayName ->
                                     val isSelected = selectedDayFilter == dayName
                                     FilterChip(
                                         selected = isSelected,
                                         onClick = { selectedDayFilter = dayName },
                                         label = {
                                             Text(
-                                                text = if (dayName == todayDayOfWeekAbbreviation) "$dayName (Bugün)" else dayName,
+                                                text = if (dayName == todayDayOfWeekAbbreviation) "$dayName ($todayText)" else dayName,
                                                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
                                                 fontSize = 11.sp
                                             )
@@ -491,9 +497,9 @@ fun ItemsScreen(
                     val isResuming = (isWorkoutStarted || savedStepIndex > 0) && !isAllCompleted
 
                     val cardTitle = when (workoutConfig.frequency) {
-                        "Daily" -> "Günlük Antrenman Programı"
-                        "Monthly" -> "$selectedMonthlyDayFilter. Gün Programı"
-                        else -> "$selectedDayFilter Günlük Programı"
+                        "Daily" -> stringResource(R.string.daily_workout_program)
+                        "Monthly" -> stringResource(R.string.monthly_workout_program, selectedMonthlyDayFilter)
+                        else -> stringResource(R.string.weekly_workout_program, selectedDayFilter)
                     }
 
                     Card(
@@ -545,10 +551,10 @@ fun ItemsScreen(
                                             color = MaterialTheme.colorScheme.onSurfaceVariant
                                         )
                                         val statusSubtext = when {
-                                            isAllCompleted -> "Bugünkü antrenman tamamlandı! ✓"
-                                            !isToday -> if (workoutConfig.frequency == "Monthly") "Seçilen gün bugün değil ($todayDayOfMonthStr. gün)" else "Seçilen gün bugün değil ($todayDayOfWeekAbbreviation)"
-                                            isResuming -> "Antrenman devam ediyor (${savedStepIndex + 1}. adım)"
-                                            else -> "${displayItems.size} egzersiz hazır"
+                                            isAllCompleted -> stringResource(R.string.workout_done_today)
+                                            !isToday -> if (workoutConfig.frequency == "Monthly") stringResource(R.string.not_selected_day_monthly, todayDayOfMonthStr) else stringResource(R.string.not_selected_day_weekly, todayDayOfWeekAbbreviation)
+                                            isResuming -> stringResource(R.string.workout_in_progress, savedStepIndex + 1)
+                                            else -> stringResource(R.string.exercises_ready, displayItems.size)
                                         }
                                         Text(
                                             text = statusSubtext,
@@ -574,15 +580,15 @@ fun ItemsScreen(
                                 ) {
                                     Icon(Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(16.dp))
                                     Spacer(modifier = Modifier.width(4.dp))
-                                    Text("Sıfırla", fontSize = 12.sp, maxLines = 1)
+                                    Text(stringResource(R.string.reset), fontSize = 12.sp, maxLines = 1)
                                 }
 
                                 val buttonEnabled = isToday && !isAllCompleted
                                 val buttonText = when {
-                                    isAllCompleted -> "Tamamlandı ✓"
-                                    !isToday -> "Günü Değil"
-                                    isResuming -> "Devam Et"
-                                    else -> "Antrenmanı Başlat"
+                                    isAllCompleted -> stringResource(R.string.completed_status)
+                                    !isToday -> stringResource(R.string.not_today)
+                                    isResuming -> stringResource(R.string.resume)
+                                    else -> stringResource(R.string.start_workout)
                                 }
 
                                 Button(
@@ -623,7 +629,7 @@ fun ItemsScreen(
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 6.dp)
                     .testTag("item_search_input"),
-                placeholder = { Text("Mevcut listede arayın...") },
+                placeholder = { Text(stringResource(R.string.search_items_placeholder)) },
                 leadingIcon = { Icon(Icons.Default.Search, null) },
                 trailingIcon = {
                     if (searchQuery.isNotEmpty()) {
@@ -680,7 +686,7 @@ fun ItemsScreen(
                                     modifier = Modifier.size(18.dp)
                                 )
                                 Text(
-                                    text = "TAMAMLANMA ORANI",
+                                    text = stringResource(R.string.completion_rate),
                                     fontSize = 11.sp,
                                     fontWeight = FontWeight.Bold,
                                     letterSpacing = 0.5.sp,
@@ -725,7 +731,7 @@ fun ItemsScreen(
                                             .background(MaterialTheme.colorScheme.primary, CircleShape)
                                     )
                                     Text(
-                                        text = "$completedCount Tamamlanan",
+                                        text = stringResource(R.string.completed_count, completedCount),
                                         style = MaterialTheme.typography.bodySmall,
                                         fontSize = 11.sp,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -738,7 +744,7 @@ fun ItemsScreen(
                                             .background(MaterialTheme.colorScheme.outline, CircleShape)
                                     )
                                     Text(
-                                        text = "$activeCount Aktif",
+                                        text = stringResource(R.string.active_count, activeCount),
                                         style = MaterialTheme.typography.bodySmall,
                                         fontSize = 11.sp,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -747,7 +753,7 @@ fun ItemsScreen(
                             }
 
                             Text(
-                                text = "Toplam $totalCount Öğe",
+                                text = stringResource(R.string.total_items_count, totalCount),
                                 style = MaterialTheme.typography.bodySmall,
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.Bold,
@@ -770,7 +776,7 @@ fun ItemsScreen(
                     FilterChip(
                         selected = filterStarred,
                         onClick = { viewModel.filterStarred.value = !filterStarred },
-                        label = { Text("★ Yıldızlı") }
+                        label = { Text(stringResource(R.string.starred_filter)) }
                     )
                 }
 
@@ -781,7 +787,7 @@ fun ItemsScreen(
                         onClick = {
                             viewModel.filterCompleted.value = if (filterCompleted == false) null else false
                         },
-                        label = { Text("Etkinler") }
+                        label = { Text(stringResource(R.string.active_filter)) }
                     )
                 }
                 item {
@@ -790,7 +796,7 @@ fun ItemsScreen(
                         onClick = {
                             viewModel.filterCompleted.value = if (filterCompleted == true) null else true
                         },
-                        label = { Text("Tamamlananlar") }
+                        label = { Text(stringResource(R.string.completed_filter)) }
                     )
                 }
 
@@ -824,19 +830,35 @@ fun ItemsScreen(
                 // Sort Dropdown Selector
                 item {
                     var showSortMenu by varRemember { mutableStateOf(false) }
+                    val displaySortType = when(sortType) {
+                        "Manuel" -> stringResource(R.string.sort_manual)
+                        "A-Z" -> stringResource(R.string.sort_az)
+                        "Z-A" -> stringResource(R.string.sort_za)
+                        "Öncelik" -> stringResource(R.string.sort_priority)
+                        "Tarih" -> stringResource(R.string.sort_date)
+                        "Yıldızlı" -> stringResource(R.string.sort_starred)
+                        else -> sortType
+                    }
                     Box {
                         FilterChip(
                             selected = sortType != "Manuel",
                             onClick = { showSortMenu = true },
-                            label = { Text("⇅ Sırala: $sortType") },
+                            label = { Text(stringResource(R.string.sort_by, displaySortType)) },
                             trailingIcon = { Icon(Icons.Default.ArrowDropDown, null) }
                         )
                         DropdownMenu(expanded = showSortMenu, onDismissRequest = { showSortMenu = false }) {
-                            listOf("Manuel", "A-Z", "Z-A", "Öncelik", "Tarih", "Yıldızlı").forEach { type ->
+                            listOf(
+                                "Manuel" to stringResource(R.string.sort_manual),
+                                "A-Z" to stringResource(R.string.sort_az),
+                                "Z-A" to stringResource(R.string.sort_za),
+                                "Öncelik" to stringResource(R.string.sort_priority),
+                                "Tarih" to stringResource(R.string.sort_date),
+                                "Yıldızlı" to stringResource(R.string.sort_starred)
+                            ).forEach { (rawType, label) ->
                                 DropdownMenuItem(
-                                    text = { Text(type) },
+                                    text = { Text(label) },
                                     onClick = {
-                                        viewModel.sortType.value = type
+                                        viewModel.sortType.value = rawType
                                         showSortMenu = false
                                     }
                                 )
@@ -880,9 +902,9 @@ fun ItemsScreen(
                             tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
                         )
                         Spacer(modifier = Modifier.height(16.dp))
-                        Text("Burada gösterilecek öğe yok", fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.no_items_title), fontWeight = FontWeight.Bold)
                         Text(
-                            text = "Arama kriterlerinizi sıfırlayabilir veya sağ alttaki '+' butonu ile yeni bir liste ögesi oluşturabilirsiniz.",
+                            text = stringResource(R.string.no_items_sub),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             textAlign = androidx.compose.ui.text.style.TextAlign.Center,
@@ -908,9 +930,9 @@ fun ItemsScreen(
                             tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
                         )
                         Spacer(modifier = Modifier.height(16.dp))
-                        Text("${selectedDayFilter} Günü İçin Plan Yok", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+                        Text(stringResource(R.string.no_workout_plan_title, selectedDayFilter), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
                         Text(
-                            text = "Bu gün için planlanmış egzersiz bulunmamaktadır. Detaylar ekranından egzersizlerinize bu günü atayabilir veya farklı bir günü filtreleyebilirsiniz.",
+                            text = stringResource(R.string.no_workout_plan_sub),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             textAlign = androidx.compose.ui.text.style.TextAlign.Center,
@@ -1112,7 +1134,7 @@ fun ItemsScreen(
                         }
                     }
 
-                    Text("Hızlı Su Ekle", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+                    Text(stringResource(R.string.quick_add_water), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
@@ -1135,7 +1157,7 @@ fun ItemsScreen(
                     ) {
                         Icon(Icons.Default.Refresh, null)
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text("Sıfırla")
+                        Text(stringResource(R.string.reset))
                     }
                 }
             }
@@ -1156,7 +1178,7 @@ fun ItemsScreen(
                         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
                     ) {
                         Column(modifier = Modifier.padding(16.dp)) {
-                            Text("Antrenman Analitiği & Gelişim Grafiği", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
+                            Text(stringResource(R.string.workout_analytics_title), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
                             Spacer(modifier = Modifier.height(12.dp))
 
                             var selectedMetric by varRemember { mutableStateOf("Sets") }
@@ -1166,9 +1188,9 @@ fun ItemsScreen(
                                 horizontalArrangement = Arrangement.spacedBy(6.dp)
                             ) {
                                 listOf(
-                                    "Sets" to "Set Sayıları",
-                                    "Weekly" to "Haftalık Tonaj",
-                                    "Monthly" to "Aylık Tonaj"
+                                    "Sets" to stringResource(R.string.metric_sets),
+                                    "Weekly" to stringResource(R.string.metric_weekly_tonnage),
+                                    "Monthly" to stringResource(R.string.metric_monthly_tonnage)
                                 ).forEach { (key, label) ->
                                     val isSelected = selectedMetric == key
                                     Box(
@@ -1377,9 +1399,9 @@ fun ItemsScreen(
 
                             Text(
                                 text = when (selectedMetric) {
-                                    "Sets" -> "Son 7 antrenmanda tamamlanan toplam set sayıları"
-                                    "Weekly" -> "Haftalık kaldırılan toplam tonaj (kg cinsinden)"
-                                    "Monthly" -> "Aylık kaldırılan toplam tonaj (kg cinsinden)"
+                                    "Sets" -> stringResource(R.string.metric_sets_desc)
+                                    "Weekly" -> stringResource(R.string.metric_weekly_desc)
+                                    "Monthly" -> stringResource(R.string.metric_monthly_desc)
                                     else -> ""
                                 },
                                 style = MaterialTheme.typography.bodySmall,
@@ -1388,7 +1410,7 @@ fun ItemsScreen(
                         }
                     }
 
-                    Text("Antrenman Geçmişi Raporları", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+                    Text(stringResource(R.string.workout_history_reports), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
                     Spacer(modifier = Modifier.height(8.dp))
 
                     if (logs.isEmpty()) {
@@ -1398,7 +1420,7 @@ fun ItemsScreen(
                                 .weight(1f),
                             contentAlignment = Alignment.Center
                         ) {
-                            Text("Kayıtlı antrenman raporu bulunamadı.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text(stringResource(R.string.no_workout_reports), color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     } else {
                         LazyColumn(
@@ -1467,19 +1489,19 @@ fun ItemsScreen(
         
         AlertDialog(
             onDismissRequest = { showQuickAddDialog = false },
-            title = { Text("Hızlı Görev Ekle", fontWeight = FontWeight.Bold) },
+            title = { Text(stringResource(R.string.quick_add_title), fontWeight = FontWeight.Bold) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     OutlinedTextField(
                         value = quickTitle,
                         onValueChange = { quickTitle = it },
-                        label = { Text("Görev Başlığı *") },
+                        label = { Text(stringResource(R.string.item_title_label)) },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth()
                     )
                     
                     Column {
-                        Text("Öncelik Seviyesi", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.priority_level_label), style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold)
                         val pOpts = notebook?.getPriorityConfig() ?: NotebookEntity.DEFAULT_PRIORITIES
                         Row(
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -1522,7 +1544,7 @@ fun ItemsScreen(
                             onNavigateToAddEdit(0L)
                         }
                     ) {
-                        Text("Detaylı Ekle")
+                        Text(stringResource(R.string.detailed_add))
                     }
                     Button(
                         onClick = {
@@ -1536,13 +1558,13 @@ fun ItemsScreen(
                         },
                         enabled = quickTitle.isNotBlank()
                     ) {
-                        Text("Ekle")
+                        Text(stringResource(R.string.add))
                     }
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showQuickAddDialog = false }) {
-                    Text("İptal")
+                    Text(stringResource(R.string.cancel))
                 }
             }
         )
@@ -1552,10 +1574,10 @@ fun ItemsScreen(
     if (showBulkMoveDialog) {
         AlertDialog(
             onDismissRequest = { showBulkMoveDialog = false },
-            title = { Text("Ögeleri Taşı", fontWeight = FontWeight.Bold) },
+            title = { Text(stringResource(R.string.move_items_title), fontWeight = FontWeight.Bold) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Seçilen ögelerin taşınacağı defteri seçin:")
+                    Text(stringResource(R.string.select_target_notebook))
                     LazyColumn(modifier = Modifier.height(200.dp)) {
                         items(notebooks) { n ->
                             if (n.id != notebook?.id) {
@@ -1563,7 +1585,7 @@ fun ItemsScreen(
                                     onClick = {
                                         viewModel.bulkMove(n.id)
                                         showBulkMoveDialog = false
-                                        Toast.makeText(context, "Ögeler başarıyla taşındı!", Toast.LENGTH_SHORT).show()
+                                        Toast.makeText(context, context.getString(R.string.items_moved_successfully), Toast.LENGTH_SHORT).show()
                                     },
                                     modifier = Modifier
                                         .fillMaxWidth()
@@ -1586,7 +1608,7 @@ fun ItemsScreen(
             confirmButton = {},
             dismissButton = {
                 TextButton(onClick = { showBulkMoveDialog = false }) {
-                    Text("İptal")
+                    Text(stringResource(R.string.cancel))
                 }
             }
         )
@@ -1672,7 +1694,7 @@ fun ItemsScreen(
                     updatedAt = System.currentTimeMillis()
                 ))
                 showEditNotebookDialog = false
-                Toast.makeText(context, "Defter güncellendi!", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, context.getString(R.string.notebook_updated), Toast.LENGTH_SHORT).show()
             }
         )
     }
@@ -1687,7 +1709,7 @@ fun ItemsScreen(
                 val priorityCfgJson = NotebookEntity.serializePriorityConfig(updatedList)
                 viewModel.updateNotebook(currentNb.copy(priorityConfigJson = priorityCfgJson))
                 showPriorityCustomizationDialog = false
-                Toast.makeText(context, "Öncelik seviyeleri güncellendi!", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, context.getString(R.string.priorities_updated), Toast.LENGTH_SHORT).show()
             }
         )
     }
@@ -2318,13 +2340,13 @@ fun NotebookStatisticsDialog(
                             tint = MaterialTheme.colorScheme.primary
                         )
                         Text(
-                            text = "Defter Analizi",
+                            text = stringResource(R.string.notebook_analysis),
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold
                         )
                     }
                     IconButton(onClick = onDismiss) {
-                        Icon(Icons.Default.Close, contentDescription = "Kapat")
+                        Icon(Icons.Default.Close, contentDescription = stringResource(R.string.close))
                     }
                 }
 
@@ -2346,7 +2368,7 @@ fun NotebookStatisticsDialog(
                                 verticalArrangement = Arrangement.spacedBy(12.dp)
                             ) {
                                 Text(
-                                    text = "🎯 Tamamlama Oranı",
+                                    text = "🎯 " + stringResource(R.string.completion_rate),
                                     style = MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.Bold
                                 )
@@ -2397,9 +2419,9 @@ fun NotebookStatisticsDialog(
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.SpaceEvenly
                                 ) {
-                                    StatMetricChip(label = "Tamamlanan", value = "$completedCount", color = MaterialTheme.colorScheme.primary)
-                                    StatMetricChip(label = "Aktif", value = "$activeCount", color = MaterialTheme.colorScheme.secondary)
-                                    StatMetricChip(label = "Yıldızlı", value = "$starredCount", color = Color(0xFFFFB300))
+                                    StatMetricChip(label = stringResource(R.string.stat_completed), value = "$completedCount", color = MaterialTheme.colorScheme.primary)
+                                    StatMetricChip(label = stringResource(R.string.stat_active), value = "$activeCount", color = MaterialTheme.colorScheme.secondary)
+                                    StatMetricChip(label = stringResource(R.string.stat_starred), value = "$starredCount", color = Color(0xFFFFB300))
                                 }
                             }
                         }
@@ -2416,14 +2438,14 @@ fun NotebookStatisticsDialog(
                                 verticalArrangement = Arrangement.spacedBy(12.dp)
                             ) {
                                 Text(
-                                    text = "🎨 Öncelik & Renk Dağılımı",
+                                    text = "🎨 " + stringResource(R.string.priority_color_distribution),
                                     style = MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.Bold
                                 )
 
                                 if (totalCount == 0) {
                                     Text(
-                                        text = "Henüz veri yok.",
+                                        text = stringResource(R.string.no_data_yet),
                                         style = MaterialTheme.typography.bodySmall,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )

@@ -5,107 +5,107 @@
 [![Jetpack Compose](https://img.shields.io/badge/UI-Jetpack%20Compose-blue.svg?logo=jetpackcompose)](https://developer.android.com/jetpack/compose)
 [![Package](https://img.shields.io/badge/Package-xyz.younglion.flexilist-informational.svg)](https://github.com/)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
-[![Release](https://img.shields.io/badge/Release-v1.0.0-brightgreen.svg)](releases/FlexiList-v1.0.0.apk)
+[![Release](https://img.shields.io/badge/Release-v1.0.1-brightgreen.svg)](releases/FlexiList-v1.0.1.apk)
 
-**FlexiList**, Kotlin, Jetpack Compose ve SQLite tabanlı Room Veritabanı mimarisi kullanılarak geliştirilmiş; ultra hızlı, çevrimdışı öncelikli (offline-first), modern, modüler ve esnek bir çok amaçlı liste yönetim ve antrenman planlama uygulamasıdır.
+**FlexiList** is an ultra-fast, offline-first, modern, modular, and flexible multi-purpose list management and workout assistant application built with Kotlin, Jetpack Compose, and SQLite-based Room Database.
 
-Sıradan yapılacaklar (To-Do) listelerinden farklı olarak FlexiList; Yapılacaklar, Alışveriş, Alışkanlık Takibi ve gelişmiş **Workout Planner (Antrenman Asistanı)** modüllerini tek bir çatı altında birleştirir. Material Design 3 yönergelerine tam uyumlu, karanlık oda odaklı (*Distraction-Free Dark Slate Space*) şık ve ergonomik arayüzü ile eksiksiz bir kullanıcı deneyimi sunar.
-
----
-
-## 🚀 Öne Çıkan Özellikler
-
-### 1. 🏋️‍♂️ Gelişmiş Antrenman Asistanı (Workout Planner)
-- **Akıllı DSL Ayrıştırma (Parsing)**: Egzersiz açıklamalarından Set, Tekrar/Süre, Ağırlık (kg), Mola (sn) ve Hedef Kas Gruplarını otomatik olarak görsel pill'lere (etiketlere) dönüştürür.
-- **⚡ Süperset Desteği**: Birbiriyle bağlantılı egzersizleri otomatik gruplayan görsel süperset rozetleri.
-- **Distraction-Free Tam Ekran Oynatıcı**:
-  - 5 saniyelik hazırlık geri sayımı (Prep Countdown).
-  - Süre tabanlı egzersizlerde otomatik sayaç; tekrar tabanlı egzersizlerde hızlı "SETİ TAMAMLA" butonu.
-  - Cyberpunk esintili **Muscle Group Visualizer**: Çalıştırılan kas grupları görsel anatomik insan modeli üzerinde parlar.
-  - Otomatik dinlenme molası (Rest State), "+15sn Mola Ekle" ve "Molayı Atla" seçenekleri.
-  - O an hazır olunmayan hareketler için "Bunu Sonra Yap (Skip)" mantığı.
-- **Periyot Yönetimi**:
-  - **Günlük Programlar**: Haftanın günlerine özel antrenman akışı (Pzt, Sal, Çar...).
-  - **Aylık Programlar**: 1-31 gün arası yatay kaydırılabilir (LazyRow) çip tasarımı.
-- **Otomatik Senkronizasyon & Günlük**: Antrenman bittiğinde tüm liste veritabanında otomatik "tamamlandı" olarak işaretlenir; süre, set sayısı ve kaldırılan tonaj antrenman günlüğüne kaydedilir.
-
-### 2. 📝 Çok Amaçlı Liste & Defter Yönetimi
-- **Esnek Defter Modelleri**: Normal, Yapılacaklar, Alışveriş, Alışkanlık ve Workout türünde defterler.
-- **Sürükle-Bırak & Toplu İşlemler**: Manuel liste sıralama (Drag & Drop) ve çoklu seçim (Bulk Mode) ile toplu silme/taşıma.
-- **Özelleştirilebilir Öncelik Seviyeleri**: Özel renk paleti ve seviye isimleri tanımlayabilme (`PriorityCustomizationDialog`).
-- **Gelişmiş Filtreleme**: Yıldızlama (Starring), öncelik rozetleri (badges) ve kategori/etiket filtreleri.
-
-### 3. 🎨 Tema & Görsel Özelleştirme
-- **El Yapımı Renk Paletleri**: Flexi Cyan, Neon Emerald, Electric Violet, Sunset Crimson, Cyber Gold ve Deep Ocean vurgu renkleri.
-- **Koyu / Açık Tema**: Otomatik veya elle kontrol edilebilir göz dostu temalar.
-- **Dokunsal Geri Bildirim**: İşlemlerde hassas titreşim (Haptic Feedback) motoru.
-
-### 4. 🔔 Bildirimler, Sesler & Hatırlatıcılar
-- **Sesli Geri Sayım**: Son 3 saniye tikleme sesi (Tick) ve bitiş gong sesi (Ding).
-- **Yerel Hatırlatıcılar**: `AlarmManager` ve `NotificationManager` tabanlı bağımsız bildirim kurma sistemi.
-- **Kilit Ekranı & Sistem Bildirimi**: Arka plan servisi ile kesintisiz antrenman ve hatırlatıcı takibi.
-
-### 5. ☁️ Bulut Yedekleme & Paylaşım
-- **SSL Korumalı Bulut Senkronizasyonu**: `JSONBlob` REST API entegrasyonu ile tek tıkla buluta yedekleme ve geri yükleme.
-- **Güvenli Kod Üretimi**: Otomatik `FLX-XXXXXX` senkronizasyon kodları.
-- **Flexi Dosya Paylaşımı**: `.flexi` uzantılı defter dosyalarını dışa aktarma ve içe aktarma (`ACTION_VIEW` & `ACTION_SEND` Intent desteği).
+Unlike ordinary to-do apps, FlexiList combines To-Do Lists, Shopping Lists, Habit Trackers, and an interactive **Workout Planner (Workout Assistant)** into a single, unified experience. Featuring a Material Design 3 compliant, distraction-free dark slate aesthetic, it delivers high performance and intuitive ergonomics.
 
 ---
 
-## 🛠️ Teknolojik Mimari & Kütüphaneler
+## 🚀 Key Features
 
-- **Dil**: Kotlin (100%)
+### 1. 🏋️‍♂️ Advanced Workout Assistant (Workout Planner)
+- **Smart DSL Parsing**: Parses exercise descriptions automatically into visual pills/chips for Set counts, Reps/Timer, Weight (kg), Rest periods (s), and Target Muscle Groups.
+- **⚡ Superset Support**: Automatic visual grouping and connection badges for superset exercises.
+- **Distraction-Free Full-Screen Player**:
+  - 5-second preparation countdown (Prep State).
+  - Auto-counting timer for duration exercises; instant "COMPLETE SET" action for rep-based exercises.
+  - Cyberpunk-inspired **Muscle Group Visualizer**: Anatomical human graphic that highlights active muscle groups during exercises.
+  - Automatic rest timer with "+15s Rest", "Skip Rest", and "Do Later" options.
+- **Period Management**:
+  - **Daily Programs**: Weekday-specific routines (Mon, Tue, Wed...).
+  - **Monthly Programs**: 1–31 day horizontal chip navigation (`LazyRow`).
+- **Auto-Sync & Logging**: Upon completing a session, items auto-mark as completed; duration, sets, and lifted volume save directly to local history logs.
+
+### 2. 📝 Multi-Purpose Notebook & List Management
+- **Flexible Notebook Models**: Standard, To-Do, Shopping, Habit Tracker, and Workout Planner notebooks.
+- **Drag & Drop Reordering & Bulk Operations**: Smooth Compose list reordering and multi-selection mode for batch delete/move.
+- **Customizable Priority Levels**: Custom color palettes and level names via `PriorityCustomizationDialog`.
+- **Advanced Filtering**: Starring, priority badge indicators, and tag/category filtering.
+
+### 3. 🌐 Multi-Language & Theme Personalization
+- **Multi-Language Support**: Built-in support for English 🇬🇧, Turkish 🇹🇷, and Russian 🇷🇺 with real-time switching.
+- **Handcrafted Accent Palettes**: *Flexi Cyan, Neon Emerald, Electric Violet, Sunset Crimson, Cyber Gold, Deep Ocean*.
+- **Dark / Light Modes**: Eye-friendly slate themes with automatic or manual toggling.
+- **Haptic Feedback**: Precise tactile feedback for key actions.
+
+### 4. 🔔 Notifications, Audio & Reminders
+- **Audio Feedback**: Countdown tick sounds for the last 3 seconds and completion gong sounds.
+- **Local Reminders**: Independent scheduling using `AlarmManager` and `NotificationManager`.
+- **Lock Screen & Notification Tracking**: Background service tracking for active workout sessions and reminders.
+
+### 5. ☁️ Cloud Sync & File Sharing
+- **SSL-Encrypted Cloud Sync**: Zero-configuration cloud backup & restore powered by `CloudSyncManager` (JSONBlob REST API).
+- **Secure Sync Keys**: Auto-generated `FLX-XXXXXX` synchronization codes.
+- **Flexi File Import/Export**: Share `.flexi` notebook files directly with native Android `ACTION_VIEW` and `ACTION_SEND` intent handlers.
+
+---
+
+## 🛠️ Architecture & Tech Stack
+
+- **Language**: Kotlin (100%)
 - **UI Framework**: Jetpack Compose + Material Design 3
-- **Mimari**: MVVM (Model-View-ViewModel) + Clean Architecture prensipleri
-- **Yerel Veritabanı**: Room Persistence Library + KSP
-- **Asenkron İşlemler**: Kotlin Coroutines & Flow
-- **Ağ & REST API**: Retrofit 2, OkHttp 4, Moshi Converter
-- **Navigasyon**: Type-Safe Navigation Compose
-- **Test**: JUnit 4, Robolectric, Roborazzi (Visual Regression Test)
-- **Paket Adı (Application ID)**: `xyz.younglion.flexilist`
+- **Architecture**: MVVM (Model-View-ViewModel) + Clean Architecture
+- **Local Database**: Room Persistence Library + KSP
+- **Concurrency**: Kotlin Coroutines & Flow
+- **Networking & REST API**: Retrofit 2, OkHttp 4, Moshi
+- **Navigation**: Type-Safe Navigation Compose
+- **Testing**: JUnit 4, Robolectric, Roborazzi (Visual Regression Testing)
+- **Application ID**: `xyz.younglion.flexilist`
 
 ---
 
-## 📥 İndirme ve Yükleme (APK)
+## 📥 Download & Installation (APK)
 
-Uygulamanın derlenmiş **v1.0.0** sürümünü doğrudan cihazınıza indirip kurabilirsiniz:
+Download the compiled **v1.0.1** release directly to install on your Android device:
 
-Direct Link: [`releases/FlexiList-v1.0.0.apk`](releases/FlexiList-v1.0.0.apk)
+Direct Download: [`releases/FlexiList-v1.0.1.apk`](releases/FlexiList-v1.0.1.apk)
 
-### Manuel Yükleme Adımları:
-1. `FlexiList-v1.0.0.apk` dosyasını Android cihazınıza indirin.
-2. Tarayıcı veya dosya yöneticisinden indirdiğiniz APK'ya dokunun.
-3. İstenirse "Bilinmeyen Kaynaklardan Yükleme" iznini onaylayın.
-4. Yüklemeyi tamamlayıp **FlexiList**'i kullanmaya başlayın!
+### Installation Steps:
+1. Download `FlexiList-v1.0.1.apk` to your Android device.
+2. Open the file in your browser or file manager.
+3. Allow "Install from Unknown Sources" if prompted.
+4. Complete installation and enjoy **FlexiList**!
 
 ---
 
-## 💻 Projeyi Yerel Ortamda Derleme (Build Guide)
+## 💻 Building From Source
 
-### Gereksinimler:
-- **Android Studio**: Ladybug (2024.2.1+) veya üzeri
-- **JDK**: OpenJDK 11 veya 17
+### Prerequisites:
+- **Android Studio**: Ladybug (2024.2.1+) or newer
+- **JDK**: OpenJDK 11 or 17
 - **Android SDK**: API level 36 (Min SDK: 24)
 
-### Adımlar:
+### Building:
 
 ```bash
-# 1. Depoyu klonlayın
+# 1. Clone repository
 git clone https://github.com/username/flexilist.git
 
-# 2. Proje dizinine gidin
+# 2. Navigate to project directory
 cd flexilist
 
-# 3. Gradle ile Debug APK derleyin
+# 3. Build Debug APK
 ./gradlew assembleDebug
 
-# 4. Derlenen APK dosyasını bulabilirsiniz:
+# 4. Locate output APK at:
 # app/build/outputs/apk/debug/app-debug.apk
 ```
 
 ---
 
-## 📁 Proje Klasör Yapısı
+## 📁 Directory Structure
 
 ```
 FlexiList/
@@ -113,52 +113,51 @@ FlexiList/
 │   ├── src/main/
 │   │   ├── java/xyz/younglion/flexilist/
 │   │   │   ├── data/
-│   │   │   │   ├── backup/         # Cloud & File Backup yöneticileri
-│   │   │   │   ├── db/             # Room DAO ve AppDatabase
-│   │   │   │   ├── model/          # Entity verileri
-│   │   │   │   ├── notifications/  # AlarmManager & Notification yöneticileri
+│   │   │   │   ├── backup/         # Cloud & File Backup managers
+│   │   │   │   ├── db/             # Room DAO & AppDatabase
+│   │   │   │   ├── model/          # Entities & Data Models
+│   │   │   │   ├── notifications/  # AlarmManager & Notification handlers
 │   │   │   │   └── repository/     # FlexiRepository
 │   │   │   ├── ui/
-│   │   │   │   ├── detail/         # Detay ekranları
-│   │   │   │   ├── dialogs/        # Tema, Ayar & İstatistik Diyalogları
-│   │   │   │   ├── items/          # Liste Öğeleri Ekranı
-│   │   │   │   ├── notebooks/      # Defterler Ekranı
-│   │   │   │   ├── theme/          # Color, Type, Theme M3 tanımları
-│   │   │   │   └── workout/        # Workout Player & Kas Görselleştiricisi
-│   │   │   └── util/               # Animasyon & Ağ Monitörü Araçları
-│   │   ├── res/                    # Görsel, Ses, XML ve String Kaynakları
+│   │   │   │   ├── detail/         # Item detail screens
+│   │   │   │   ├── dialogs/        # Theme, Language, Settings & Analytics dialogs
+│   │   │   │   ├── items/          # List items screen
+│   │   │   │   ├── notebooks/      # Notebooks list screen
+│   │   │   │   ├── theme/          # Color, Type, Theme M3 specs
+│   │   │   │   └── workout/        # Workout Player & Visualizer
+│   │   │   └── util/               # Animations & Network Monitor
+│   │   ├── res/                    # Values (en, tr, ru), Drawables, Sounds & XMLs
 │   │   └── AndroidManifest.xml
 │   └── build.gradle.kts            # Application ID: xyz.younglion.flexilist
 ├── releases/
-│   └── FlexiList-v1.0.0.apk        # Hazır Yükleme APK Dosyası
-├── AGENTS.md                       # Detaylı Gelişim Raporu & Kod Kılavuzu
-├── RELEASE.md                      # Sürüm Notları (v1.0.0)
+│   └── FlexiList-v1.0.1.apk        # Compiled Release APK
+├── AGENTS.md                       # Progress Report & Technical Specification
+├── RELEASE.md                      # Release Notes (v1.0.1)
 ├── LICENSE                         # GNU General Public License v3.0
-├── CONTRIBUTING.md                 # Katkıda Bulunma Kılavuzu
-└── SECURITY.md                     # Güvenlik Politikası
+├── CONTRIBUTING.md                 # Contribution Guidelines
+└── SECURITY.md                     # Security Policy
 ```
 
 ---
 
-## 🤝 Katkıda Bulunma (Contributing)
+## 🤝 Contributing
 
-Açık kaynak topluluğunun katkılarını içtenlikle karşılıyoruz!
-Katkıda bulunmak istiyorsanız lütfen önce [CONTRIBUTING.md](CONTRIBUTING.md) dosyasını inceleyin.
+Contributions are warmly welcomed! Please read [CONTRIBUTING.md](CONTRIBUTING.md) before submitting pull requests.
 
-1. Projeyi çatallayın (**Fork**).
-2. Yeni bir özellik dalı oluşturun (`git checkout -b feature/harika-ozellik`).
-3. Değişikliklerinizi işleyin (`git commit -m 'feat: Yeni özellik eklendi'`).
-4. Dalınıza itin (`git push origin feature/harika-ozellik`).
-5. Bir **Pull Request (PR)** açın.
+1. Fork the repository.
+2. Create your feature branch (`git checkout -b feature/amazing-feature`).
+3. Commit your changes (`git commit -m 'feat: Add amazing feature'`).
+4. Push to the branch (`git push origin feature/amazing-feature`).
+5. Open a Pull Request.
 
 ---
 
-## 📜 Lisans
+## 📜 License
 
-Bu proje **GNU General Public License v3.0 (GPLv3)** ile lisanslanmıştır. Detaylı bilgi için [LICENSE](LICENSE) dosyasını inceleyebilirsiniz.
+This project is licensed under the **GNU General Public License v3.0 (GPLv3)**. See [LICENSE](LICENSE) for details.
 
 ---
 
 <p align="center">
-  <b>FlexiList</b> — Ultra Hızlı, Özgür ve Esnek Liste & Antrenman Asistanı 🚀
+  <b>FlexiList</b> — Fast, Free & Flexible Multi-Purpose Assistant 🚀
 </p>

@@ -1,0 +1,21 @@
+FlexiList; Kotlin, Jetpack Compose ve SQLite tabanlı Room veritabanı ile geliştirilmiş, ultra hızlı, çevrimdışı öncelikli, modern ve esnek bir çok amaçlı liste yönetimi ve antrenman asistanı uygulamasıdır.
+
+Öne Çıkan Özellikler:
+
+1. Gelişmiş Antrenman Asistanı (Workout Planner):
+- Egzersiz açıklamalarından set, tekrar/süre, ağırlık, dinlenme ve hedef kas gruplarını otomatik ayrıştıran akıllı DSL motoru.
+- Süperset visual bağlantı rozetleri.
+- Hazırlık sayacı, otomatik dinlenme süresi ve anatomik Kas Grubu Görselleştiricisi içeren Tam Ekran Antrenman Oynatıcısı.
+- Haftalık ve Aylık antrenman programları.
+- Detaylı antrenman geçmişi raporları ve kaldırılan tonaj grafikleri.
+
+2. Çok Amaçlı Defter ve Liste Yönetimi:
+- Standart, Yapılacaklar (To-Do), Alışveriş, Alışkanlık Takibi ve Antrenman defterleri.
+- Sürükle-bırak sıralama, özelleştirilebilir öncelik dereceleri ve toplu seçim modu.
+- Etiket ve kategori filtreleme.
+
+3. Gizlilik ve Açık Kaynak Şartları:
+- %100 çevrimdışı yerel Room veritabanı depolaması.
+- F-Droid şartlarına tam uyumlu: Reklam, takipçi veya kapalı kaynak SDK barındırmaz.
+- Özel senkronizasyon kodları ile SSL şifreli bulut yedekleme.
+- Çoklu dil desteği (İngilizce, Türkçe, Rusça, Almanca, İspanyolca, Fransızca).
