@@ -1,7 +1,7 @@
 Categories:
-  - Time
   - Sports & Health
 License: GPL-3.0-only
+AuthorName: Javanshir
 SourceCode: https://github.com/Cavanshirpro/FlexiList
 IssueTracker: https://github.com/Cavanshirpro/FlexiList/issues
 
@@ -16,7 +16,12 @@ Builds:
     gradle:
       - fdroid
 
+Binaries: https://github.com/Cavanshirpro/FlexiList/releases/download/v1.0.1/app-fdroid-release-unsigned.apk
+
+AllowedAPKSigningKeys: 1f69d377fc891db13ffe8c8744a7e14cd22fffd82df4caaaf704567b14c9dba3
+
 AutoUpdateMode: Version %v
 UpdateCheckMode: Tags
+UpdateCheckData: v1.0.1
 CurrentVersion: 1.0.1
 CurrentVersionCode: 2
