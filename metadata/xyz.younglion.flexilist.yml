@@ -9,19 +9,19 @@ RepoType: git
 Repo: https://github.com/Cavanshirpro/FlexiList.git
 
 Builds:
-  - versionName: 1.0.2
-    versionCode: 3
-    commit: c84a5ee3c68c627879b5d77ccd689c46daa41d40
+  - versionName: 1.0.3
+    versionCode: 4
+    commit: 95aeed83bb4682621397b447e8525f08ae508bef
     subdir: app
     gradle:
       - fdroid
 
-Binaries: https://github.com/Cavanshirpro/FlexiList/releases/download/v1.0.2/FlexiList-v1.0.2.apk
+Binaries: https://github.com/Cavanshirpro/FlexiList/releases/download/v1.0.3/FlexiList-v1.0.3.apk
 
 AllowedAPKSigningKeys: 1f69d377fc891db13ffe8c8744a7e14cd22fffd82df4caaaf704567b14c9dba3
 
 AutoUpdateMode: Version %v
 UpdateCheckMode: Tags
-UpdateCheckData: v1.0.2
-CurrentVersion: 1.0.2
-CurrentVersionCode: 3
+UpdateCheckData: v1.0.3
+CurrentVersion: 1.0.3
+CurrentVersionCode: 4
