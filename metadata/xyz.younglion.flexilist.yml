@@ -11,7 +11,7 @@ Repo: https://github.com/Cavanshirpro/FlexiList.git
 Builds:
   - versionName: 1.0.2
     versionCode: 3
-    commit: v1.0.2
+    commit: c84a5ee3c68c627879b5d77ccd689c46daa41d40
     subdir: app
     gradle:
       - fdroid
