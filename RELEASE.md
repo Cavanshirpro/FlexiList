@@ -5,7 +5,7 @@
 - **Release Version**: `1.0.3`
 - **Version Code**: `4`
 - **Git Tag**: `v1.0.3`
-- **Commit SHA**: `df06c779c963480991122d8df077968719012935`
+- **Commit SHA**: `edba8ff491d693a471348ad50952b31194b206f2`
 - **Build Target**: Android 16 (API 36) / Minimum Android 7.0 (API 24)
 - **License**: GNU General Public License v3.0 (GPLv3)
 
@@ -16,7 +16,7 @@
 ### 1. 📱 Full F-Droid Open-Source Compliance & Reproducible Builds
 - Configured dedicated `fdroid` build flavor matching F-Droid official inclusion requirements.
 - Validated 100% reproducible APK build structure verified against unsigned F-Droid release output.
-- Updated `.fdroid.yml` and `metadata/xyz.younglion.flexilist.yml` manifests pointing to exact release commit `df06c779c963480991122d8df077968719012935`.
+- Updated `.fdroid.yml` and `metadata/xyz.younglion.flexilist.yml` manifests pointing to exact release commit `edba8ff491d693a471348ad50952b31194b206f2`.
 - Verified allowed APK signing certificate fingerprint (`1f69d377fc891db13ffe8c8744a7e14cd22fffd82df4caaaf704567b14c9dba3`).
 
 ### 2. 🌐 Multi-Language Support (Localization)

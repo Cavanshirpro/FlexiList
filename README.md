@@ -5,7 +5,7 @@
 [![Jetpack Compose](https://img.shields.io/badge/UI-Jetpack%20Compose-blue.svg?logo=jetpackcompose)](https://developer.android.com/jetpack/compose)
 [![Package](https://img.shields.io/badge/Package-xyz.younglion.flexilist-informational.svg)](https://github.com/)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
-[![Release](https://img.shields.io/badge/Release-v1.0.1-brightgreen.svg)](releases/FlexiList-v1.0.1.apk)
+[![Release](https://img.shields.io/badge/Release-v1.0.3-brightgreen.svg)](FlexiList-v1.0.3.apk)
 
 **FlexiList** is an ultra-fast, offline-first, modern, modular, and flexible multi-purpose list management and workout assistant application built with Kotlin, Jetpack Compose, and SQLite-based Room Database.
 
@@ -68,12 +68,12 @@ Unlike ordinary to-do apps, FlexiList combines To-Do Lists, Shopping Lists, Habi
 
 ## 📥 Download & Installation (APK)
 
-Download the compiled **v1.0.1** release directly to install on your Android device:
+Download the compiled **v1.0.3** release directly to install on your Android device:
 
-Direct Download: [`releases/FlexiList-v1.0.1.apk`](releases/FlexiList-v1.0.1.apk)
+Direct Download: [`FlexiList-v1.0.3.apk`](FlexiList-v1.0.3.apk) or [`releases/FlexiList-v1.0.3.apk`](releases/FlexiList-v1.0.3.apk)
 
 ### Installation Steps:
-1. Download `FlexiList-v1.0.1.apk` to your Android device.
+1. Download `FlexiList-v1.0.3.apk` to your Android device.
 2. Open the file in your browser or file manager.
 3. Allow "Install from Unknown Sources" if prompted.
 4. Complete installation and enjoy **FlexiList**!
@@ -129,10 +129,11 @@ FlexiList/
 │   │   ├── res/                    # Values (en, tr, ru), Drawables, Sounds & XMLs
 │   │   └── AndroidManifest.xml
 │   └── build.gradle.kts            # Application ID: xyz.younglion.flexilist
+├── FlexiList-v1.0.3.apk           # Compiled Release APK (Root)
 ├── releases/
-│   └── FlexiList-v1.0.1.apk        # Compiled Release APK
+│   └── FlexiList-v1.0.3.apk        # Compiled Release APK
 ├── AGENTS.md                       # Progress Report & Technical Specification
-├── RELEASE.md                      # Release Notes (v1.0.1)
+├── RELEASE.md                      # Release Notes (v1.0.3)
 ├── LICENSE                         # GNU General Public License v3.0
 ├── CONTRIBUTING.md                 # Contribution Guidelines
 └── SECURITY.md                     # Security Policy

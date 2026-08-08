@@ -18,5 +18,7 @@ local.properties
 debug.keystore
 *.apk
 *.idsig
+!FlexiList-*.apk
+!releases/*.apk
 debug.keystore.base64
 .build-outputs/
