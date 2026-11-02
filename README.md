@@ -5,7 +5,7 @@
 [![Jetpack Compose](https://img.shields.io/badge/UI-Jetpack%20Compose-blue.svg?logo=jetpackcompose)](https://developer.android.com/jetpack/compose)
 [![Package](https://img.shields.io/badge/Package-xyz.younglion.flexilist-informational.svg)](https://github.com/)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
-[![Release](https://img.shields.io/badge/Release-v1.0.3-brightgreen.svg)](FlexiList-v1.0.3.apk)
+[![Release](https://img.shields.io/github/v/release/Cavanshirpro/FlexiList)](https://github.com/Cavanshirpro/FlexiList/releases)
 
 **FlexiList** is an ultra-fast, offline-first, modern, modular, and flexible multi-purpose list management and workout assistant application built with Kotlin, Jetpack Compose, and SQLite-based Room Database.
 
@@ -46,8 +46,8 @@ Unlike ordinary to-do apps, FlexiList combines To-Do Lists, Shopping Lists, Habi
 - **Lock Screen & Notification Tracking**: Background service tracking for active workout sessions and reminders.
 
 ### 5. ☁️ Cloud Sync & File Sharing
-- **SSL-Encrypted Cloud Sync**: Zero-configuration cloud backup & restore powered by `CloudSyncManager` (JSONBlob REST API).
-- **Secure Sync Keys**: Auto-generated `FLX-XXXXXX` synchronization codes.
+- **HTTPS Cloud Backup**: Cloud backup & restore powered by `CloudSyncManager` (JSONBlob REST API).
+- **Cloud Backup IDs**: Restore JSONBlob backups using their generated identifier.
 - **Flexi File Import/Export**: Share `.flexi` notebook files directly with native Android `ACTION_VIEW` and `ACTION_SEND` intent handlers.
 
 ---
@@ -56,52 +56,38 @@ Unlike ordinary to-do apps, FlexiList combines To-Do Lists, Shopping Lists, Habi
 
 - **Language**: Kotlin (100%)
 - **UI Framework**: Jetpack Compose + Material Design 3
-- **Architecture**: MVVM (Model-View-ViewModel) + Clean Architecture
+- **Architecture**: MVVM (Model-View-ViewModel), repository and Room transactions
 - **Local Database**: Room Persistence Library + KSP
 - **Concurrency**: Kotlin Coroutines & Flow
 - **Networking & REST API**: Retrofit 2, OkHttp 4, Moshi
-- **Navigation**: Type-Safe Navigation Compose
+- **Navigation**: Navigation Compose
 - **Testing**: JUnit 4, Robolectric, Roborazzi (Visual Regression Testing)
 - **Application ID**: `xyz.younglion.flexilist`
 
 ---
 
-## 📥 Download & Installation (APK)
+## 📥 Downloads
 
-Download the compiled **v1.0.3** release directly to install on your Android device:
+Install published APKs from [GitHub Releases](https://github.com/Cavanshirpro/FlexiList/releases). Development APKs and test reports are available from the [Actions runs](https://github.com/Cavanshirpro/FlexiList/actions).
 
-Direct Download: [`FlexiList-v1.0.3.apk`](FlexiList-v1.0.3.apk) or [`releases/FlexiList-v1.0.3.apk`](releases/FlexiList-v1.0.3.apk)
+## 💻 Build and verification
 
-### Installation Steps:
-1. Download `FlexiList-v1.0.3.apk` to your Android device.
-2. Open the file in your browser or file manager.
-3. Allow "Install from Unknown Sources" if prompted.
-4. Complete installation and enjoy **FlexiList**!
+Use **JDK 17 or newer**, Android SDK **36.1**, and the checked-in Gradle wrapper (**9.3.1**). The minimum device version is Android 7.0 (API 24).
 
----
-
-## 💻 Building From Source
-
-### Prerequisites:
-- **Android Studio**: Ladybug (2024.2.1+) or newer
-- **JDK**: OpenJDK 11 or 17
-- **Android SDK**: API level 36 (Min SDK: 24)
-
-### Building:
-
-```bash
-# 1. Clone repository
-git clone https://github.com/username/flexilist.git
-
-# 2. Navigate to project directory
-cd flexilist
-
-# 3. Build Debug APK
-./gradlew assembleDebug
-
-# 4. Locate output APK at:
-# app/build/outputs/apk/debug/app-debug.apk
+```sh
+git clone https://github.com/Cavanshirpro/FlexiList.git
+cd FlexiList
+./gradlew :app:testFullDebugUnitTest :app:lintFullDebug :app:assembleFullDebug
+./gradlew :app:testFdroidDebugUnitTest :app:lintFdroidDebug :app:assembleFdroidDebug
 ```
+
+Debug APKs are written to `app/build/outputs/apk/full/debug/` and `app/build/outputs/apk/fdroid/debug/`. No Google Services configuration, `.env`, or custom debug keystore is required.
+
+## 🔄 Automated build and release
+
+CI tests, lints and compiles both flavors on every pull request and push to `main`. A separate release workflow verifies signed APKs, their checksums and source commit before publishing to GitHub Releases. Matching version tags trigger publication automatically; manual runs support validation and publication modes.
+
+Version metadata lives in `release/release.json`. See [the release guide](docs/RELEASING.md) for one-time signing-secret setup and the full artifact contract.
 
 ---
 
@@ -129,9 +115,9 @@ FlexiList/
 │   │   ├── res/                    # Values (en, tr, ru), Drawables, Sounds & XMLs
 │   │   └── AndroidManifest.xml
 │   └── build.gradle.kts            # Application ID: xyz.younglion.flexilist
-├── FlexiList-v1.0.3.apk           # Compiled Release APK (Root)
-├── releases/
-│   └── FlexiList-v1.0.3.apk        # Compiled Release APK
+├── release/                       # Canonical metadata and versioned release notes
+├── tools/release.py                # APK validation, staging and publication
+├── docs/RELEASING.md               # CI and signing setup
 ├── AGENTS.md                       # Progress Report & Technical Specification
 ├── RELEASE.md                      # Release Notes (v1.0.3)
 ├── LICENSE                         # GNU General Public License v3.0

@@ -12,48 +12,37 @@ import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
 import java.io.FileOutputStream
-import java.io.InputStreamReader
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.launch
 
 object NotebookShareManager {
 
     /**
      * Serializes notebook and its items into a JSON string format (.flexi)
      */
+    private val notebookAdapter = com.squareup.moshi.Moshi.Builder()
+        .addLast(com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory()).build()
+        .adapter(BackupManager.NotebookBackup::class.java)
+
     fun createFlexiJson(notebook: NotebookEntity, items: List<ListItemEntity>): String {
-        val root = JSONObject()
-        root.put("version", 1)
-        root.put("app", "FlexiList")
-        
-        val nbJson = JSONObject().apply {
-            put("name", notebook.name)
-            put("description", notebook.description)
-            put("emoji", notebook.emoji)
-            put("color", notebook.color)
-            put("type", notebook.type)
-            put("pinned", notebook.pinned)
-            put("favorite", notebook.favorite)
-            put("priorityConfigJson", notebook.priorityConfigJson)
-        }
-        root.put("notebook", nbJson)
+        val data = JSONObject(notebookAdapter.toJson(BackupManager.notebookBackup(notebook, items)))
+        val itemData = data.getJSONArray("items")
+        data.remove("items")
+        return JSONObject().apply {
+            put("version", 1)
+            put("app", "FlexiList")
+            put("notebook", data)
+            put("items", itemData)
+        }.toString(2)
+    }
 
-        val itemsArray = JSONArray()
-        items.forEach { item ->
-            val itemJson = JSONObject().apply {
-                put("title", item.title)
-                put("description", item.description)
-                put("completed", item.completed)
-                put("starred", item.starred)
-                put("category", item.category)
-                put("tags", item.tags)
-                put("dueDate", item.dueDate)
-                put("priority", item.priority)
-                put("sortOrder", item.sortOrder)
-            }
-            itemsArray.put(itemJson)
-        }
-        root.put("items", itemsArray)
-
-        return root.toString(2)
+    fun parseFlexiJson(json: String): Pair<NotebookEntity, List<ListItemEntity>> {
+        val root = JSONObject(json)
+        require(root.optInt("version", 1) == 1) { "Unsupported .flexi version" }
+        val data = root.getJSONObject("notebook")
+        data.put("items", root.optJSONArray("items") ?: JSONArray())
+        val backup = requireNotNull(notebookAdapter.fromJson(data.toString()))
+        return BackupManager.notebookEntity(backup) to backup.items.map { BackupManager.itemEntity(it, 0L) }
     }
 
     /**
@@ -101,99 +90,36 @@ object NotebookShareManager {
         onSuccess: (String, Int) -> Unit,
         onError: (String) -> Unit
     ) {
-        try {
-            var jsonStr: String? = null
-            val action = intent.action
-
-            val uri: Uri? = when (action) {
-                Intent.ACTION_VIEW -> intent.data
-                Intent.ACTION_SEND -> {
-                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
-                        intent.getParcelableExtra(Intent.EXTRA_STREAM, Uri::class.java)
-                    } else {
-                        @Suppress("DEPRECATION")
-                        intent.getParcelableExtra(Intent.EXTRA_STREAM)
-                    } ?: intent.data
-                }
-                else -> intent.data
-            }
-
-            if (uri != null) {
-                try {
-                    context.contentResolver.openInputStream(uri)?.use { stream ->
-                        jsonStr = InputStreamReader(stream, Charsets.UTF_8).readText()
+        viewModel.viewModelScope.launch {
+            try {
+                val (notebook, items) = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                    val uri: Uri? = when (intent.action) {
+                        Intent.ACTION_SEND -> {
+                            if (android.os.Build.VERSION.SDK_INT >= 33) {
+                                intent.getParcelableExtra(Intent.EXTRA_STREAM, Uri::class.java)
+                            } else {
+                                @Suppress("DEPRECATION")
+                                intent.getParcelableExtra(Intent.EXTRA_STREAM)
+                            } ?: intent.data
+                        }
+                        else -> intent.data
                     }
-                } catch (e: Exception) {
-                    e.printStackTrace()
+                    val json = if (uri != null) {
+                        requireNotNull(context.contentResolver.openInputStream(uri)).use {
+                            it.bufferedReader(Charsets.UTF_8).readText()
+                        }
+                    } else {
+                        requireNotNull(intent.getStringExtra(Intent.EXTRA_TEXT))
+                    }
+                    parseFlexiJson(json)
                 }
+                viewModel.importNotebookWithItems(notebook, items,
+                    onComplete = { onSuccess(notebook.name, items.size) }, onError = onError)
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                onError(e.message ?: "İçe aktarım başarısız oldu.")
             }
-
-            if (jsonStr.isNullOrBlank() && intent.hasExtra(Intent.EXTRA_TEXT)) {
-                val textExtra = intent.getStringExtra(Intent.EXTRA_TEXT)
-                if (textExtra != null && textExtra.trim().startsWith("{") && textExtra.contains("notebook")) {
-                    jsonStr = textExtra
-                }
-            }
-
-            if (jsonStr.isNullOrBlank()) {
-                onError("Gelen paylaşım veya dosya içeriği okunamadı.")
-                return
-            }
-
-            val root = JSONObject(jsonStr)
-            if (!root.has("notebook")) {
-                throw IllegalArgumentException("Geçersiz .flexi dosya formatı!")
-            }
-
-            val nbJson = root.getJSONObject("notebook")
-            val name = nbJson.optString("name", "İçe Aktarılan Defter")
-            val description = nbJson.optString("description", "")
-            val emoji = nbJson.optString("emoji", "📋")
-            val color = nbJson.optInt("color", 0)
-            val type = nbJson.optString("type", "Standard")
-            val priorityConfigJson = nbJson.optString("priorityConfigJson", "")
-
-            val newNotebook = NotebookEntity(
-                name = "$name (İçe Aktarıldı)",
-                description = description,
-                emoji = emoji,
-                color = color,
-                type = type,
-                pinned = false,
-                favorite = false,
-                priorityConfigJson = priorityConfigJson,
-                createdAt = System.currentTimeMillis(),
-                updatedAt = System.currentTimeMillis()
-            )
-
-            val itemsList = mutableListOf<ListItemEntity>()
-            if (root.has("items")) {
-                val itemsArray = root.getJSONArray("items")
-                for (i in 0 until itemsArray.length()) {
-                    val itemObj = itemsArray.getJSONObject(i)
-                    itemsList.add(
-                        ListItemEntity(
-                            notebookId = 0L,
-                            title = itemObj.optString("title", "Öğe"),
-                            description = itemObj.optString("description", ""),
-                            completed = itemObj.optBoolean("completed", false),
-                            starred = itemObj.optBoolean("starred", false),
-                            category = itemObj.optString("category", ""),
-                            tags = itemObj.optString("tags", ""),
-                            dueDate = if (itemObj.has("dueDate")) itemObj.optLong("dueDate") else null,
-                            priority = itemObj.optInt("priority", 0),
-                            sortOrder = itemObj.optInt("sortOrder", i)
-                        )
-                    )
-                }
-            }
-
-            viewModel.importNotebookWithItems(newNotebook, itemsList) { createdNbId ->
-                onSuccess(name, itemsList.size)
-            }
-        } catch (e: Exception) {
-            e.printStackTrace()
-            onError(e.message ?: "İçe aktarım başarısız oldu.")
         }
     }
 

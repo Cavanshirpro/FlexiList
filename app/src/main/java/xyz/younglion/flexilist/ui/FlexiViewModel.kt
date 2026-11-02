@@ -14,6 +14,10 @@ import xyz.younglion.flexilist.data.repository.FlexiRepository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.CancellationException
 import java.io.InputStream
 import java.io.OutputStream
 import java.util.Calendar
@@ -143,7 +147,7 @@ class FlexiViewModel(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
     private fun getTodayDateString(): String {
-        val sdf = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault())
+        val sdf = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.ROOT)
         return sdf.format(java.util.Date())
     }
 
@@ -218,9 +222,8 @@ class FlexiViewModel(
         .combine(filterStarred) { list, starred ->
             if (!starred) list else list.filter { it.starred }
         }
-        .combine(filterCompleted) { list, completed ->
-            // If completed is explicitly filtered, use it. Otherwise, fallback to showCompleted in selectedNotebook settings
-            val showComp = completed ?: selectedNotebook.value?.showCompleted ?: true
+        .combine(combine(filterCompleted, selectedNotebook) { completed, notebook -> completed to notebook }) { list, (completed, notebook) ->
+            val showComp = notebook?.showCompleted ?: true
             if (completed != null) {
                 list.filter { it.completed == completed }
             } else if (!showComp) {
@@ -249,9 +252,6 @@ class FlexiViewModel(
             } else {
                 list
             }
-        }
-        .onEach { list ->
-            checkAndResetOldCompletedItems(list)
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
@@ -300,6 +300,11 @@ class FlexiViewModel(
             if (_selectedNotebookId.value == notebook.id) {
                 _selectedNotebookId.value = null
             }
+            repository.getItemsForNotebook(notebook.id).first().forEach {
+                ReminderScheduler.cancel(getApplication(), it.id)
+            }
+            cancelNotebookReminder(notebook.id)
+            resetWorkoutStepIndex(notebook.id)
             repository.deleteNotebook(notebook)
         }
     }
@@ -307,17 +312,22 @@ class FlexiViewModel(
     fun importNotebookWithItems(
         notebook: NotebookEntity,
         itemsList: List<ListItemEntity>,
-        onComplete: (Long) -> Unit
+        onComplete: (Long) -> Unit,
+        onError: (String) -> Unit = {}
     ) {
         viewModelScope.launch {
-            val createdId = repository.insertNotebook(notebook)
-            val updatedItems = itemsList.map { item ->
-                item.copy(id = 0L, notebookId = createdId)
+            try {
+                val createdId = repository.withTransaction {
+                    val id = repository.insertNotebook(notebook.copy(id = 0L))
+                    repository.insertItems(itemsList.map { it.copy(id = 0L, notebookId = id) })
+                    id
+                }
+                onComplete(createdId)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                onError(e.message ?: "Import failed")
             }
-            if (updatedItems.isNotEmpty()) {
-                repository.insertItems(updatedItems)
-            }
-            onComplete(createdId)
         }
     }
 
@@ -552,29 +562,30 @@ class FlexiViewModel(
     }
 
     // Workout & Water helper methods
-    fun saveWorkoutLog(
-        name: String,
-        startTime: Long,
-        endTime: Long,
-        totalDurationSec: Long,
-        totalSets: Int,
-        totalWeightKg: Double,
-        exerciseStatsJson: String
+    fun saveWorkoutSession(
+        log: xyz.younglion.flexilist.data.model.WorkoutLogEntity,
+        completedExerciseIds: List<Long>,
+        onSuccess: () -> Unit,
+        onError: () -> Unit
     ) {
-        val notebookId = _selectedNotebookId.value ?: return
         viewModelScope.launch {
-            repository.insertWorkoutLog(
-                xyz.younglion.flexilist.data.model.WorkoutLogEntity(
-                    notebookId = notebookId,
-                    workoutName = name,
-                    startTime = startTime,
-                    endTime = endTime,
-                    totalDurationSeconds = totalDurationSec,
-                    totalSetsCompleted = totalSets,
-                    totalWeightLiftedKg = totalWeightKg,
-                    exerciseStatsJson = exerciseStatsJson
-                )
-            )
+            try {
+                repository.withTransaction {
+                    repository.insertWorkoutLog(log)
+                    completedExerciseIds.forEach { id ->
+                        val item = repository.getItemByIdSuspend(id)
+                        if (item != null && item.notebookId == log.notebookId) {
+                            repository.updateItem(item.copy(completed = true, completedAt = log.endTime, updatedAt = log.endTime))
+                        }
+                    }
+                }
+                resetWorkoutStepIndex(log.notebookId)
+                onSuccess()
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                onError()
+            }
         }
     }
 
@@ -582,6 +593,24 @@ class FlexiViewModel(
     private val workoutPrefs = application.getSharedPreferences("flexilist_workout_prefs", Context.MODE_PRIVATE)
     private val _workoutSavedStepIndices = MutableStateFlow<Map<Long, Int>>(emptyMap())
     val workoutSavedStepIndices: StateFlow<Map<Long, Int>> = _workoutSavedStepIndices.asStateFlow()
+
+    fun getWorkoutQueue(notebookId: Long): List<String> =
+        workoutPrefs.getString("workout_queue_$notebookId", null)?.split(",").orEmpty()
+
+    fun getCompletedWorkoutSteps(notebookId: Long): Set<Int>? =
+        workoutPrefs.getStringSet("workout_completed_$notebookId", null)?.mapNotNull { it.toIntOrNull() }?.toSet()
+
+    fun getWorkoutStartTime(notebookId: Long): Long =
+        workoutPrefs.getLong("workout_start_time_$notebookId", System.currentTimeMillis())
+
+    fun saveWorkoutProgress(notebookId: Long, queue: List<String>, completed: Set<Int>, startTime: Long) {
+        if (notebookId <= 0) return
+        workoutPrefs.edit()
+            .putString("workout_queue_$notebookId", queue.joinToString(","))
+            .putStringSet("workout_completed_$notebookId", completed.map { it.toString() }.toSet())
+            .putLong("workout_start_time_$notebookId", startTime)
+            .apply()
+    }
 
     fun isWorkoutStarted(notebookId: Long): Boolean {
         if (notebookId <= 0) return false
@@ -614,38 +643,27 @@ class FlexiViewModel(
             workoutPrefs.edit()
                 .remove("workout_started_$notebookId")
                 .remove("workout_step_$notebookId")
+                .remove("workout_queue_$notebookId")
+                .remove("workout_completed_$notebookId")
+                .remove("workout_start_time_$notebookId")
                 .apply()
             _workoutSavedStepIndices.value = _workoutSavedStepIndices.value - notebookId
         }
     }
 
-    // Daily automatic reset of completed items from previous days
-    private var lastDayResetCheckDate: String = ""
-
-    private fun checkAndResetOldCompletedItems(list: List<ListItemEntity>) {
-        val todayStr = getTodayDateString()
-        if (todayStr == lastDayResetCheckDate) return
-        lastDayResetCheckDate = todayStr
-
-        val sdf = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault())
-        val oldCompleted = list.filter { item ->
-            if (item.completed) {
-                val completionMillis = item.completedAt ?: item.updatedAt
-                val completedDateStr = sdf.format(java.util.Date(completionMillis))
-                completedDateStr != todayStr
-            } else false
-        }
-
-        if (oldCompleted.isNotEmpty()) {
-            viewModelScope.launch {
-                val updated = oldCompleted.map {
-                    it.copy(
-                        completed = false,
-                        completedAt = null,
-                        updatedAt = System.currentTimeMillis()
-                    )
-                }
-                repository.updateItems(updated)
+    // Reset from the complete database, independently of the selected notebook or UI filters.
+    init {
+        viewModelScope.launch {
+            while (true) {
+                _todayDate.value = getTodayDateString()
+                val midnight = Calendar.getInstance().apply {
+                    set(Calendar.HOUR_OF_DAY, 0)
+                    set(Calendar.MINUTE, 0)
+                    set(Calendar.SECOND, 0)
+                    set(Calendar.MILLISECOND, 0)
+                }.timeInMillis
+                repository.resetDailyCompletions(midnight)
+                delay(30_000)
             }
         }
     }
@@ -682,16 +700,9 @@ class FlexiViewModel(
 
     fun addWater(amountMl: Int) {
         viewModelScope.launch {
-            val currentDate = _todayDate.value
-            val currentIntake = todayWaterIntake.value
-            val newAmount = (currentIntake?.amountMl ?: 0) + amountMl
-            repository.insertWaterIntake(
-                xyz.younglion.flexilist.data.model.WaterIntakeEntity(
-                    dateString = currentDate,
-                    amountMl = newAmount,
-                    updatedAt = System.currentTimeMillis()
-                )
-            )
+            val currentDate = getTodayDateString()
+            _todayDate.value = currentDate
+            repository.addWater(currentDate, amountMl)
         }
     }
 
@@ -710,21 +721,21 @@ class FlexiViewModel(
     // Export/Import backup trigger wrappers
     fun exportBackupJson(outputStream: OutputStream, onSuccess: () -> Unit, onError: () -> Unit) {
         viewModelScope.launch {
-            val result = backupManager.exportToJson(outputStream)
+            val result = withContext(Dispatchers.IO) { outputStream.use { backupManager.exportToJson(it) } }
             if (result) onSuccess() else onError()
         }
     }
 
     fun importBackupJson(inputStream: InputStream, onSuccess: () -> Unit, onError: () -> Unit) {
         viewModelScope.launch {
-            val result = backupManager.importFromJson(inputStream)
+            val result = withContext(Dispatchers.IO) { inputStream.use { backupManager.importFromJson(it) } }
             if (result) onSuccess() else onError()
         }
     }
 
     fun exportBackupCsv(outputStream: OutputStream, onSuccess: () -> Unit, onError: () -> Unit) {
         viewModelScope.launch {
-            val result = backupManager.exportToCsv(outputStream)
+            val result = withContext(Dispatchers.IO) { outputStream.use { backupManager.exportToCsv(it) } }
             if (result) onSuccess() else onError()
         }
     }

@@ -119,3 +119,15 @@ The following checklist tracks development milestones, completed features, and f
 ---
 
 *Note: This progress report is updated alongside major release milestones.*
+
+
+## Maintenance update: 1.0.4
+
+- Canonical Android version metadata is in `release/release.json`; Gradle reads it directly.
+- `ci.yml` calls the reusable `android-build.yml` for Full/F-Droid tests, lint and APK artifacts. `publish-release.yml` verifies signed candidates and publishes on matching version tags or explicit manual publish runs. See `docs/RELEASING.md` for signing secrets and artifact validation.
+- Backup schema 2 preserves source notebook IDs for log remapping, item order and timestamps. Imports are atomic; legacy backups remain readable. Import creates copies rather than performing identity-based multi-device synchronization.
+- Daily completion reset applies to workout/habit notebooks and operates independently of UI filters. Normal tasks remain completed.
+- Water increments use Room transactions. Workout logs and item completion updates are saved in one transaction. Partial sessions only complete exercises whose entire set sequence was performed.
+- Workout persistence includes queue ordering, completed steps and start time. Timer seconds and preparation/rest phase are not persisted; reopening resumes at set boundaries. The Compose timer is not a foreground service and does not guarantee exact background execution.
+- Local `.flexi` imports preserve optional fields and run file reading off the main thread. Notifications use a single workout channel and check Android notification permission.
+- Verification commands and remaining device-test limits are documented in `docs/RELEASING.md`.

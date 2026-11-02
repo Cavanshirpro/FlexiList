@@ -123,6 +123,13 @@ fun WorkoutPlayerScreen(
                 i++
             }
         }
+        val savedOrder = viewModel.getWorkoutQueue(notebookId)
+        val byKey = queue.associateBy { "${it.exercise.id}:${it.setNumber}" }
+        if (savedOrder.size == queue.size && savedOrder.toSet() == byKey.keys) {
+            val restored = savedOrder.mapNotNull { byKey[it] }
+            queue.clear()
+            queue.addAll(restored)
+        }
         queue
     }
 
@@ -159,7 +166,8 @@ fun WorkoutPlayerScreen(
 
     val savedIndex = remember(notebookId) { viewModel.getSavedWorkoutStepIndex(notebookId) }
     var currentStepIndex by remember {
-        mutableStateOf(if (executionQueue.isNotEmpty()) savedIndex.coerceIn(0, executionQueue.size - 1) else 0)
+        mutableStateOf((savedIndex + if (viewModel.getCompletedWorkoutSteps(notebookId)?.contains(savedIndex) == true) 1 else 0)
+            .coerceIn(0, executionQueue.lastIndex))
     }
 
     LaunchedEffect(currentStepIndex, notebookId) {
@@ -171,8 +179,18 @@ fun WorkoutPlayerScreen(
     val currentStep = executionQueue.getOrNull(currentStepIndex)
 
     // Log tracking
-    val completedSteps = remember { mutableStateMapOf<Int, Boolean>() }
-    val startTime = remember { System.currentTimeMillis() }
+    val completedSteps = remember {
+        mutableStateMapOf<Int, Boolean>().apply {
+            val restored = viewModel.getCompletedWorkoutSteps(notebookId) ?: (0 until savedIndex).toSet()
+            restored.filter { it in executionQueue.indices }.forEach { this[it] = true }
+        }
+    }
+    val startTime = remember(notebookId) { viewModel.getWorkoutStartTime(notebookId) }
+    LaunchedEffect(currentStepIndex, executionQueue.toList(), completedSteps.toMap()) {
+        viewModel.saveWorkoutProgress(notebookId,
+            executionQueue.map { "${it.exercise.id}:${it.setNumber}" },
+            completedSteps.filterValues { it }.keys, startTime)
+    }
 
     // Timing Engine State
     var isTimerRunning by remember { mutableStateOf(false) }
@@ -184,11 +202,11 @@ fun WorkoutPlayerScreen(
     var isAwaitingConfirmation by remember { mutableStateOf(true) }
 
     // Live Ongoing Notification Manager for Active Workout
-    LaunchedEffect(currentStepIndex, isRestingState, isPrepState, secondsRemaining, isTimerRunning) {
+    LaunchedEffect(currentStepIndex, isRestingState, isPrepState, prepSecondsRemaining, secondsRemaining, isTimerRunning) {
         val step = executionQueue.getOrNull(currentStepIndex)
         val statusText = when {
             step == null -> "Antrenman son aşamasında."
-            isRestingState -> "⏸️ Mola: $secondsRemaining sn kaldı! (Sıradaki: ${step.exercise.name})"
+            isRestingState -> "⏸️ Mola: $secondsRemaining sn kaldı! (Sıradaki: ${executionQueue.getOrNull(currentStepIndex + 1)?.exercise?.name.orEmpty()})"
             isPrepState -> "🚀 Hazırlık: $prepSecondsRemaining sn..."
             step.exercise.type == "Timer" && isTimerRunning -> "⏱️ ${step.exercise.name} (Set ${step.setNumber}/${step.exercise.setsCount}) - $secondsRemaining sn"
             else -> "🏋️ ${step.exercise.name} (Set ${step.setNumber}/${step.exercise.setsCount}) ${if (step.exercise.weightKg > 0) "- ${step.exercise.weightKg} kg" else ""}"
@@ -207,51 +225,35 @@ fun WorkoutPlayerScreen(
         }
     }
 
-    // Final finish dialog & saver
+    var isFinishing by remember { mutableStateOf(false) }
+
     fun finishWorkout() {
+        if (isFinishing) return
+        isFinishing = true
+        isTimerRunning = false
         val endTime = System.currentTimeMillis()
-        val totalSec = (endTime - startTime) / 1000
-        val totalCompletedSets = completedSteps.filter { it.value }.size
-
-        // Calculate total weight lifted
-        var totalWeight = 0.0
-        val summaryMap = mutableMapOf<String, Int>() // exercise to completed sets count
-        completedSteps.filter { it.value }.forEach { (idx, _) ->
-            val step = executionQueue.getOrNull(idx)
-            if (step != null) {
-                totalWeight += step.exercise.weightKg
-                summaryMap[step.exercise.name] = (summaryMap[step.exercise.name] ?: 0) + 1
-            }
-        }
-
-        // Format programmatic JSON
-        val summaryList = summaryMap.map { (name, sets) ->
-            val ex = exerciseConfigs.find { it.name == name }
-            "{\"exercise\":\"$name\",\"sets\":$sets,\"weight\":${ex?.weightKg ?: 0.0}}"
-        }
-        val statsJson = "[${summaryList.joinToString(",")}]"
-
-        viewModel.saveWorkoutLog(
-            name = workoutName,
+        val summary = summarizeWorkout(executionQueue, completedSteps.filterValues { it }.keys)
+        val log = xyz.younglion.flexilist.data.model.WorkoutLogEntity(
+            notebookId = notebookId,
+            workoutName = workoutName,
             startTime = startTime,
             endTime = endTime,
-            totalDurationSec = totalSec,
-            totalSets = totalCompletedSets,
-            totalWeightKg = totalWeight,
-            exerciseStatsJson = statsJson
+            totalDurationSeconds = ((endTime - startTime) / 1000).coerceAtLeast(0),
+            totalSetsCompleted = summary.totalSets,
+            totalWeightLiftedKg = summary.totalWeightKg,
+            exerciseStatsJson = summary.exerciseStatsJson
         )
-
-        // Also mark all exercises in active workout as completed in the database!
-        val completedExerciseIds = exercises.map { it.id }
-        if (completedExerciseIds.isNotEmpty()) {
-            viewModel.markExercisesAsCompleted(completedExerciseIds)
-        }
-
-        viewModel.resetWorkoutStepIndex(notebookId)
-
-        SystemSoundAndNotificationHelper.dismissWorkoutNotification(context)
-        Toast.makeText(context, context.getString(R.string.workout_saved), Toast.LENGTH_LONG).show()
-        onDismiss()
+        viewModel.saveWorkoutSession(log, summary.completedExerciseIds,
+            onSuccess = {
+                SystemSoundAndNotificationHelper.dismissWorkoutNotification(context)
+                Toast.makeText(context, context.getString(R.string.workout_saved), Toast.LENGTH_LONG).show()
+                onDismiss()
+            },
+            onError = {
+                isFinishing = false
+                Toast.makeText(context, context.getString(R.string.workout_save_failed), Toast.LENGTH_LONG).show()
+            }
+        )
     }
 
     // Helper to transition state cleanly and prevent key race conditions
@@ -347,8 +349,12 @@ fun WorkoutPlayerScreen(
     }
 
     // Core Timer Countdown ticker loop
-    LaunchedEffect(isTimerRunning, isRestingState, isPrepState, isAwaitingConfirmation) {
+    LaunchedEffect(currentStepIndex, isTimerRunning, isRestingState, isPrepState, isAwaitingConfirmation) {
         if (isTimerRunning && !isAwaitingConfirmation) {
+            if (isRestingState && secondsRemaining == 0) {
+                moveToNextStep()
+                return@LaunchedEffect
+            }
             while (true) {
                 delay(1000)
                 if (isPrepState) {
@@ -396,6 +402,7 @@ fun WorkoutPlayerScreen(
                         SystemSoundAndNotificationHelper.playTick()
                     }
                 } else {
+                    if (isRestingState) moveToNextStep()
                     break
                 }
             }
@@ -446,14 +453,14 @@ fun WorkoutPlayerScreen(
                         fontSize = 12.sp
                     )
                 }
-                IconButton(onClick = { finishWorkout() }) {
+                IconButton(onClick = { finishWorkout() }, enabled = !isFinishing) {
                     Icon(Icons.Default.DoneAll, stringResource(R.string.finish_workout), tint = MaterialTheme.colorScheme.primary)
                 }
             }
 
             // Progress bar
             LinearProgressIndicator(
-                progress = { (currentStepIndex.toFloat() + 1) / executionQueue.size.toFloat() },
+                progress = { completedSteps.count { it.value }.toFloat() / executionQueue.size.toFloat() },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(vertical = 8.dp)
@@ -578,7 +585,9 @@ fun WorkoutPlayerScreen(
                             color = Color.White
                         )
                         Text(
-                            stringResource(R.string.next_label, "${ex.name} (${stringResource(R.string.set_progress, currentStep.setNumber, ex.setsCount)})"),
+                            stringResource(R.string.next_label, executionQueue.getOrNull(currentStepIndex + 1)?.let { next ->
+                                "${next.exercise.name} (${next.setNumber}/${next.exercise.setsCount})"
+                            }.orEmpty()),
                             color = Color.White.copy(alpha = 0.7f),
                             fontSize = 14.sp,
                             textAlign = TextAlign.Center

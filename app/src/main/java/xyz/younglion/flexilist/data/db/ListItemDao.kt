@@ -36,6 +36,15 @@ interface ListItemDao {
     @Delete
     suspend fun deleteItems(items: List<ListItemEntity>)
 
+    @Query("""
+        UPDATE list_items SET completed = 0, completedAt = NULL
+        WHERE completed = 1 AND COALESCE(completedAt, updatedAt) < :beforeMillis
+        AND notebookId IN (
+            SELECT id FROM notebooks WHERE type IN ('Workout Planner', 'WorkoutPlanner', 'Habit Tracker', 'HabitTracker')
+        )
+    """)
+    suspend fun resetDailyCompletions(beforeMillis: Long)
+
     @Query("DELETE FROM list_items WHERE notebookId = :notebookId")
     suspend fun deleteAllItemsInNotebook(notebookId: Long)
 }

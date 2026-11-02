@@ -868,15 +868,15 @@ fun parseExerciseConfig(desc: String): ExerciseConfig {
     return try {
         val clean = desc.removePrefix("[EXERCISE_CFG]")
         val parts = clean.split("|").associate {
-            val s = it.split("=")
+            val s = it.split("=", limit = 2)
             if (s.size >= 2) s[0] to s[1] else s[0] to ""
         }
-        val type = parts["type"] ?: "Reps"
-        val sets = parts["sets"]?.toIntOrNull() ?: 3
-        val reps = parts["reps"]?.toIntOrNull() ?: 10
-        val time = parts["time"]?.toIntOrNull() ?: 30
-        val rest = parts["rest"]?.toIntOrNull() ?: 60
-        val weight = parts["weight"]?.toDoubleOrNull() ?: 0.0
+        val type = parts["type"]?.takeIf { it == "Timer" || it == "Reps" } ?: "Reps"
+        val sets = (parts["sets"]?.toIntOrNull() ?: 3).coerceIn(1, 100)
+        val reps = (parts["reps"]?.toIntOrNull() ?: 10).coerceIn(1, 10000)
+        val time = (parts["time"]?.toIntOrNull() ?: 30).coerceIn(1, 86400)
+        val rest = (parts["rest"]?.toIntOrNull() ?: 60).coerceIn(0, 86400)
+        val weight = parts["weight"]?.toDoubleOrNull()?.takeIf { it.isFinite() && it >= 0.0 } ?: 0.0
         val muscles = parts["muscles"]?.split(",")?.filter { it.isNotEmpty() } ?: emptyList()
         val group = parts["group"] ?: ""
         val days = parts["days"]?.split(",")?.filter { it.isNotEmpty() } ?: emptyList()

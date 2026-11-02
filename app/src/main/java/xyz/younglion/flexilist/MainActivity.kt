@@ -61,12 +61,7 @@ class MainActivity : ComponentActivity() {
         
         // Setup SQLite Database, Repository and Backup manager completely offline
         val database = AppDatabase.getDatabase(applicationContext)
-        val repository = FlexiRepository(
-            database.notebookDao(),
-            database.listItemDao(),
-            database.workoutLogDao(),
-            database.waterIntakeDao()
-        )
+        val repository = FlexiRepository(database)
         val backupManager = BackupManager(repository)
         
         // Instantiate our primary business ViewModel
@@ -74,7 +69,7 @@ class MainActivity : ComponentActivity() {
         val viewModel = ViewModelProvider(this, factory)[FlexiViewModel::class.java]
         mainViewModel = viewModel
 
-        handleIncomingIntent(intent)
+        if (savedInstanceState == null) handleIncomingIntent(intent)
 
         enableEdgeToEdge()
         

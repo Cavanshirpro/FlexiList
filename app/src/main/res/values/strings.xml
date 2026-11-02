@@ -384,4 +384,5 @@
     <string name="backup_to_cloud">Backup to Cloud</string>
     <string name="generate_code">Generate Code</string>
     <string name="copy_code">Copy Code</string>
+    <string name="workout_save_failed">Workout could not be saved. Please try again.</string>
 </resources>

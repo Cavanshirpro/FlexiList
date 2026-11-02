@@ -384,4 +384,5 @@
     <string name="backup_to_cloud">Buluta Yedekle</string>
     <string name="generate_code">Kod Üret</string>
     <string name="copy_code">Kodu Kopyala</string>
+    <string name="workout_save_failed">Antrenman kaydedilemedi. Lütfen tekrar deneyin.</string>
 </resources>

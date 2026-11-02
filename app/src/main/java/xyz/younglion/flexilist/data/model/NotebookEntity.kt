@@ -97,12 +97,12 @@ data class NotebookEntity(
             }
             val clean = description.removePrefix("[WORKOUT_CFG]")
             val parts = clean.split("|").associate {
-                val s = it.split("=")
+                val s = it.split("=", limit = 2)
                 if (s.size >= 2) s[0] to s[1] else s[0] to ""
             }
             val freq = parts["frequency"] ?: "Weekly"
-            val wd = parts["workoutDays"]?.toIntOrNull() ?: 3
-            val rd = parts["restDays"]?.toIntOrNull() ?: 2
+            val wd = (parts["workoutDays"]?.toIntOrNull() ?: 3).coerceIn(1, 365)
+            val rd = (parts["restDays"]?.toIntOrNull() ?: 2).coerceIn(0, 365)
             val start = parts["startDate"]?.toLongOrNull() ?: System.currentTimeMillis()
             val weekly = parts["weekly"]?.split(",")?.mapNotNull { it.toIntOrNull() } ?: listOf(1, 3, 5)
             val monthly = parts["monthly"]?.split(",")?.mapNotNull { it.toIntOrNull() } ?: listOf(1, 15)

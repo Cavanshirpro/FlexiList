@@ -1,0 +1,69 @@
+name: Publish release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: Validate artifacts or publish release
+        type: choice
+        default: validate
+        options: [validate, publish]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: flexilist-release
+  cancel-in-progress: false
+
+jobs:
+  preflight:
+    runs-on: ubuntu-24.04
+    outputs:
+      tag: ${{ steps.meta.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Validate release source and metadata
+        id: meta
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tools/release.py preflight
+
+  build:
+    needs: preflight
+    uses: ./.github/workflows/android-build.yml
+    with:
+      sign_release: true
+    secrets:
+      KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+      STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
+      KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+      KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+
+  publish:
+    needs: [preflight, build]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: android-*
+          path: candidates
+      - name: Verify exact artifacts, source and checksums
+        run: python3 tools/release.py collect --source candidates --sha "$GITHUB_SHA"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-verified
+          path: dist/release/*
+          if-no-files-found: error
+      - name: Publish verified APKs
+        if: github.event_name == 'push' || inputs.mode == 'publish'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tools/release.py publish --sha "$GITHUB_SHA"

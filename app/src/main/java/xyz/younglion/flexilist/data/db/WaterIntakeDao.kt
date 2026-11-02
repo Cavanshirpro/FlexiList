@@ -9,6 +9,9 @@ interface WaterIntakeDao {
     @Query("SELECT * FROM water_intake WHERE dateString = :dateString")
     fun getWaterIntakeForDate(dateString: String): Flow<WaterIntakeEntity?>
 
+    @Query("SELECT * FROM water_intake WHERE dateString = :dateString")
+    suspend fun getWaterIntakeForDateSuspend(dateString: String): WaterIntakeEntity?
+
     @Query("SELECT * FROM water_intake")
     fun getAllWaterIntake(): Flow<List<WaterIntakeEntity>>
 
