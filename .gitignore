@@ -22,3 +22,9 @@ debug.keystore
 !releases/*.apk
 debug.keystore.base64
 .build-outputs/
+
+/app/build/
+/dist/
+__pycache__/
+*.pyc
+*.jks

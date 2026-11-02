@@ -372,7 +372,7 @@
     <!-- Cloud Sync -->
     <string name="cloud_sync_copied">Backup code copied to clipboard!</string>
     <string name="cloud_info_title">🌐 CLOUD SYSTEM INFO</string>
-    <string name="cloud_info_desc">• Cloud Service: Your data is encrypted and securely stored on JSONBlob SSL global REST servers.\n• Backup Code: A unique ID is generated when you tap \'Backup to Cloud\'.\n• Cross-Device Transfer: Enter this code in \'Restore\' on any phone to instantly sync all your notebooks and items.</string>
+    <string name="cloud_info_desc">• Data is transferred to JSONBlob over HTTPS.\n• Saving a backup generates a backup code.\n• Restoring on another phone adds copies of your notebooks. Anyone with the code can access the backup.</string>
     <string name="cloud_enter_code_warning">Please enter the backup code to restore!</string>
     <string name="cloud_downloading">Downloading and restoring backup…</string>
     <string name="cloud_imported_success">Cloud backup successfully imported!</string>
@@ -384,4 +384,5 @@
     <string name="backup_to_cloud">Backup to Cloud</string>
     <string name="generate_code">Generate Code</string>
     <string name="copy_code">Copy Code</string>
+    <string name="workout_save_failed">Workout could not be saved. Please try again.</string>
 </resources>

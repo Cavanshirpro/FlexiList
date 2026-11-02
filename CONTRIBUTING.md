@@ -6,7 +6,7 @@ Thank you for your interest in contributing to **FlexiList**! We welcome contrib
 
 ## 🚀 Ways to Contribute
 
-1. **Bug Reports**: Report bugs in detail on the [Issues](https://github.com/username/flexilist/issues) page.
+1. **Bug Reports**: Report bugs in detail on the [Issues](https://github.com/Cavanshirpro/FlexiList/issues) page.
 2. **Feature Requests**: Suggest new features or improvements.
 3. **Pull Requests**: Implement new features or fix open bugs.
 
@@ -17,7 +17,7 @@ Thank you for your interest in contributing to **FlexiList**! We welcome contrib
 - **Language**: All new code must be written in **Kotlin** using **Jetpack Compose**.
 - **Architecture**: Follow MVVM and Clean Architecture principles.
 - **Formatting**: Adhere to standard Kotlin code formatting (`ktlint` / Android Studio default code style).
-- **Compilation**: Ensure your changes compile without warnings and pass existing tests (`./gradlew testDebugUnitTest`).
+- **Compilation**: Ensure your changes compile without warnings and pass existing tests (`./gradlew :app:testFullDebugUnitTest :app:testFdroidDebugUnitTest :app:lintFullDebug :app:lintFdroidDebug`).
 
 ---
 

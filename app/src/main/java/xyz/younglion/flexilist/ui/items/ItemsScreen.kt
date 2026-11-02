@@ -84,7 +84,8 @@ fun ItemsScreen(
         NotebookEntity.parseWorkoutScheduleConfig(notebook?.description)
     }
 
-    val todayDayOfWeekAbbreviation = remember {
+    val todayDate by viewModel.todayDate.collectAsState()
+    val todayDayOfWeekAbbreviation = remember(todayDate) {
         val dayOfWeek = java.util.Calendar.getInstance().get(java.util.Calendar.DAY_OF_WEEK)
         when (dayOfWeek) {
             java.util.Calendar.MONDAY -> "Pzt"
@@ -97,11 +98,11 @@ fun ItemsScreen(
             else -> "Pzt"
         }
     }
-    val todayDayOfMonthStr = remember {
+    val todayDayOfMonthStr = remember(todayDate) {
         java.util.Calendar.getInstance().get(java.util.Calendar.DAY_OF_MONTH).toString()
     }
-    var selectedDayFilter by remember { mutableStateOf(todayDayOfWeekAbbreviation) }
-    var selectedMonthlyDayFilter by remember { mutableStateOf(todayDayOfMonthStr) }
+    var selectedDayFilter by remember(notebook?.id, todayDate) { mutableStateOf(todayDayOfWeekAbbreviation) }
+    var selectedMonthlyDayFilter by remember(notebook?.id, todayDate) { mutableStateOf(todayDayOfMonthStr) }
     
     // Drag-and-drop state synchronization
     var localItems by remember { mutableStateOf<List<ListItemEntity>>(emptyList()) }
@@ -122,7 +123,7 @@ fun ItemsScreen(
     val filterCompleted by viewModel.filterCompleted.collectAsState()
     val sortType by viewModel.sortType.collectAsState()
 
-    val displayItems = remember(localItems, selectedDayFilter, selectedMonthlyDayFilter, workoutConfig.frequency) {
+    val displayItems = remember(localItems, selectedDayFilter, selectedMonthlyDayFilter, workoutConfig.frequency, isWorkout) {
         if (!isWorkout) {
             localItems
         } else {
@@ -418,7 +419,7 @@ fun ItemsScreen(
                         }
                         "Monthly" -> {
                             // Requirement 3: Monthly mode days of month filter chips (1..31) cleanly in LazyRow
-                            val todayDayNum = remember { Calendar.getInstance().get(Calendar.DAY_OF_MONTH) }
+                            val todayDayNum = remember(todayDate) { Calendar.getInstance().get(Calendar.DAY_OF_MONTH) }
                             val todayText = stringResource(R.string.today)
                             val dayText = stringResource(R.string.day_suffix, 0).replace("0", "").trim()
                             LazyRow(

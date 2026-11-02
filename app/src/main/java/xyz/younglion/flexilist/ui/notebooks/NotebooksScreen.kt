@@ -715,7 +715,7 @@ fun NotebookCard(
                     )
 
                     val createdDateStr = remember(notebook.createdAt) {
-                        java.text.SimpleDateFormat("d MMM yyyy", java.util.Locale("tr")).format(java.util.Date(notebook.createdAt))
+                        java.text.SimpleDateFormat("d MMM yyyy", java.util.Locale.forLanguageTag("tr")).format(java.util.Date(notebook.createdAt))
                     }
 
                     Text(

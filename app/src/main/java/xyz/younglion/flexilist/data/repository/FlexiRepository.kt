@@ -1,21 +1,29 @@
 package xyz.younglion.flexilist.data.repository
 
-import xyz.younglion.flexilist.data.db.ListItemDao
-import xyz.younglion.flexilist.data.db.NotebookDao
-import xyz.younglion.flexilist.data.db.WorkoutLogDao
-import xyz.younglion.flexilist.data.db.WaterIntakeDao
+import androidx.room.withTransaction
+
 import xyz.younglion.flexilist.data.model.ListItemEntity
 import xyz.younglion.flexilist.data.model.NotebookEntity
 import xyz.younglion.flexilist.data.model.WorkoutLogEntity
 import xyz.younglion.flexilist.data.model.WaterIntakeEntity
 import kotlinx.coroutines.flow.Flow
 
-class FlexiRepository(
-    private val notebookDao: NotebookDao,
-    private val listItemDao: ListItemDao,
-    private val workoutLogDao: WorkoutLogDao,
-    private val waterIntakeDao: WaterIntakeDao
-) {
+class FlexiRepository(private val database: xyz.younglion.flexilist.data.db.AppDatabase) {
+    private val notebookDao = database.notebookDao()
+    private val listItemDao = database.listItemDao()
+    private val workoutLogDao = database.workoutLogDao()
+    private val waterIntakeDao = database.waterIntakeDao()
+
+    suspend fun <T> withTransaction(block: suspend () -> T): T = database.withTransaction(block)
+
+    suspend fun resetDailyCompletions(beforeMillis: Long) = listItemDao.resetDailyCompletions(beforeMillis)
+
+    suspend fun addWater(dateString: String, amountMl: Int) = withTransaction {
+        val current = waterIntakeDao.getWaterIntakeForDateSuspend(dateString)
+        val amount = ((current?.amountMl ?: 0).toLong() + amountMl).coerceIn(0, Int.MAX_VALUE.toLong()).toInt()
+        waterIntakeDao.insertWaterIntake(WaterIntakeEntity(dateString, amount))
+    }
+
     // WorkoutLog Actions
     fun getLogsForNotebook(notebookId: Long): Flow<List<WorkoutLogEntity>> =
         workoutLogDao.getLogsForNotebook(notebookId)

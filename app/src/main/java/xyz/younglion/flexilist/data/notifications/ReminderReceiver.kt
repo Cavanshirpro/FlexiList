@@ -49,6 +49,9 @@ class ReminderReceiver : BroadcastReceiver() {
             .setContentIntent(pendingIntent)
             .setAutoCancel(true)
 
-        notificationManager.notify(itemId.toInt(), builder.build())
+        if (Build.VERSION.SDK_INT < 33 || context.checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS)
+            == android.content.pm.PackageManager.PERMISSION_GRANTED) {
+            notificationManager.notify(itemId.toInt(), builder.build())
+        }
     }
 }

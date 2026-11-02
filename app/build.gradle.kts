@@ -1,3 +1,5 @@
+import groovy.json.JsonSlurper
+
 plugins {
   alias(libs.plugins.android.application)
   alias(libs.plugins.kotlin.compose)
@@ -5,34 +7,7 @@ plugins {
   alias(libs.plugins.roborazzi)
 }
 
-val isFdroidBuild = gradle.startParameter.taskNames.any { it.contains("fdroid", ignoreCase = true) }
-
-if (!isFdroidBuild) {
-  pluginManager.apply("com.google.android.libraries.mapsplatform.secrets-gradle-plugin")
-  pluginManager.apply("com.google.gms.google-services")
-
-  extensions.findByName("secrets")?.let { ext ->
-    try {
-      ext.javaClass.getMethod("setPropertiesFileName", String::class.java).invoke(ext, ".env")
-      ext.javaClass.getMethod("setDefaultPropertiesFileName", String::class.java).invoke(ext, ".env.example")
-    } catch (e: Exception) {
-      // Ignore fallback
-    }
-  }
-
-  extensions.findByName("googleServices")?.let { ext ->
-    try {
-      val warnEnum = Class.forName("com.google.gms.googleservices.GoogleServicesPlugin\$MissingGoogleServicesStrategy")
-        .enumConstants?.firstOrNull { it.toString() == "WARN" }
-      if (warnEnum != null) {
-        val method = ext.javaClass.methods.firstOrNull { it.name == "setMissingGoogleServicesStrategy" || it.name == "missingGoogleServicesStrategy" }
-        method?.invoke(ext, warnEnum)
-      }
-    } catch (e: Exception) {
-      // Ignore fallback
-    }
-  }
-}
+val releaseMetadata = JsonSlurper().parse(rootProject.file("release/release.json")) as Map<*, *>
 
 android {
   namespace = "xyz.younglion.flexilist"
@@ -42,8 +17,8 @@ android {
     applicationId = "xyz.younglion.flexilist"
     minSdk = 24
     targetSdk = 36
-    versionCode = 4
-    versionName = "1.0.3"
+    versionCode = (releaseMetadata["version_code"] as Number).toInt()
+    versionName = releaseMetadata["version"] as String
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
   }
@@ -61,22 +36,17 @@ android {
   }
 
   signingConfigs {
-    val keystorePath = System.getenv("KEYSTORE_PATH") ?: "${rootDir}/my-upload-key.jks"
+    val keystorePath = System.getenv("KEYSTORE_PATH")?.takeIf { it.isNotBlank() } ?: "${rootDir}/my-upload-key.jks"
     val keystoreFile = file(keystorePath)
-    if (keystoreFile.exists()) {
+    if (keystoreFile.isFile) {
       create("release") {
         storeFile = keystoreFile
         storePassword = System.getenv("STORE_PASSWORD")
-        keyAlias = "upload"
+        keyAlias = System.getenv("KEY_ALIAS")?.takeIf { it.isNotBlank() } ?: "upload"
         keyPassword = System.getenv("KEY_PASSWORD")
       }
     }
-    create("debugConfig") {
-      storeFile = file("${rootDir}/debug.keystore")
-      storePassword = "android"
-      keyAlias = "androiddebugkey"
-      keyPassword = "android"
-    }
+
   }
 
   buildTypes {
@@ -88,9 +58,6 @@ android {
       if (releaseSigning != null) {
         signingConfig = releaseSigning
       }
-    }
-    debug {
-      signingConfig = signingConfigs.getByName("debugConfig")
     }
   }
   compileOptions {
@@ -108,7 +75,6 @@ android {
 // This makes it easy to add them back in the future if needed.
 dependencies {
   implementation(platform(libs.androidx.compose.bom))
-  "fullImplementation"(platform(libs.firebase.bom))
   // implementation(libs.accompanist.permissions)
   implementation(libs.androidx.activity.compose)
   // implementation(libs.androidx.camera.camera2)
@@ -131,8 +97,6 @@ dependencies {
   implementation(libs.androidx.room.runtime)
   // implementation(libs.coil.compose)
   implementation(libs.converter.moshi)
-  "fullImplementation"(libs.firebase.ai)
-  "fullImplementation"(libs.firebase.appcheck.recaptcha)
   implementation(libs.kotlinx.coroutines.android)
   implementation(libs.kotlinx.coroutines.core)
   implementation(libs.logging.interceptor)
