@@ -70,7 +70,7 @@ def preflight():
 
 def inspect_apk(apk, data, signed):
     sdk = Path(os.environ.get('ANDROID_HOME') or os.environ['ANDROID_SDK_ROOT'])
-    analyzer = sdk / 'cmdline-tools/latest/bin/apkanalyzer'
+    analyzer = Path(shutil.which('apkanalyzer') or sdk / 'cmdline-tools/latest/bin/apkanalyzer')
     for key, expected in [('application-id', 'xyz.younglion.flexilist'),
                           ('version-name', data['version']), ('version-code', str(data['version_code']))]:
         assert run(str(analyzer), 'manifest', key, str(apk)) == expected, f'APK {key} mismatch'
