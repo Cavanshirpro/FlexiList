@@ -95,7 +95,9 @@ class DataIntegrityTest {
     }
 
     @Test fun legacyBackupsAndMalformedFilesAreHandledWithoutDataLoss() = runBlocking {
-        assertTrue(backup.importFromJsonString("""{"notebooks":[{"name":"Legacy","items":[{"title":"Task"}]}]}"""))
+        assertTrue(backup.importFromJsonString("""{"notebooks":[{"name":"Legacy","items":[{"title":"First"},{"title":"Second"}]}]}"""))
+        val legacyId = repository.allNotebooks.first().single().id
+        assertEquals(listOf("First", "Second"), repository.getItemsForNotebook(legacyId).first().map { it.title })
         assertFalse(backup.importFromJsonString("""{"schemaVersion":999,"notebooks":[]}"""))
         assertFalse(backup.importFromJsonString("{invalid"))
         assertEquals(1, repository.allNotebooks.first().size)

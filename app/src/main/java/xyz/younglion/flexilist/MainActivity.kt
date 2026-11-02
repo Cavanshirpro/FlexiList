@@ -48,7 +48,7 @@ class MainActivity : ComponentActivity() {
     override fun attachBaseContext(newBase: Context) {
         val prefs = newBase.getSharedPreferences("flexilist_prefs", Context.MODE_PRIVATE)
         val lang = prefs.getString("app_language", "en") ?: "en"
-        val locale = Locale(lang)
+        val locale = Locale.forLanguageTag(lang)
         Locale.setDefault(locale)
         val config = Configuration(newBase.resources.configuration)
         config.setLocale(locale)
@@ -93,7 +93,7 @@ class MainActivity : ComponentActivity() {
             val baseContext = LocalContext.current
             val activityResultRegistryOwner = LocalActivityResultRegistryOwner.current
             val localizedContext = remember(appLanguage) {
-                val locale = Locale(appLanguage)
+                val locale = Locale.forLanguageTag(appLanguage)
                 Locale.setDefault(locale)
                 val config = Configuration(baseContext.resources.configuration)
                 config.setLocale(locale)

@@ -6,7 +6,7 @@ The pipeline follows the same separation used by LeoMiniGames and YLSpec: build 
 
 Every pull request and push to `main`/`master` runs `.github/workflows/ci.yml`, which calls `android-build.yml`. The build workflow can also run manually.
 
-Both **Full** and **F-Droid** variants run unit/Robolectric tests, Android lint, and debug/release compilation on JDK 17 with Gradle 9.3.1 and Android SDK 36.1. Reports and APKs are uploaded separately per flavor. Unsigned release builds remain clearly named `-unsigned.apk`; they are build evidence, not installable public release assets.
+Both **Full** and **F-Droid** variants run unit/Robolectric tests, Android lint, and debug/release compilation on JDK 21 with Gradle 9.3.1 and Android SDK 36.1. Reports and APKs are uploaded separately per flavor. Unsigned release builds remain clearly named `-unsigned.apk`; they are build evidence, not installable public release assets.
 
 Firebase and Google Services were unused by the application and have been removed. Both variants build without a `google-services.json`, `.env`, or a checked-in debug keystore. Android's standard debug signing is used for development.
 

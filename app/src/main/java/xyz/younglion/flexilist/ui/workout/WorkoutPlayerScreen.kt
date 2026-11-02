@@ -164,9 +164,15 @@ fun WorkoutPlayerScreen(
         return
     }
 
-    val savedIndex = remember(notebookId) { viewModel.getSavedWorkoutStepIndex(notebookId) }
+    val compatibleProgress = remember(exerciseConfigs) {
+        val saved = viewModel.getWorkoutQueue(notebookId)
+        saved.isEmpty() || saved.toSet() == executionQueue.map { "${it.exercise.id}:${it.setNumber}" }.toSet()
+    }
+    val savedIndex = remember(notebookId, compatibleProgress) {
+        if (compatibleProgress) viewModel.getSavedWorkoutStepIndex(notebookId) else 0
+    }
     var currentStepIndex by remember {
-        mutableStateOf((savedIndex + if (viewModel.getCompletedWorkoutSteps(notebookId)?.contains(savedIndex) == true) 1 else 0)
+        mutableStateOf((savedIndex + if (compatibleProgress && viewModel.getCompletedWorkoutSteps(notebookId)?.contains(savedIndex) == true) 1 else 0)
             .coerceIn(0, executionQueue.lastIndex))
     }
 
@@ -181,11 +187,11 @@ fun WorkoutPlayerScreen(
     // Log tracking
     val completedSteps = remember {
         mutableStateMapOf<Int, Boolean>().apply {
-            val restored = viewModel.getCompletedWorkoutSteps(notebookId) ?: (0 until savedIndex).toSet()
+            val restored = if (compatibleProgress) viewModel.getCompletedWorkoutSteps(notebookId) ?: (0 until savedIndex).toSet() else emptySet()
             restored.filter { it in executionQueue.indices }.forEach { this[it] = true }
         }
     }
-    val startTime = remember(notebookId) { viewModel.getWorkoutStartTime(notebookId) }
+    val startTime = remember(notebookId) { if (compatibleProgress) viewModel.getWorkoutStartTime(notebookId) else System.currentTimeMillis() }
     LaunchedEffect(currentStepIndex, executionQueue.toList(), completedSteps.toMap()) {
         viewModel.saveWorkoutProgress(notebookId,
             executionQueue.map { "${it.exercise.id}:${it.setNumber}" },

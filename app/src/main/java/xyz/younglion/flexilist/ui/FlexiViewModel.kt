@@ -41,12 +41,12 @@ class FlexiViewModel(
     fun setAppLanguage(lang: String) {
         _appLanguage.value = lang
         prefs.edit().putString("app_language", lang).apply()
-        updateLocale(lang)
+        updateLocale.forLanguageTag(lang)
     }
 
     private fun updateLocale(lang: String) {
         try {
-            val locale = java.util.Locale(lang)
+            val locale = java.util.Locale.forLanguageTag(lang)
             java.util.Locale.setDefault(locale)
             val resources = getApplication<Application>().resources
             val config = resources.configuration

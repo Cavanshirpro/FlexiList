@@ -72,7 +72,7 @@ Install published APKs from [GitHub Releases](https://github.com/Cavanshirpro/Fl
 
 ## 💻 Build and verification
 
-Use **JDK 17 or newer**, Android SDK **36.1**, and the checked-in Gradle wrapper (**9.3.1**). The minimum device version is Android 7.0 (API 24).
+Use **JDK 21 or newer**, Android SDK **36.1**, and the checked-in Gradle wrapper (**9.3.1**). The minimum device version is Android 7.0 (API 24).
 
 ```sh
 git clone https://github.com/Cavanshirpro/FlexiList.git
