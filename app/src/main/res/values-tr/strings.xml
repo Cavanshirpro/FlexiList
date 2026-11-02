@@ -372,7 +372,7 @@
     <!-- Cloud Sync -->
     <string name="cloud_sync_copied">Yedekleme kodu kopyalandı!</string>
     <string name="cloud_info_title">🌐 BULUT SİSTEMİ BİLGİLENDİRMESİ</string>
-    <string name="cloud_info_desc">• Hangi Bulut Hizmeti?: Verileriniz JSONBlob SSL korumalı küresel REST bulut sunucularında şifreli olarak saklanır.\n• Yedekleme Kodu: \'Buluta Yedekle\'ye bastığınızda size özel benzersiz bir kimlik üretilir.\n• Cihazlar Arası Aktarım: Bu kodu herhangi bir telefonda \'Geri Yükle\' alanına yazarak tüm defter ve listelerinizi anında senkronize edebilirsiniz.</string>
+    <string name="cloud_info_desc">• Veriler JSONBlob servisine HTTPS üzerinden aktarılır.\n• Yedek kaydedildiğinde bir yedek kodu oluşturulur.\n• Başka bir telefonda geri yüklemek defterlerinizin kopyalarını ekler. Kodu bilen herkes yedeğe erişebilir.</string>
     <string name="cloud_enter_code_warning">Lütfen geri yüklenecek yedekleme kodunu girin!</string>
     <string name="cloud_downloading">Yedek indiriliyor ve yükleniyor...</string>
     <string name="cloud_imported_success">Bulut yedeği başarıyla içe aktarıldı!</string>
