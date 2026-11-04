@@ -36,13 +36,13 @@ Configure these GitHub repository Actions secrets once:
 | `KEY_PASSWORD` | Private key password |
 | `KEY_ALIAS` | Optional key alias; defaults to `upload` |
 
-The build decodes the keystore only into the runner's temporary directory and removes it on success or failure. Missing credentials, a wrong password, or a certificate mismatch stop the workflow before publication. No new signing identity is generated.
+The build decodes the keystore only into the runner's temporary directory and removes it on success or failure. Publication checks for missing credentials in preflight, before any build starts. A wrong password or certificate mismatch also stops publication. Validation-only runs can inspect unsigned candidates without credentials. No new signing identity is generated.
 
 To build a signed APK locally, supply `KEYSTORE_PATH`, `STORE_PASSWORD`, `KEY_PASSWORD` and optionally `KEY_ALIAS` in the command environment. Ordinary builds need none of these variables. F-Droid's own build infrastructure can continue compiling unsigned release APKs and signing them independently.
 
 ## Validate or publish
 
-- Run **Publish release** on `main` with mode `validate` to build signed candidates, run all checks, and download the `release-verified` artifact without creating a GitHub Release.
+- Run **Publish release** on `main` with mode `validate` to run all checks and download the `release-verified` artifact without creating a GitHub Release. If signing credentials are available it validates signed APKs; otherwise it builds clearly labeled unsigned candidates.
 - Run it on `main` with mode `publish` to perform the same checks and publish automatically.
 - Push the matching `vX.Y.Z` tag from a commit on `main` to run the complete pipeline and publish automatically.
 
@@ -51,3 +51,19 @@ Each publication uses candidates produced by the same workflow run and commit. I
 The public release contains two signed APKs, `SHA256SUMS.txt` and `release-manifest.json`. Only current build outputs are attached; old root/release-folder APKs are excluded. GitHub provides downloadable artifacts and a GitHub Release; this does not submit the application to F-Droid or Google Play.
 
 Automated checks cover JVM/Robolectric behavior and APK inspection. They do not constitute physical-device qualification of background execution, sound or notifications.
+
+## F-Droid inclusion
+
+The existing submission is [fdroiddata!45077](https://gitlab.com/fdroid/fdroiddata/-/merge_requests/45077), sourced from the public, unprotected `Flexilist` branch in `Cavanshirpro/fdroiddata`.
+
+Generate its recipe from the **published release source SHA**:
+
+```sh
+python3 tools/fdroid_metadata.py --commit FULL_RELEASE_SOURCE_SHA --output metadata/xyz.younglion.flexilist.yml
+```
+
+The generator pins a full source commit, selects JDK 21 and the `fdroid` flavor, uses the exact signed F-Droid APK asset name, and reads future version names/codes from `release/release.json` at version tags. The checked-in recipe is a source recipe; regenerate it for the final published revision before updating the GitLab submission.
+
+Release builds disable Gradle dependency metadata and VCS metadata for F-Droid compatibility and reproducibility. Unused proprietary library/plugin aliases are removed. The store icon is encoded as a valid 512px PNG from the original launcher artwork.
+
+CI installs the pinned tools in `tools/requirements-fdroid.txt`, runs the upstream F-Droid linter against current fdroiddata categories, and validates the store metadata and icon. APK staging checks ZIP integrity before inspecting package, version and certificate. F-Droid's final comparison against the signed upstream APK requires that the matching GitHub Release has been published. Only F-Droid maintainers can accept and distribute the submission.

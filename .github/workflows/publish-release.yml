@@ -23,10 +23,19 @@ jobs:
     runs-on: ubuntu-24.04
     outputs:
       tag: ${{ steps.meta.outputs.tag }}
+      sign_release: ${{ steps.signing.outputs.sign_release }}
     steps:
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
+      - name: Check signing configuration before building
+        id: signing
+        env:
+          PUBLISH_REQUESTED: ${{ github.event_name == 'push' || inputs.mode == 'publish' }}
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: python3 tools/release.py signing
       - name: Validate release source and metadata
         id: meta
         env:
@@ -37,7 +46,7 @@ jobs:
     needs: preflight
     uses: ./.github/workflows/android-build.yml
     with:
-      sign_release: true
+      sign_release: ${{ needs.preflight.outputs.sign_release == 'true' }}
     secrets:
       KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
       STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
@@ -56,7 +65,12 @@ jobs:
           pattern: android-*
           path: candidates
       - name: Verify exact artifacts, source and checksums
-        run: python3 tools/release.py collect --source candidates --sha "$GITHUB_SHA"
+        env:
+          SIGNED_RELEASE: ${{ needs.preflight.outputs.sign_release }}
+        run: |
+          args=()
+          if [[ "$SIGNED_RELEASE" != true ]]; then args+=(--allow-unsigned); fi
+          python3 tools/release.py collect --source candidates --sha "$GITHUB_SHA" "${args[@]}"
       - uses: actions/upload-artifact@v7
         with:
           name: release-verified

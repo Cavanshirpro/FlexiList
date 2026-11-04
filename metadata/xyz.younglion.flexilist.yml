@@ -1,27 +1,30 @@
 Categories:
-  - Sports & Health
+  - Habit Tracker
+  - Shopping List
+  - Task
+  - Workout
 License: GPL-3.0-only
-AuthorName: Javanshir
+AuthorName: Cavanshirpro
 SourceCode: https://github.com/Cavanshirpro/FlexiList
 IssueTracker: https://github.com/Cavanshirpro/FlexiList/issues
 
 RepoType: git
 Repo: https://github.com/Cavanshirpro/FlexiList.git
+Binaries: https://github.com/Cavanshirpro/FlexiList/releases/download/v%v/FlexiList-%v-fdroid-release.apk
 
 Builds:
-  - versionName: 1.0.3
-    versionCode: 4
-    commit: edba8ff491d693a471348ad50952b31194b206f2
+  - versionName: 1.0.4
+    versionCode: 5
+    commit: caa94d365f1c047ce7513f527946b5f828004cde
     subdir: app
+    sudo: update-java-alternatives --set java-1.21.0-openjdk-amd64
     gradle:
       - fdroid
 
-Binaries: https://github.com/Cavanshirpro/FlexiList/releases/download/v1.0.3/FlexiList-v1.0.3.apk
-
 AllowedAPKSigningKeys: 1f69d377fc891db13ffe8c8744a7e14cd22fffd82df4caaaf704567b14c9dba3
 
-AutoUpdateMode: Version %v
-UpdateCheckMode: Tags
-UpdateCheckData: v1.0.3
-CurrentVersion: 1.0.3
-CurrentVersionCode: 4
+AutoUpdateMode: Version v%v
+UpdateCheckMode: Tags ^v[0-9]+\.[0-9]+\.[0-9]+$
+UpdateCheckData: release/release.json|"version_code":\s*(\d+)|.|"version":\s*"([^"]+)"
+CurrentVersion: 1.0.4
+CurrentVersionCode: 5

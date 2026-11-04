@@ -66,6 +66,25 @@ class ReleaseContractTest(unittest.TestCase):
                 with self.assertRaises(AssertionError):
                     release.verify_candidate(root, 'Full', 'a' * 40, data)
 
+    def test_unsigned_release_is_only_accepted_in_validation_mode(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            data, manifest = self.candidate(root)
+            record = manifest['assets'][1]
+            old_name = record['name']
+            record['name'] = old_name.removesuffix('.apk') + '-unsigned.apk'
+            record['signed'] = False
+            (root / old_name).rename(root / record['name'])
+            (root / 'manifest.json').write_text(json.dumps(manifest))
+            with self.assertRaisesRegex(AssertionError, 'Unsigned'):
+                release.verify_candidate(root, 'Full', 'a' * 40, data)
+            result = release.verify_candidate(root, 'Full', 'a' * 40, data, require_signed=False)
+            self.assertFalse(result['signed'])
+            manifest['assets'][0]['signed'] = False
+            (root / 'manifest.json').write_text(json.dumps(manifest))
+            with self.assertRaisesRegex(AssertionError, 'Unsigned'):
+                release.verify_candidate(root, 'Full', 'a' * 40, data, require_signed=False)
+
     def test_unsafe_notes_are_rejected(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

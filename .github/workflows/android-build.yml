@@ -32,6 +32,22 @@ jobs:
           python3 tools/release.py metadata
           python3 -m unittest discover -s tools/tests -v
 
+  fdroid:
+    name: F-Droid metadata and store assets
+    needs: contract
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+          cache: pip
+          cache-dependency-path: tools/requirements-fdroid.txt
+      - name: Install F-Droid validation tools
+        run: python -m pip install -r tools/requirements-fdroid.txt
+      - name: Validate recipe with upstream F-Droid tooling
+        run: python tools/check_fdroid.py --commit "$GITHUB_SHA"
+
   android:
     name: Android ${{ matrix.flavor }}
     needs: contract

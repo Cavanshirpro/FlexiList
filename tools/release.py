@@ -8,6 +8,8 @@ from pathlib import Path
 import re
 import shutil
 import subprocess
+from zipfile import ZipFile
+
 from urllib.parse import quote
 from urllib.request import Request, urlopen
 
@@ -53,6 +55,19 @@ def output(values):
     print(json.dumps(values, indent=2))
 
 
+def signing_configuration(publish_requested):
+    required = ('KEYSTORE_BASE64', 'STORE_PASSWORD', 'KEY_PASSWORD')
+    missing = [name for name in required if not os.environ.get(name, '').strip()]
+    if publish_requested and missing:
+        raise ValueError('Signed publication requires repository Actions secrets: ' + ', '.join(missing)
+                         + '. Use the existing release keystore; see docs/RELEASING.md.')
+    result = {'sign_release': 'false' if missing else 'true'}
+    output(result)
+    if missing:
+        print('Validation will inspect unsigned release candidates. No public release will be created.')
+    return result
+
+
 def preflight():
     data = metadata()
     ref = os.environ['GITHUB_REF']
@@ -69,6 +84,10 @@ def preflight():
 
 
 def inspect_apk(apk, data, signed):
+    with ZipFile(apk) as archive:
+        assert archive.testzip() is None, 'Corrupt APK ZIP entry'
+        assert 'AndroidManifest.xml' in archive.namelist() and 'classes.dex' in archive.namelist(), 'Incomplete APK archive'
+        assert 'META-INF/com/android/build/gradle/dependencies.pb' not in archive.namelist(), 'APK contains dependency metadata'
     sdk = Path(os.environ.get('ANDROID_HOME') or os.environ['ANDROID_SDK_ROOT'])
     analyzer = Path(shutil.which('apkanalyzer') or sdk / 'cmdline-tools/latest/bin/apkanalyzer')
     for key, expected in [('application-id', 'xyz.younglion.flexilist'),
@@ -103,7 +122,7 @@ def stage(flavor, sha):
     (destination / 'manifest.json').write_text(json.dumps(manifest, indent=2) + '\n')
 
 
-def verify_candidate(directory, flavor, sha, data):
+def verify_candidate(directory, flavor, sha, data, require_signed=True):
     manifest = json.loads((directory / 'manifest.json').read_text())
     assert manifest['source_sha'] == sha, 'Candidate source mismatch'
     assert manifest['version'] == data['version'] and manifest['version_code'] == data['version_code'], 'Candidate version mismatch'
@@ -112,8 +131,11 @@ def verify_candidate(directory, flavor, sha, data):
     assert len(records) == 2 and {r['kind'] for r in records} == {'debug', 'release'}, 'Incomplete artifact set'
     expected = {'manifest.json'}
     for record in records:
-        name = f"FlexiList-{data['version']}-{flavor.lower()}-{record['kind']}.apk"
-        assert record['name'] == name and record['signed'] is True, 'Unsigned or misnamed candidate'
+        assert type(record['signed']) is bool, 'Invalid signing status'
+        assert record['signed'] or (not require_signed and record['kind'] == 'release'), 'Unsigned candidate'
+        suffix = '-unsigned' if not record['signed'] else ''
+        name = f"FlexiList-{data['version']}-{flavor.lower()}-{record['kind']}{suffix}.apk"
+        assert record['name'] == name, 'Misnamed candidate'
         apk = directory / name
         assert apk.stat().st_size == record['size'] and digest(apk) == record['sha256'], 'Artifact checksum mismatch'
         expected.add(name)
@@ -121,14 +143,14 @@ def verify_candidate(directory, flavor, sha, data):
     return next(r for r in records if r['kind'] == 'release')
 
 
-def collect(source, sha):
+def collect(source, sha, allow_unsigned=False):
     data = metadata()
     destination = ROOT / 'dist/release'
     assert not destination.exists(), 'Release staging directory already exists'
     selected = []
     for flavor in FLAVORS:
         directory = source / ('android-' + flavor)
-        selected.append((directory, verify_candidate(directory, flavor, sha, data)))
+        selected.append((directory, verify_candidate(directory, flavor, sha, data, require_signed=not allow_unsigned)))
     destination.mkdir(parents=True)
     assets = []
     for directory, record in selected:
@@ -193,19 +215,22 @@ def publish(sha):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('command', choices=('metadata', 'preflight', 'stage', 'collect', 'publish'))
+    parser.add_argument('command', choices=('metadata', 'signing', 'preflight', 'stage', 'collect', 'publish'))
     parser.add_argument('--flavor', choices=FLAVORS)
     parser.add_argument('--sha')
     parser.add_argument('--source', type=Path)
+    parser.add_argument('--allow-unsigned', action='store_true', help='Validation only; publication still requires signed APKs')
     args = parser.parse_args()
     os.chdir(ROOT)
     if args.command == 'metadata':
         output(metadata())
+    elif args.command == 'signing':
+        signing_configuration(os.environ.get('PUBLISH_REQUESTED') == 'true')
     elif args.command == 'preflight':
         preflight()
     elif args.command == 'stage':
         stage(args.flavor, args.sha)
     elif args.command == 'collect':
-        collect(args.source, args.sha)
+        collect(args.source, args.sha, allow_unsigned=args.allow_unsigned)
     else:
         publish(args.sha)

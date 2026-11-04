@@ -131,3 +131,10 @@ The following checklist tracks development milestones, completed features, and f
 - Workout persistence includes queue ordering, completed steps and start time. Timer seconds and preparation/rest phase are not persisted; reopening resumes at set boundaries. The Compose timer is not a foreground service and does not guarantee exact background execution.
 - Local `.flexi` imports preserve optional fields and run file reading off the main thread. Notifications use a single workout channel and check Android notification permission.
 - Verification commands and remaining device-test limits are documented in `docs/RELEASING.md`.
+
+
+## Publish and F-Droid follow-up
+
+- Publish runs check signing-secret availability in preflight; validation mode can inspect unsigned candidates. Public publication continues to require the existing release certificate.
+- `tools/fdroid_metadata.py` generates a canonical F-Droid recipe pinned to a full release source SHA; `tools/check_fdroid.py` runs the official linter and validates store assets. Update the GitLab recipe from the published revision, not an in-progress branch.
+- Release APKs omit dependency and VCS metadata. Staging checks ZIP integrity so corrupt binaries cannot be uploaded as APKs.
