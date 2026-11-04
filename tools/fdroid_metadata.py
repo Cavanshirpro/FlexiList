@@ -25,6 +25,8 @@ AuthorName: Cavanshirpro
 SourceCode: https://github.com/Cavanshirpro/FlexiList
 IssueTracker: https://github.com/Cavanshirpro/FlexiList/issues
 
+AutoName: FlexiList
+
 RepoType: git
 Repo: https://github.com/Cavanshirpro/FlexiList.git
 

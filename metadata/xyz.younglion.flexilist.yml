@@ -8,13 +8,15 @@ AuthorName: Cavanshirpro
 SourceCode: https://github.com/Cavanshirpro/FlexiList
 IssueTracker: https://github.com/Cavanshirpro/FlexiList/issues
 
+AutoName: FlexiList
+
 RepoType: git
 Repo: https://github.com/Cavanshirpro/FlexiList.git
 
 Builds:
   - versionName: 1.0.4
     versionCode: 5
-    commit: 139dddb1653d710d4a7deaad021bb879e84ad6f3
+    commit: 8abeed5565b91207aba945e25e79bb9aea775bdb
     subdir: app
     sudo: update-java-alternatives --set java-1.21.0-openjdk-amd64
     gradle:

@@ -13,6 +13,7 @@ class FdroidMetadataTest(unittest.TestCase):
     def test_recipe_builds_pinned_source_for_fdroid_signing(self):
         text = recipe.render('a' * 40)
         self.assertIn('commit: ' + 'a' * 40, text)
+        self.assertIn('\nAutoName: FlexiList\n', text)
         self.assertNotIn('Binaries:', text)
         self.assertNotIn('AllowedAPKSigningKeys:', text)
         self.assertIn('java-1.21.0-openjdk-amd64', text)
