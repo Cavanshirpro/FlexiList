@@ -1,0 +1,1 @@
+Yedekleme ve geri yükleme, günlük sıfırlama, antrenman geçmişi ve su takibi düzeltildi. Çeviriler tamamlandı; Full/F-Droid derleme ve yayın doğrulaması eklendi.

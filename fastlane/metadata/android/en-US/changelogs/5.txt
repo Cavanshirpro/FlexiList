@@ -1,0 +1,1 @@
+Reliable backup and restore, corrected daily task reset and workout history, atomic water tracking, complete translations, and verified Full/F-Droid builds.
