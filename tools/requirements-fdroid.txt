@@ -2,3 +2,4 @@ fdroidserver @ git+https://gitlab.com/fdroid/fdroidserver.git@cdfdce835a8231996b
 Pillow==13.0.0
 PyYAML==6.0.3
 jsonschema==4.25.1
+ruamel.yaml==0.18.10
