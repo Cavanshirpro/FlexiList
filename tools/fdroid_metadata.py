@@ -26,7 +26,8 @@ IssueTracker: https://github.com/Cavanshirpro/FlexiList/issues
 
 RepoType: git
 Repo: https://github.com/Cavanshirpro/FlexiList.git
-Binaries: https://github.com/Cavanshirpro/FlexiList/releases/download/v%v/FlexiList-%v-fdroid-release.apk
+Binaries:
+  https://github.com/Cavanshirpro/FlexiList/releases/download/v%v/FlexiList-%v-fdroid-release.apk
 
 Builds:
   - versionName: {data['version']}
@@ -39,7 +40,7 @@ Builds:
 
 AllowedAPKSigningKeys: {data['signing_cert_sha256']}
 
-AutoUpdateMode: Version v%v
+AutoUpdateMode: Version
 UpdateCheckMode: Tags ^v[0-9]+\\.[0-9]+\\.[0-9]+$
 UpdateCheckData: release/release.json|"version_code":\\s*(\\d+)|.|"version":\\s*"([^\"]+)"
 CurrentVersion: {data['version']}

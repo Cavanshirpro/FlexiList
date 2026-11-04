@@ -10,12 +10,13 @@ IssueTracker: https://github.com/Cavanshirpro/FlexiList/issues
 
 RepoType: git
 Repo: https://github.com/Cavanshirpro/FlexiList.git
-Binaries: https://github.com/Cavanshirpro/FlexiList/releases/download/v%v/FlexiList-%v-fdroid-release.apk
+Binaries:
+  https://github.com/Cavanshirpro/FlexiList/releases/download/v%v/FlexiList-%v-fdroid-release.apk
 
 Builds:
   - versionName: 1.0.4
     versionCode: 5
-    commit: 6bb6dbbded3d916463e7b293af4757b86f6de28e
+    commit: 550a5ef5909c3b3b17536b2753199030936deb82
     subdir: app
     sudo: update-java-alternatives --set java-1.21.0-openjdk-amd64
     gradle:
@@ -23,7 +24,7 @@ Builds:
 
 AllowedAPKSigningKeys: 1f69d377fc891db13ffe8c8744a7e14cd22fffd82df4caaaf704567b14c9dba3
 
-AutoUpdateMode: Version v%v
+AutoUpdateMode: Version
 UpdateCheckMode: Tags ^v[0-9]+\.[0-9]+\.[0-9]+$
 UpdateCheckData: release/release.json|"version_code":\s*(\d+)|.|"version":\s*"([^"]+)"
 CurrentVersion: 1.0.4

@@ -15,6 +15,7 @@ class FdroidMetadataTest(unittest.TestCase):
         self.assertIn('commit: ' + 'a' * 40, text)
         self.assertIn('FlexiList-%v-fdroid-release.apk', text)
         self.assertIn('java-1.21.0-openjdk-amd64', text)
+        self.assertIn('\nAutoUpdateMode: Version\n', text)
         self.assertNotIn('\r', text)
         self.assertNotRegex(text, r'(?m)^\s*\* ')
 

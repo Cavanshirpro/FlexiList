@@ -10,6 +10,8 @@ from urllib.request import urlopen
 
 from PIL import Image
 import yaml
+import json
+import jsonschema
 
 from fdroid_metadata import APP_ID, ROOT, render
 
@@ -25,12 +27,18 @@ def main(commit):
     url = 'https://gitlab.com/fdroid/fdroiddata/-/raw/master/config/categories.yml'
     with urlopen(url, timeout=30) as response:
         categories = yaml.safe_load(response)
+    schema_url = 'https://gitlab.com/fdroid/fdroiddata/-/raw/master/schemas/metadata.json'
+    with urlopen(schema_url, timeout=30) as response:
+        schema = json.load(response)
+    jsonschema.validate(yaml.safe_load(render(commit)), schema)
     with tempfile.TemporaryDirectory(prefix='flexilist-fdroid-') as directory:
         root = Path(directory)
         (root / 'metadata').mkdir()
         (root / 'metadata' / f'{APP_ID}.yml').write_text(render(commit))
         # Category names come from fdroiddata; category artwork is not needed to lint one recipe.
-        (root / 'config.yml').write_text(yaml.safe_dump({'categories': list(categories)}))
+        config = root / 'config.yml'
+        config.write_text(yaml.safe_dump({'categories': list(categories)}))
+        config.chmod(0o600)
         executable = shutil.which('fdroid') or str(Path(sys.executable).with_name('fdroid'))
         subprocess.run([executable, 'lint', '--format', APP_ID], cwd=root, check=True)
     print('F-Droid metadata, update matching and store assets validated.')
