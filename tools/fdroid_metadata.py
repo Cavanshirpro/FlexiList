@@ -13,7 +13,7 @@ def render(commit, root=ROOT):
     if not re.fullmatch('[0-9a-f]{40}', commit):
         raise ValueError('F-Droid build recipes must pin a full commit SHA')
     data = json.loads((root / 'release/release.json').read_text())
-    # Match ruamel.yaml 0.18.10 on F-Droid runners, including its space before a wrapped URL.
+    # F-Droid builds and signs its own APK; no upstream reference binary is required.
     # UpdateCheckData reads the canonical JSON at each tag, rather than parsing Gradle expressions.
     return f'''Categories:
   - Habit Tracker
@@ -27,8 +27,6 @@ IssueTracker: https://github.com/Cavanshirpro/FlexiList/issues
 
 RepoType: git
 Repo: https://github.com/Cavanshirpro/FlexiList.git
-Binaries:{chr(32)}
-  https://github.com/Cavanshirpro/FlexiList/releases/download/v%v/FlexiList-%v-fdroid-release.apk
 
 Builds:
   - versionName: {data['version']}
@@ -38,8 +36,6 @@ Builds:
     sudo: update-java-alternatives --set java-1.21.0-openjdk-amd64
     gradle:
       - fdroid
-
-AllowedAPKSigningKeys: {data['signing_cert_sha256']}
 
 AutoUpdateMode: Version
 UpdateCheckMode: Tags ^v[0-9]+\\.[0-9]+\\.[0-9]+$

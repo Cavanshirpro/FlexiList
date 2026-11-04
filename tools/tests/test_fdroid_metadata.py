@@ -10,10 +10,11 @@ spec.loader.exec_module(recipe)
 
 
 class FdroidMetadataTest(unittest.TestCase):
-    def test_recipe_is_pinned_to_source_and_published_apk(self):
+    def test_recipe_builds_pinned_source_for_fdroid_signing(self):
         text = recipe.render('a' * 40)
         self.assertIn('commit: ' + 'a' * 40, text)
-        self.assertIn('FlexiList-%v-fdroid-release.apk', text)
+        self.assertNotIn('Binaries:', text)
+        self.assertNotIn('AllowedAPKSigningKeys:', text)
         self.assertIn('java-1.21.0-openjdk-amd64', text)
         self.assertIn('\nAutoUpdateMode: Version\n', text)
         self.assertNotIn('\r', text)

@@ -31,11 +31,20 @@ jobs:
       - name: Check signing configuration before building
         id: signing
         env:
-          PUBLISH_REQUESTED: ${{ github.event_name == 'push' || inputs.mode == 'publish' }}
+          PUBLISH_REQUESTED: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'publish' }}
           KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
           STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: python3 tools/release.py signing
+      - name: Report distribution mode
+        env:
+          SIGN_RELEASE: ${{ steps.signing.outputs.sign_release }}
+        run: |
+          if [[ "$SIGN_RELEASE" == true ]]; then
+            echo 'Release signing is available.' >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo 'Source/validation build: no public GitHub APK release will be created. F-Droid builds and signs independently. Configure the existing signing secrets to enable GitHub APK publication.' >> "$GITHUB_STEP_SUMMARY"
+          fi
       - name: Validate release source and metadata
         id: meta
         env:
@@ -77,7 +86,7 @@ jobs:
           path: dist/release/*
           if-no-files-found: error
       - name: Publish verified APKs
-        if: github.event_name == 'push' || inputs.mode == 'publish'
+        if: needs.preflight.outputs.sign_release == 'true' && (github.event_name == 'push' || inputs.mode == 'publish')
         env:
           GH_TOKEN: ${{ github.token }}
         run: python3 tools/release.py publish --sha "$GITHUB_SHA"

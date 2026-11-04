@@ -136,5 +136,5 @@ The following checklist tracks development milestones, completed features, and f
 ## Publish and F-Droid follow-up
 
 - Publish runs check signing-secret availability in preflight; validation mode can inspect unsigned candidates. Public publication continues to require the existing release certificate.
-- `tools/fdroid_metadata.py` generates a canonical F-Droid recipe pinned to a full release source SHA; `tools/check_fdroid.py` runs the official linter and validates store assets. Update the GitLab recipe from the published revision, not an in-progress branch.
+- `tools/fdroid_metadata.py` generates a canonical F-Droid recipe pinned to a full release source SHA; `tools/check_fdroid.py` runs the official linter and validates store assets. Update the GitLab recipe from the tagged release revision. F-Droid signs its own APK, independently of the GitHub release key.
 - Release APKs omit dependency and VCS metadata. Staging checks ZIP integrity so corrupt binaries cannot be uploaded as APKs.
