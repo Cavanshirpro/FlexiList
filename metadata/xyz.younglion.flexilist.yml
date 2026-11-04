@@ -15,7 +15,7 @@ Binaries: https://github.com/Cavanshirpro/FlexiList/releases/download/v%v/FlexiL
 Builds:
   - versionName: 1.0.4
     versionCode: 5
-    commit: caa94d365f1c047ce7513f527946b5f828004cde
+    commit: 6bb6dbbded3d916463e7b293af4757b86f6de28e
     subdir: app
     sudo: update-java-alternatives --set java-1.21.0-openjdk-amd64
     gradle:
