@@ -4,10 +4,17 @@ import android.content.Context
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import androidx.room.Entity
+import androidx.room.Index
 import androidx.room.PrimaryKey
 import xyz.younglion.flexilist.R
 
-@Entity(tableName = "notebooks")
+@Entity(
+    tableName = "notebooks",
+    indices = [
+        Index(value = ["pinned", "sortOrder"]),
+        Index(value = ["type"])
+    ]
+)
 data class NotebookEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val name: String,

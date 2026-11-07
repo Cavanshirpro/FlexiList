@@ -14,7 +14,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 
 @Database(
     entities = [NotebookEntity::class, ListItemEntity::class, WorkoutLogEntity::class, WaterIntakeEntity::class],
-    version = 3,
+    version = 4,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -33,6 +33,17 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_3_4 = object : Migration(3, 4) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_list_items_notebookId_sortOrder ON list_items(notebookId, sortOrder)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_list_items_notebookId_completed ON list_items(notebookId, completed)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_list_items_dueDate ON list_items(dueDate)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_notebooks_pinned_sortOrder ON notebooks(pinned, sortOrder)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_notebooks_type ON notebooks(type)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_workout_logs_notebookId_createdAt ON workout_logs(notebookId, createdAt)")
+            }
+        }
+
         fun getDatabase(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -40,7 +51,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "flexilist_database"
                 )
-                .addMigrations(MIGRATION_2_3)
+                .addMigrations(MIGRATION_2_3, MIGRATION_3_4)
                 .fallbackToDestructiveMigration(dropAllTables = true)
                 .build()
                 INSTANCE = instance

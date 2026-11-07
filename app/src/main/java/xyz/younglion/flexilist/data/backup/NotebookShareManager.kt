@@ -81,7 +81,7 @@ object NotebookShareManager {
     }
 
     /**
-     * Imports notebook from an incoming Intent (e.g. ACTION_VIEW or ACTION_SEND) or Uri
+     * Imports notebook or full backup from an incoming Intent (e.g. ACTION_VIEW or ACTION_SEND) or Uri
      */
     fun importFlexiNotebookFromIntent(
         context: Context,
@@ -92,7 +92,7 @@ object NotebookShareManager {
     ) {
         viewModel.viewModelScope.launch {
             try {
-                val (notebook, items) = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                val json = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
                     val uri: Uri? = when (intent.action) {
                         Intent.ACTION_SEND -> {
                             if (android.os.Build.VERSION.SDK_INT >= 33) {
@@ -104,17 +104,41 @@ object NotebookShareManager {
                         }
                         else -> intent.data
                     }
-                    val json = if (uri != null) {
+                    if (uri != null) {
                         requireNotNull(context.contentResolver.openInputStream(uri)).use {
                             it.bufferedReader(Charsets.UTF_8).readText()
                         }
                     } else {
                         requireNotNull(intent.getStringExtra(Intent.EXTRA_TEXT))
                     }
-                    parseFlexiJson(json)
                 }
-                viewModel.importNotebookWithItems(notebook, items,
-                    onComplete = { onSuccess(notebook.name, items.size) }, onError = onError)
+
+                val trimmed = json.trim()
+                if (trimmed.contains("\"notebooks\"") && trimmed.contains("\"schemaVersion\"")) {
+                    // Full system backup format
+                    val success = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                        viewModel.backupManager.importFromJsonString(trimmed)
+                    }
+                    if (success) {
+                        onSuccess("Tüm Yedek", 0)
+                    } else {
+                        onError("Yedek dosyası çözümlenemedi.")
+                    }
+                } else {
+                    // Single notebook format (.flexi)
+                    val (notebook, items) = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                        parseFlexiJson(trimmed)
+                    }
+                    viewModel.importNotebookWithItems(
+                        notebook,
+                        items,
+                        onComplete = { newId ->
+                            viewModel.selectNotebook(newId)
+                            onSuccess(notebook.name, items.size)
+                        },
+                        onError = onError
+                    )
+                }
             } catch (e: kotlinx.coroutines.CancellationException) {
                 throw e
             } catch (e: Exception) {

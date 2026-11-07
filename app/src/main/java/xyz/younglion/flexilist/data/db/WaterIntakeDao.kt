@@ -15,6 +15,9 @@ interface WaterIntakeDao {
     @Query("SELECT * FROM water_intake")
     fun getAllWaterIntake(): Flow<List<WaterIntakeEntity>>
 
+    @Query("SELECT * FROM water_intake")
+    suspend fun getAllWaterIntakeSuspend(): List<WaterIntakeEntity>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertWaterIntake(intake: WaterIntakeEntity)
 }

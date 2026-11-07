@@ -25,7 +25,7 @@ import java.util.Calendar
 class FlexiViewModel(
     application: Application,
     private val repository: FlexiRepository,
-    private val backupManager: BackupManager
+    val backupManager: BackupManager
 ) : AndroidViewModel(application) {
 
     private val prefs = application.getSharedPreferences("flexilist_prefs", Context.MODE_PRIVATE)
@@ -572,11 +572,12 @@ class FlexiViewModel(
             try {
                 repository.withTransaction {
                     repository.insertWorkoutLog(log)
-                    completedExerciseIds.forEach { id ->
-                        val item = repository.getItemByIdSuspend(id)
-                        if (item != null && item.notebookId == log.notebookId) {
-                            repository.updateItem(item.copy(completed = true, completedAt = log.endTime, updatedAt = log.endTime))
-                        }
+                    val items = repository.getItemsByIdsSuspend(completedExerciseIds)
+                    val updatedItems = items.filter { it.notebookId == log.notebookId }.map { item ->
+                        item.copy(completed = true, completedAt = log.endTime, updatedAt = log.endTime)
+                    }
+                    if (updatedItems.isNotEmpty()) {
+                        repository.updateItems(updatedItems)
                     }
                 }
                 resetWorkoutStepIndex(log.notebookId)
@@ -669,16 +670,14 @@ class FlexiViewModel(
     }
 
     fun markExercisesAsCompleted(ids: List<Long>) {
+        if (ids.isEmpty()) return
         viewModelScope.launch {
-            val itemsToUpdate = mutableListOf<ListItemEntity>()
-            ids.forEach { id ->
-                val item = repository.getItemByIdSuspend(id)
-                if (item != null) {
-                    itemsToUpdate.add(item.copy(completed = true, completedAt = System.currentTimeMillis(), updatedAt = System.currentTimeMillis()))
-                }
+            val items = repository.getItemsByIdsSuspend(ids)
+            val updated = items.map {
+                it.copy(completed = true, completedAt = System.currentTimeMillis(), updatedAt = System.currentTimeMillis())
             }
-            if (itemsToUpdate.isNotEmpty()) {
-                repository.updateItems(itemsToUpdate)
+            if (updated.isNotEmpty()) {
+                repository.updateItems(updated)
             }
         }
     }
@@ -686,7 +685,7 @@ class FlexiViewModel(
     fun resetAllExercisesInNotebook() {
         val notebookId = _selectedNotebookId.value ?: return
         viewModelScope.launch {
-            val itemsList = repository.getItemsForNotebook(notebookId).first()
+            val itemsList = repository.getItemsForNotebookSuspend(notebookId)
             val updated = itemsList.map { it.copy(completed = false, updatedAt = System.currentTimeMillis()) }
             repository.updateItems(updated)
         }

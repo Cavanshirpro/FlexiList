@@ -1,9 +1,15 @@
 package xyz.younglion.flexilist.data.model
 
 import androidx.room.Entity
+import androidx.room.Index
 import androidx.room.PrimaryKey
 
-@Entity(tableName = "workout_logs")
+@Entity(
+    tableName = "workout_logs",
+    indices = [
+        Index(value = ["notebookId", "createdAt"])
+    ]
+)
 data class WorkoutLogEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val notebookId: Long,

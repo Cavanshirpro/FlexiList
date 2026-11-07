@@ -1,0 +1,6 @@
+{
+  "summary":  "Detaylı araştırma sonucunda tespit edilen ekran rotasyonu (portrait/landscape), arka plandan dönüş, form durumu kaybı ve görsel düzen sorunlarının giderilmesine yönelik kapsamlı uygulama planı. Workout Player iki sütunlu adaptif yatay düzen, rememberSaveable ile form ve diyalog durumlarının korunması ve BackHandler entegrasyonu içermektedir.",
+  "updatedAt":  "2026-11-07T17:23:37.867274870Z",
+  "requestFeedback":  true,
+  "userFacing":  true
+}

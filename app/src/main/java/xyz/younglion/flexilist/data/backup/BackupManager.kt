@@ -114,23 +114,23 @@ class BackupManager(private val repository: FlexiRepository) {
             val snapshot = repository.withTransaction {
                 BackupWrapper(
                     schemaVersion = 2,
-                    notebooks = repository.allNotebooks.first().map { n ->
-                        notebookBackup(n, repository.getItemsForNotebook(n.id).first())
+                    notebooks = repository.getAllNotebooksSuspend().map { n ->
+                        notebookBackup(n, repository.getItemsForNotebookSuspend(n.id))
                     },
-                    workoutLogs = repository.getAllWorkoutLogs().first().map {
+                    workoutLogs = repository.getAllWorkoutLogsSuspend().map {
                         WorkoutLogBackup(
                             notebookId = it.notebookId,
-                    workoutName = it.workoutName,
-                    startTime = it.startTime,
-                    endTime = it.endTime,
-                    totalDurationSeconds = it.totalDurationSeconds,
-                    totalSetsCompleted = it.totalSetsCompleted,
-                    totalWeightLiftedKg = it.totalWeightLiftedKg,
-                    exerciseStatsJson = it.exerciseStatsJson,
-                    createdAt = it.createdAt
+                            workoutName = it.workoutName,
+                            startTime = it.startTime,
+                            endTime = it.endTime,
+                            totalDurationSeconds = it.totalDurationSeconds,
+                            totalSetsCompleted = it.totalSetsCompleted,
+                            totalWeightLiftedKg = it.totalWeightLiftedKg,
+                            exerciseStatsJson = it.exerciseStatsJson,
+                            createdAt = it.createdAt
                         )
                     },
-                    waterIntakes = repository.getAllWaterIntakes().first().map {
+                    waterIntakes = repository.getAllWaterIntakesSuspend().map {
                         WaterIntakeBackup(it.dateString, it.amountMl, it.updatedAt)
                     }
                 )
@@ -183,7 +183,7 @@ class BackupManager(private val repository: FlexiRepository) {
                     )
                 }
                 wrapper.waterIntakes.orEmpty().forEach { water ->
-                    val existing = repository.getWaterIntakeForDate(water.dateString).first()
+                    val existing = repository.getWaterIntakeForDateSuspend(water.dateString)
                     if (existing == null || water.updatedAt > existing.updatedAt) {
                         repository.insertWaterIntake(WaterIntakeEntity(water.dateString, water.amountMl, water.updatedAt))
                     }
@@ -203,8 +203,8 @@ class BackupManager(private val repository: FlexiRepository) {
             val csv = repository.withTransaction {
                 buildString {
                     append("Defter,Baslik,Aciklama,Tamamlandi,Oncelik,Etiketler,Kategori,Tarih\n")
-                    repository.allNotebooks.first().forEach { n ->
-                        repository.getItemsForNotebook(n.id).first().forEach { i ->
+                    repository.getAllNotebooksSuspend().forEach { n ->
+                        repository.getItemsForNotebookSuspend(n.id).forEach { i ->
                             val priority = n.getPriorityConfig().find { it.level == i.priority }?.name ?: i.priority.toString()
                             append(listOf(n.name, i.title, i.description, i.completed, priority, i.tags, i.category, i.dueDate ?: "")
                                 .joinToString(",") { cell(it) })

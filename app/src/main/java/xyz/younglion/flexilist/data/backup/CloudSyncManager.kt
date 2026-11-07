@@ -14,9 +14,9 @@ sealed class CloudSyncResult {
 
 class CloudSyncManager {
     private val client = OkHttpClient.Builder()
-        .connectTimeout(15, TimeUnit.SECONDS)
-        .readTimeout(15, TimeUnit.SECONDS)
-        .writeTimeout(15, TimeUnit.SECONDS)
+        .connectTimeout(20, TimeUnit.SECONDS)
+        .readTimeout(20, TimeUnit.SECONDS)
+        .writeTimeout(20, TimeUnit.SECONDS)
         .build()
 
     // Public REST storage endpoint (JSONBlob Cloud Vault)
@@ -24,7 +24,7 @@ class CloudSyncManager {
 
     /**
      * Uploads the raw backup JSON to JSONBlob cloud storage.
-     * Returns CloudSyncResult.Success with the assigned syncCode or Error.
+     * Returns CloudSyncResult.Success with the assigned syncCode (FLX-XXXXXX) or Error.
      */
     suspend fun uploadToCloud(syncCode: String, jsonString: String): CloudSyncResult {
         return kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
@@ -32,12 +32,14 @@ class CloudSyncManager {
                 val mediaType = "application/json; charset=utf-8".toMediaType()
                 val body = jsonString.toRequestBody(mediaType)
                 
-                val cleanCode = syncCode.trim().removePrefix("FLX-").trim()
+                val cleanCode = syncCode.trim().replaceFirst(Regex("^(?i)FLX-"), "").trim()
 
-                if (cleanCode.length >= 8) {
+                if (cleanCode.length >= 6) {
                     // Try to update existing blob
                     val putRequest = Request.Builder()
                         .url("$jsonBlobUrl/$cleanCode")
+                        .addHeader("Accept", "application/json")
+                        .addHeader("Content-Type", "application/json; charset=utf-8")
                         .put(body)
                         .build()
 
@@ -45,7 +47,8 @@ class CloudSyncManager {
                         val putResponse = client.newCall(putRequest).execute()
                         if (putResponse.isSuccessful) {
                             putResponse.close()
-                            return@withContext CloudSyncResult.Success(cleanCode)
+                            val formattedCode = if (cleanCode.startsWith("FLX-", ignoreCase = true)) cleanCode.uppercase() else "FLX-${cleanCode.uppercase()}"
+                            return@withContext CloudSyncResult.Success(formattedCode)
                         }
                         putResponse.close()
                     } catch (e: Exception) {
@@ -56,6 +59,8 @@ class CloudSyncManager {
                 // Create a new cloud blob on JSONBlob
                 val postRequest = Request.Builder()
                     .url(jsonBlobUrl)
+                    .addHeader("Accept", "application/json")
+                    .addHeader("Content-Type", "application/json; charset=utf-8")
                     .post(body)
                     .build()
 
@@ -67,7 +72,8 @@ class CloudSyncManager {
 
                     val newId = headerId ?: location?.substringAfterLast("/")
                     if (!newId.isNullOrBlank()) {
-                        return@withContext CloudSyncResult.Success(newId)
+                        val formattedCode = "FLX-${newId.uppercase()}"
+                        return@withContext CloudSyncResult.Success(formattedCode)
                     }
                 } else {
                     val errCode = postResponse.code
@@ -92,11 +98,12 @@ class CloudSyncManager {
     suspend fun downloadFromCloud(syncCode: String): String? {
         return kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
             try {
-                val cleanCode = syncCode.trim().removePrefix("FLX-").trim()
+                val cleanCode = syncCode.trim().replaceFirst(Regex("^(?i)FLX-"), "").trim()
                 if (cleanCode.isBlank()) return@withContext null
 
                 val request = Request.Builder()
                     .url("$jsonBlobUrl/$cleanCode")
+                    .addHeader("Accept", "application/json")
                     .get()
                     .build()
 

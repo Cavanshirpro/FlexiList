@@ -15,7 +15,12 @@ import androidx.room.PrimaryKey
             onDelete = ForeignKey.CASCADE
         )
     ],
-    indices = [Index(value = ["notebookId"])]
+    indices = [
+        Index(value = ["notebookId"]),
+        Index(value = ["notebookId", "sortOrder"]),
+        Index(value = ["notebookId", "completed"]),
+        Index(value = ["dueDate"])
+    ]
 )
 data class ListItemEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,

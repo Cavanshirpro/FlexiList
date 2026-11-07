@@ -31,6 +31,12 @@ class FlexiRepository(private val database: xyz.younglion.flexilist.data.db.AppD
     fun getAllWorkoutLogs(): Flow<List<WorkoutLogEntity>> =
         workoutLogDao.getAllLogs()
 
+    suspend fun getAllWorkoutLogsSuspend(): List<WorkoutLogEntity> =
+        workoutLogDao.getAllLogsSuspend()
+
+    suspend fun getLogsForNotebookSuspend(notebookId: Long): List<WorkoutLogEntity> =
+        workoutLogDao.getLogsForNotebookSuspend(notebookId)
+
     suspend fun insertWorkoutLog(log: WorkoutLogEntity): Long =
         workoutLogDao.insertLog(log)
 
@@ -41,14 +47,22 @@ class FlexiRepository(private val database: xyz.younglion.flexilist.data.db.AppD
     fun getWaterIntakeForDate(dateString: String): Flow<WaterIntakeEntity?> =
         waterIntakeDao.getWaterIntakeForDate(dateString)
 
+    suspend fun getWaterIntakeForDateSuspend(dateString: String): WaterIntakeEntity? =
+        waterIntakeDao.getWaterIntakeForDateSuspend(dateString)
+
     fun getAllWaterIntakes(): Flow<List<WaterIntakeEntity>> =
         waterIntakeDao.getAllWaterIntake()
+
+    suspend fun getAllWaterIntakesSuspend(): List<WaterIntakeEntity> =
+        waterIntakeDao.getAllWaterIntakeSuspend()
 
     suspend fun insertWaterIntake(intake: WaterIntakeEntity) =
         waterIntakeDao.insertWaterIntake(intake)
 
     // Notebook actions
     val allNotebooks: Flow<List<NotebookEntity>> = notebookDao.getAllNotebooks()
+
+    suspend fun getAllNotebooksSuspend(): List<NotebookEntity> = notebookDao.getAllNotebooksSuspend()
 
     fun getNotebookById(id: Long): Flow<NotebookEntity?> = notebookDao.getNotebookById(id)
 
@@ -64,11 +78,16 @@ class FlexiRepository(private val database: xyz.younglion.flexilist.data.db.AppD
     fun getItemsForNotebook(notebookId: Long): Flow<List<ListItemEntity>> =
         listItemDao.getAllItemsForNotebook(notebookId)
 
+    suspend fun getItemsForNotebookSuspend(notebookId: Long): List<ListItemEntity> =
+        listItemDao.getItemsForNotebookSuspend(notebookId)
+
     fun getAllItemsGlobal(): Flow<List<ListItemEntity>> = listItemDao.getAllItemsGlobal()
 
     fun getItemById(id: Long): Flow<ListItemEntity?> = listItemDao.getItemById(id)
 
     suspend fun getItemByIdSuspend(id: Long): ListItemEntity? = listItemDao.getItemByIdSuspend(id)
+
+    suspend fun getItemsByIdsSuspend(ids: List<Long>): List<ListItemEntity> = listItemDao.getItemsByIdsSuspend(ids)
 
     suspend fun insertItem(item: ListItemEntity): Long = listItemDao.insertItem(item)
 

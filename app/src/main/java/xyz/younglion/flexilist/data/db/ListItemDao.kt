@@ -45,6 +45,12 @@ interface ListItemDao {
     """)
     suspend fun resetDailyCompletions(beforeMillis: Long)
 
+    @Query("SELECT * FROM list_items WHERE id IN (:ids)")
+    suspend fun getItemsByIdsSuspend(ids: List<Long>): List<ListItemEntity>
+
+    @Query("SELECT * FROM list_items WHERE notebookId = :notebookId ORDER BY sortOrder ASC, id DESC")
+    suspend fun getItemsForNotebookSuspend(notebookId: Long): List<ListItemEntity>
+
     @Query("DELETE FROM list_items WHERE notebookId = :notebookId")
     suspend fun deleteAllItemsInNotebook(notebookId: Long)
 }

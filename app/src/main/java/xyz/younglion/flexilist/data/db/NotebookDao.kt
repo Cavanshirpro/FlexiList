@@ -9,6 +9,9 @@ interface NotebookDao {
     @Query("SELECT * FROM notebooks ORDER BY pinned DESC, sortOrder ASC, id DESC")
     fun getAllNotebooks(): Flow<List<NotebookEntity>>
 
+    @Query("SELECT * FROM notebooks ORDER BY pinned DESC, sortOrder ASC, id DESC")
+    suspend fun getAllNotebooksSuspend(): List<NotebookEntity>
+
     @Query("SELECT * FROM notebooks WHERE id = :id LIMIT 1")
     fun getNotebookById(id: Long): Flow<NotebookEntity?>
 
