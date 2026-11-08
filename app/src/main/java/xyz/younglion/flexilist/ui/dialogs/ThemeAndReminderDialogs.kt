@@ -16,6 +16,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -45,8 +46,10 @@ fun ThemeCustomizationDialog(
     Dialog(onDismissRequest = onDismiss) {
         Card(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
+                .fillMaxWidth(0.96f)
+                .widthIn(max = 500.dp)
+                .heightIn(max = (androidx.compose.ui.platform.LocalConfiguration.current.screenHeightDp * 0.92f).dp)
+                .padding(vertical = 8.dp),
             shape = RoundedCornerShape(24.dp),
             colors = CardDefaults.cardColors(
                 containerColor = MaterialTheme.colorScheme.surface
@@ -292,8 +295,8 @@ fun ListReminderDialog(
     val existingReminder = remember(notebook.id) { viewModel.getNotebookReminderTime(notebook.id) }
 
     val calendar = Calendar.getInstance()
-    var selectedHour by remember { mutableStateOf(existingReminder?.first ?: 18) }
-    var selectedMinute by remember { mutableStateOf(existingReminder?.second ?: 0) }
+    var selectedHour by rememberSaveable { mutableStateOf(existingReminder?.first ?: 18) }
+    var selectedMinute by rememberSaveable { mutableStateOf(existingReminder?.second ?: 0) }
 
     val timePickerDialog = TimePickerDialog(
         context,
@@ -309,8 +312,10 @@ fun ListReminderDialog(
     Dialog(onDismissRequest = onDismiss) {
         Card(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
+                .fillMaxWidth(0.96f)
+                .widthIn(max = 500.dp)
+                .heightIn(max = (androidx.compose.ui.platform.LocalConfiguration.current.screenHeightDp * 0.92f).dp)
+                .padding(vertical = 8.dp),
             shape = RoundedCornerShape(24.dp),
             colors = CardDefaults.cardColors(
                 containerColor = MaterialTheme.colorScheme.surface

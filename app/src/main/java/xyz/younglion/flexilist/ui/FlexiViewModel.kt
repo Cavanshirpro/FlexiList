@@ -117,7 +117,9 @@ class FlexiViewModel(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     // Selected Notebook State
-    private val _selectedNotebookId = MutableStateFlow<Long?>(null)
+    private val _selectedNotebookId = MutableStateFlow<Long?>(
+        prefs.getLong("selected_notebook_id", -1L).takeIf { it != -1L }
+    )
     val selectedNotebookId: StateFlow<Long?> = _selectedNotebookId.asStateFlow()
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -153,6 +155,11 @@ class FlexiViewModel(
 
     fun selectNotebook(id: Long?) {
         _selectedNotebookId.value = id
+        if (id != null) {
+            prefs.edit().putLong("selected_notebook_id", id).apply()
+        } else {
+            prefs.edit().remove("selected_notebook_id").apply()
+        }
         // Reset local filters on notebook change
         clearFilters()
     }

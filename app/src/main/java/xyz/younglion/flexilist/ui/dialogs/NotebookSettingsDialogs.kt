@@ -16,6 +16,7 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -48,7 +49,7 @@ fun WorkoutPlannerSettingsDialog(
     onOpenStats: () -> Unit
 ) {
     val context = LocalContext.current
-    var showDeleteConfirm by remember { mutableStateOf(false) }
+    var showDeleteConfirm by rememberSaveable { mutableStateOf(false) }
     val workoutConfig = remember(notebook.description) { notebook.getWorkoutScheduleConfig() }
     val reminderTime = remember(notebook.id) { viewModel.getNotebookReminderTime(notebook.id) }
 
@@ -56,8 +57,10 @@ fun WorkoutPlannerSettingsDialog(
         Card(
             modifier = Modifier
                 .fillMaxWidth(0.96f)
-                .widthIn(max = 480.dp)
-                .padding(vertical = 12.dp),
+                .widthIn(max = 500.dp)
+                .heightIn(max = (androidx.compose.ui.platform.LocalConfiguration.current.screenHeightDp * 0.92f).dp)
+                .padding(vertical = 8.dp)
+                .imePadding(),
             shape = RoundedCornerShape(24.dp),
             colors = CardDefaults.cardColors(
                 containerColor = MaterialTheme.colorScheme.surface
@@ -416,7 +419,7 @@ fun StandardListSettingsDialog(
     onOpenStats: () -> Unit
 ) {
     val context = LocalContext.current
-    var showDeleteConfirm by remember { mutableStateOf(false) }
+    var showDeleteConfirm by rememberSaveable { mutableStateOf(false) }
     val coverColor = NotebookColors.getOrElse(notebook.color) { NotebookColors[0] }
     val reminderTime = remember(notebook.id) { viewModel.getNotebookReminderTime(notebook.id) }
     val createdDateStr = remember(notebook.createdAt) {
@@ -428,8 +431,10 @@ fun StandardListSettingsDialog(
         Card(
             modifier = Modifier
                 .fillMaxWidth(0.96f)
-                .widthIn(max = 480.dp)
-                .padding(vertical = 12.dp),
+                .widthIn(max = 500.dp)
+                .heightIn(max = (androidx.compose.ui.platform.LocalConfiguration.current.screenHeightDp * 0.92f).dp)
+                .padding(vertical = 8.dp)
+                .imePadding(),
             shape = RoundedCornerShape(24.dp),
             colors = CardDefaults.cardColors(
                 containerColor = MaterialTheme.colorScheme.surface
@@ -750,9 +755,9 @@ fun PriorityCustomizationDialog(
     onSave: (List<NotebookEntity.PriorityOption>) -> Unit
 ) {
     var options by remember { mutableStateOf(initialOptions) }
-    var editingLevel by remember { mutableStateOf<Int?>(null) }
-    var editName by remember { mutableStateOf("") }
-    var editColorHex by remember { mutableStateOf("") }
+    var editingLevel by rememberSaveable { mutableStateOf<Int?>(null) }
+    var editName by rememberSaveable { mutableStateOf("") }
+    var editColorHex by rememberSaveable { mutableStateOf("") }
 
     val defaultPalette = listOf(
         "#81C784", "#66BB6A", "#4CAF50",
@@ -766,8 +771,10 @@ fun PriorityCustomizationDialog(
         Card(
             modifier = Modifier
                 .fillMaxWidth(0.96f)
-                .widthIn(max = 480.dp)
-                .padding(vertical = 12.dp),
+                .widthIn(max = 500.dp)
+                .heightIn(max = (androidx.compose.ui.platform.LocalConfiguration.current.screenHeightDp * 0.92f).dp)
+                .padding(vertical = 8.dp)
+                .imePadding(),
             shape = RoundedCornerShape(24.dp),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
             elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)

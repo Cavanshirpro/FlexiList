@@ -1486,10 +1486,13 @@ fun ItemsScreen(
 
     // Quick Add Mini Widget Dialog
     if (showQuickAddDialog) {
-        var quickTitle by varRemember { mutableStateOf("") }
-        var quickPriority by varRemember { mutableStateOf(0) }
+        var quickTitle by rememberSaveable { mutableStateOf("") }
+        var quickPriority by rememberSaveable { mutableStateOf(0) }
         
         AlertDialog(
+            modifier = Modifier
+                .widthIn(max = 480.dp)
+                .imePadding(),
             onDismissRequest = { showQuickAddDialog = false },
             title = { Text(stringResource(R.string.quick_add_title), fontWeight = FontWeight.Bold) },
             text = {
@@ -2316,8 +2319,10 @@ fun NotebookStatisticsDialog(
     Dialog(onDismissRequest = onDismiss) {
         Card(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 12.dp),
+                .fillMaxWidth(0.96f)
+                .widthIn(max = 500.dp)
+                .heightIn(max = (androidx.compose.ui.platform.LocalConfiguration.current.screenHeightDp * 0.92f).dp)
+                .padding(vertical = 8.dp),
             shape = RoundedCornerShape(24.dp),
             border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
         ) {

@@ -425,403 +425,802 @@ fun WorkoutPlayerScreen(
     }
 
     // Visual Theme (Dark Distraction-free Slate Space)
+    var showExitConfirmDialog by rememberSaveable { mutableStateOf(false) }
+
+    BackHandler(enabled = true) {
+        showExitConfirmDialog = true
+    }
+
+    if (showExitConfirmDialog) {
+        AlertDialog(
+            onDismissRequest = { showExitConfirmDialog = false },
+            title = {
+                Text(
+                    stringResource(R.string.close),
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
+                )
+            },
+            text = {
+                Text(
+                    "Antrenmandan çıkmak istiyor musunuz? İlerlemeniz kaydedilecek ve daha sonra kaldığınız yerden devam edebileceksiniz.",
+                    color = Color.White.copy(alpha = 0.8f)
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showExitConfirmDialog = false
+                        onDismiss()
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                ) {
+                    Text("Antrenmandan Çık", fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showExitConfirmDialog = false }) {
+                    Text(stringResource(R.string.cancel), color = Color.White.copy(alpha = 0.7f))
+                }
+            },
+            containerColor = Color(0xFF1E293B),
+            shape = RoundedCornerShape(20.dp)
+        )
+    }
+
+    // Visual Theme (Dark Distraction-free Slate Space)
     Surface(
         modifier = Modifier.fillMaxSize(),
         color = Color(0xFF0F172A) // Sleek slate space dark background
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(24.dp)
-                .statusBarsPadding()
-                .navigationBarsPadding()
-                .verticalScroll(rememberScrollState()),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.SpaceBetween
-        ) {
-            // 1. Top bar summary
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                IconButton(onClick = onDismiss) {
-                    Icon(Icons.Default.Close, stringResource(R.string.close), tint = Color.White.copy(alpha = 0.6f))
-                }
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(
-                        workoutName,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White,
-                        fontSize = 18.sp
-                    )
-                    Text(
-                        stringResource(R.string.step_indicator, currentStepIndex + 1, executionQueue.size),
-                        color = Color.White.copy(alpha = 0.5f),
-                        fontSize = 12.sp
-                    )
-                }
-                IconButton(onClick = { finishWorkout() }, enabled = !isFinishing) {
-                    Icon(Icons.Default.DoneAll, stringResource(R.string.finish_workout), tint = MaterialTheme.colorScheme.primary)
-                }
-            }
+        BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+            val isLandscape = maxWidth > maxHeight
 
-            // Progress bar
-            LinearProgressIndicator(
-                progress = { completedSteps.count { it.value }.toFloat() / executionQueue.size.toFloat() },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp)
-                    .clip(RoundedCornerShape(4.dp)),
-                color = MaterialTheme.colorScheme.primary,
-                trackColor = Color.White.copy(alpha = 0.1f)
-            )
-
-            if (currentStep != null) {
-                val ex = currentStep.exercise
-
-                // 2. Muscle Group Visualizer & Exercise details
+            if (!isLandscape) {
+                // Portrait Layout
                 Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f),
-                    verticalArrangement = Arrangement.Center
+                        .fillMaxSize()
+                        .padding(24.dp)
+                        .statusBarsPadding()
+                        .navigationBarsPadding()
+                        .verticalScroll(rememberScrollState()),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.SpaceBetween
                 ) {
-                    if (isAwaitingConfirmation) {
-                        Text(
-                            stringResource(R.string.next_exercise_header),
-                            fontWeight = FontWeight.ExtraBold,
-                            color = MaterialTheme.colorScheme.primary,
-                            fontSize = 14.sp,
-                            letterSpacing = 2.sp
-                        )
-                        Spacer(modifier = Modifier.height(6.dp))
-                        Text(
-                            ex.name.uppercase(),
-                            fontWeight = FontWeight.Black,
-                            fontSize = 28.sp,
-                            color = Color.White,
-                            textAlign = TextAlign.Center
-                        )
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Box(
-                            modifier = Modifier
-                                .size(160.dp)
-                                .padding(8.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            MuscleGroupVisualizer(targetMuscles = ex.targetMuscles)
+                    // 1. Top bar summary
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        IconButton(onClick = { showExitConfirmDialog = true }) {
+                            Icon(Icons.Default.Close, stringResource(R.string.close), tint = Color.White.copy(alpha = 0.6f))
                         }
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(16.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Text(stringResource(R.string.sets_count), color = Color.White.copy(alpha = 0.5f), fontSize = 11.sp)
-                                Text("${ex.setsCount}", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Black)
-                            }
-                            Box(modifier = Modifier.width(1.dp).height(24.dp).background(Color.White.copy(alpha = 0.1f)))
-                            if (ex.type == "Reps") {
-                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                    Text(stringResource(R.string.target_reps), color = Color.White.copy(alpha = 0.5f), fontSize = 11.sp)
-                                    Text("${ex.targetReps}", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Black)
-                                }
-                            } else {
-                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                    Text(stringResource(R.string.target_time), color = Color.White.copy(alpha = 0.5f), fontSize = 11.sp)
-                                    Text("${ex.targetTimeSeconds}s", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Black)
-                                }
-                            }
-                            Box(modifier = Modifier.width(1.dp).height(24.dp).background(Color.White.copy(alpha = 0.1f)))
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Text(stringResource(R.string.weight), color = Color.White.copy(alpha = 0.5f), fontSize = 11.sp)
-                                Text("${ex.weightKg} kg", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Black)
-                            }
-                        }
-                    } else if (isPrepState) {
-                        Text(
-                            stringResource(R.string.get_ready),
-                            fontWeight = FontWeight.ExtraBold,
-                            color = Color(0xFFF59E0B), // Vibrant amber gold
-                            fontSize = 18.sp,
-                            letterSpacing = 3.sp
-                        )
-                        Spacer(modifier = Modifier.height(12.dp))
-                        Box(
-                            modifier = Modifier
-                                .size(140.dp)
-                                .background(Color(0xFFF59E0B).copy(alpha = 0.1f), CircleShape)
-                                .border(4.dp, Color(0xFFF59E0B), CircleShape),
-                            contentAlignment = Alignment.Center
-                        ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Text(
-                                text = "$prepSecondsRemaining",
-                                fontWeight = FontWeight.Black,
-                                fontSize = 64.sp,
-                                color = Color(0xFFF59E0B)
+                                workoutName,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White,
+                                fontSize = 18.sp
+                            )
+                            Text(
+                                stringResource(R.string.step_indicator, currentStepIndex + 1, executionQueue.size),
+                                color = Color.White.copy(alpha = 0.5f),
+                                fontSize = 12.sp
                             )
                         }
-                        Spacer(modifier = Modifier.height(20.dp))
-                        Text(
-                            stringResource(R.string.next_label, ex.name),
-                            color = Color.White.copy(alpha = 0.9f),
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Bold,
-                            textAlign = TextAlign.Center
-                        )
-                        Text(
-                            stringResource(R.string.set_progress, currentStep.setNumber, ex.setsCount),
-                            color = Color.White.copy(alpha = 0.6f),
-                            fontSize = 14.sp,
-                            textAlign = TextAlign.Center
-                        )
-                    } else if (isRestingState) {
-                        Text(
-                            stringResource(R.string.rest_time),
-                            fontWeight = FontWeight.ExtraBold,
-                            color = MaterialTheme.colorScheme.secondary,
-                            fontSize = 14.sp,
-                            letterSpacing = 2.sp
-                        )
-                        Spacer(modifier = Modifier.height(6.dp))
-                        Text(
-                            "${secondsRemaining}s",
-                            fontWeight = FontWeight.Black,
-                            fontSize = 64.sp,
-                            color = Color.White
-                        )
-                        Text(
-                            stringResource(R.string.next_label, executionQueue.getOrNull(currentStepIndex + 1)?.let { next ->
-                                "${next.exercise.name} (${next.setNumber}/${next.exercise.setsCount})"
-                            }.orEmpty()),
-                            color = Color.White.copy(alpha = 0.7f),
-                            fontSize = 14.sp,
-                            textAlign = TextAlign.Center
-                        )
-                    } else {
-                        // Title of current action
-                        Text(
-                            ex.name.uppercase(),
-                            fontWeight = FontWeight.Black,
-                            fontSize = 24.sp,
-                            color = Color.White,
-                            textAlign = TextAlign.Center
-                        )
+                        IconButton(onClick = { finishWorkout() }, enabled = !isFinishing) {
+                            Icon(Icons.Default.DoneAll, stringResource(R.string.finish_workout), tint = MaterialTheme.colorScheme.primary)
+                        }
+                    }
 
-                        if (currentStep.isSuperset) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier
-                                    .background(
-                                        MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
-                                        RoundedCornerShape(8.dp)
-                                    )
-                                    .padding(horizontal = 10.dp, vertical = 4.dp)
-                            ) {
-                                Icon(Icons.Default.Sync, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(14.dp))
-                                Spacer(modifier = Modifier.width(4.dp))
+                    // Progress bar
+                    LinearProgressIndicator(
+                        progress = { completedSteps.count { it.value }.toFloat() / executionQueue.size.toFloat() },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 8.dp)
+                            .clip(RoundedCornerShape(4.dp)),
+                        color = MaterialTheme.colorScheme.primary,
+                        trackColor = Color.White.copy(alpha = 0.1f)
+                    )
+
+                    if (currentStep != null) {
+                        val ex = currentStep.exercise
+
+                        // 2. Muscle Group Visualizer & Exercise details
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .weight(1f),
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            if (isAwaitingConfirmation) {
                                 Text(
-                                    stringResource(R.string.hybrid_superset, ex.supersetGroupId),
+                                    stringResource(R.string.next_exercise_header),
+                                    fontWeight = FontWeight.ExtraBold,
                                     color = MaterialTheme.colorScheme.primary,
-                                    fontSize = 10.sp,
-                                    fontWeight = FontWeight.Bold
+                                    fontSize = 14.sp,
+                                    letterSpacing = 2.sp
                                 )
+                                Spacer(modifier = Modifier.height(6.dp))
+                                Text(
+                                    ex.name.uppercase(),
+                                    fontWeight = FontWeight.Black,
+                                    fontSize = 28.sp,
+                                    color = Color.White,
+                                    textAlign = TextAlign.Center
+                                )
+                                Spacer(modifier = Modifier.height(16.dp))
+                                Box(
+                                    modifier = Modifier
+                                        .size(160.dp)
+                                        .padding(8.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    MuscleGroupVisualizer(targetMuscles = ex.targetMuscles)
+                                }
+                                Spacer(modifier = Modifier.height(16.dp))
+                                Row(
+                                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                        Text(stringResource(R.string.sets_count), color = Color.White.copy(alpha = 0.5f), fontSize = 11.sp)
+                                        Text("${ex.setsCount}", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Black)
+                                    }
+                                    Box(modifier = Modifier.width(1.dp).height(24.dp).background(Color.White.copy(alpha = 0.1f)))
+                                    if (ex.type == "Reps") {
+                                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                            Text(stringResource(R.string.target_reps), color = Color.White.copy(alpha = 0.5f), fontSize = 11.sp)
+                                            Text("${ex.targetReps}", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Black)
+                                        }
+                                    } else {
+                                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                            Text(stringResource(R.string.target_time), color = Color.White.copy(alpha = 0.5f), fontSize = 11.sp)
+                                            Text("${ex.targetTimeSeconds}s", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Black)
+                                        }
+                                    }
+                                    Box(modifier = Modifier.width(1.dp).height(24.dp).background(Color.White.copy(alpha = 0.1f)))
+                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                        Text(stringResource(R.string.weight), color = Color.White.copy(alpha = 0.5f), fontSize = 11.sp)
+                                        Text("${ex.weightKg} kg", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Black)
+                                    }
+                                }
+                            } else if (isPrepState) {
+                                Text(
+                                    stringResource(R.string.get_ready),
+                                    fontWeight = FontWeight.ExtraBold,
+                                    color = Color(0xFFF59E0B),
+                                    fontSize = 18.sp,
+                                    letterSpacing = 3.sp
+                                )
+                                Spacer(modifier = Modifier.height(12.dp))
+                                Box(
+                                    modifier = Modifier
+                                        .size(140.dp)
+                                        .background(Color(0xFFF59E0B).copy(alpha = 0.1f), CircleShape)
+                                        .border(4.dp, Color(0xFFF59E0B), CircleShape),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = "$prepSecondsRemaining",
+                                        fontWeight = FontWeight.Black,
+                                        fontSize = 64.sp,
+                                        color = Color(0xFFF59E0B)
+                                    )
+                                }
+                                Spacer(modifier = Modifier.height(20.dp))
+                                Text(
+                                    stringResource(R.string.next_label, ex.name),
+                                    color = Color.White.copy(alpha = 0.9f),
+                                    fontSize = 18.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    textAlign = TextAlign.Center
+                                )
+                                Text(
+                                    stringResource(R.string.set_progress, currentStep.setNumber, ex.setsCount),
+                                    color = Color.White.copy(alpha = 0.6f),
+                                    fontSize = 14.sp,
+                                    textAlign = TextAlign.Center
+                                )
+                            } else if (isRestingState) {
+                                Text(
+                                    stringResource(R.string.rest_time),
+                                    fontWeight = FontWeight.ExtraBold,
+                                    color = MaterialTheme.colorScheme.secondary,
+                                    fontSize = 14.sp,
+                                    letterSpacing = 2.sp
+                                )
+                                Spacer(modifier = Modifier.height(6.dp))
+                                Text(
+                                    "${secondsRemaining}s",
+                                    fontWeight = FontWeight.Black,
+                                    fontSize = 64.sp,
+                                    color = Color.White
+                                )
+                                Text(
+                                    stringResource(R.string.next_label, executionQueue.getOrNull(currentStepIndex + 1)?.let { next ->
+                                        "${next.exercise.name} (${next.setNumber}/${next.exercise.setsCount})"
+                                    }.orEmpty()),
+                                    color = Color.White.copy(alpha = 0.7f),
+                                    fontSize = 14.sp,
+                                    textAlign = TextAlign.Center
+                                )
+                            } else {
+                                Text(
+                                    ex.name.uppercase(),
+                                    fontWeight = FontWeight.Black,
+                                    fontSize = 24.sp,
+                                    color = Color.White,
+                                    textAlign = TextAlign.Center
+                                )
+
+                                if (currentStep.isSuperset) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        modifier = Modifier
+                                            .background(
+                                                MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
+                                                RoundedCornerShape(8.dp)
+                                            )
+                                            .padding(horizontal = 10.dp, vertical = 4.dp)
+                                    ) {
+                                        Icon(Icons.Default.Sync, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(14.dp))
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Text(
+                                            stringResource(R.string.hybrid_superset, ex.supersetGroupId),
+                                            color = MaterialTheme.colorScheme.primary,
+                                            fontSize = 10.sp,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    }
+                                }
+
+                                Spacer(modifier = Modifier.height(16.dp))
+
+                                Row(
+                                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                        Text(stringResource(R.string.sets_count), color = Color.White.copy(alpha = 0.5f), fontSize = 11.sp)
+                                        Text("${currentStep.setNumber} / ${ex.setsCount}", color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.Black)
+                                    }
+                                    Box(modifier = Modifier.width(1.dp).height(32.dp).background(Color.White.copy(alpha = 0.1f)))
+                                    
+                                    if (ex.type == "Reps") {
+                                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                            Text(stringResource(R.string.target_reps), color = Color.White.copy(alpha = 0.5f), fontSize = 11.sp)
+                                            Text("${ex.targetReps}", color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.Black)
+                                        }
+                                    } else {
+                                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                            Text(stringResource(R.string.target_time), color = Color.White.copy(alpha = 0.5f), fontSize = 11.sp)
+                                            Text("${secondsRemaining}s", color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.Black)
+                                        }
+                                    }
+                                    Box(modifier = Modifier.width(1.dp).height(32.dp).background(Color.White.copy(alpha = 0.1f)))
+                                    
+                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                        Text(stringResource(R.string.weight), color = Color.White.copy(alpha = 0.5f), fontSize = 11.sp)
+                                        Text("${currentExerciseWeight} kg", color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.Black)
+                                    }
+                                }
                             }
                         }
 
-                        Spacer(modifier = Modifier.height(16.dp))
-
-                        // Target Info Cards Row
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(16.dp),
-                            verticalAlignment = Alignment.CenterVertically
+                        // 3. Bottom controls
+                        Column(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(16.dp)
                         ) {
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Text(stringResource(R.string.sets_count), color = Color.White.copy(alpha = 0.5f), fontSize = 11.sp)
-                                Text("${currentStep.setNumber} / ${ex.setsCount}", color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.Black)
-                            }
-                            Box(modifier = Modifier.width(1.dp).height(32.dp).background(Color.White.copy(alpha = 0.1f)))
-                            
-                            if (ex.type == "Reps") {
-                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                    Text(stringResource(R.string.target_reps), color = Color.White.copy(alpha = 0.5f), fontSize = 11.sp)
-                                    Text("${ex.targetReps}", color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.Black)
+                            if (isAwaitingConfirmation) {
+                                Column(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                                ) {
+                                    Button(
+                                        onClick = {
+                                            isAwaitingConfirmation = false
+                                            val step = executionQueue.getOrNull(currentStepIndex)
+                                            if (step != null) {
+                                                if (step.exercise.type == "Timer") {
+                                                    prepSecondsRemaining = 5
+                                                    isPrepState = true
+                                                    secondsRemaining = step.exercise.targetTimeSeconds
+                                                    isTimerRunning = true
+                                                } else {
+                                                    secondsRemaining = 0
+                                                    isTimerRunning = false
+                                                    isPrepState = false
+                                                    prepSecondsRemaining = 0
+                                                }
+                                            }
+                                        },
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(56.dp)
+                                            .testTag("confirm_start_exercise_button"),
+                                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                                        shape = RoundedCornerShape(16.dp)
+                                    ) {
+                                        Icon(Icons.Default.PlayArrow, null)
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text(stringResource(R.string.start_exercise_btn), fontWeight = FontWeight.ExtraBold, fontSize = 16.sp)
+                                    }
+
+                                    OutlinedButton(
+                                        onClick = { skipCurrentExercise() },
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(50.dp)
+                                            .testTag("skip_exercise_start_screen_button"),
+                                        colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White),
+                                        border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.3f)),
+                                        shape = RoundedCornerShape(16.dp)
+                                    ) {
+                                        Icon(Icons.Default.Schedule, null, modifier = Modifier.size(18.dp), tint = Color.White)
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text(stringResource(R.string.do_this_later), fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                                    }
+                                }
+                            } else if (isPrepState) {
+                                Button(
+                                    onClick = {
+                                        isPrepState = false
+                                        prepSecondsRemaining = 0
+                                        val step = executionQueue.getOrNull(currentStepIndex)
+                                        if (step != null) {
+                                            secondsRemaining = step.exercise.targetTimeSeconds
+                                            isTimerRunning = true
+                                        }
+                                    },
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(56.dp)
+                                        .testTag("skip_prep_countdown_button"),
+                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF59E0B)),
+                                    shape = RoundedCornerShape(16.dp)
+                                ) {
+                                    Icon(Icons.Default.SkipNext, null)
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(stringResource(R.string.skip_countdown), fontWeight = FontWeight.ExtraBold, fontSize = 16.sp)
+                                }
+                            } else if (isRestingState) {
+                                Row(
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    TextButton(onClick = { secondsRemaining += 15 }) {
+                                        Text(stringResource(R.string.add_15s_rest), color = MaterialTheme.colorScheme.primary)
+                                    }
+                                    Button(
+                                        onClick = {
+                                            moveToNextStep()
+                                        },
+                                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
+                                    ) {
+                                        Text(stringResource(R.string.skip_rest), fontWeight = FontWeight.Bold)
+                                    }
                                 }
                             } else {
-                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                    Text(stringResource(R.string.target_time), color = Color.White.copy(alpha = 0.5f), fontSize = 11.sp)
-                                    Text("${secondsRemaining}s", color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.Black)
+                                if (ex.type == "Reps") {
+                                    Button(
+                                        onClick = {
+                                            completedSteps[currentStepIndex] = true
+                                            if (currentStepIndex < executionQueue.size - 1) {
+                                                isRestingState = true
+                                            } else {
+                                                finishWorkout()
+                                            }
+                                        },
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(56.dp)
+                                            .testTag("complete_set_button"),
+                                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                                        shape = RoundedCornerShape(16.dp)
+                                    ) {
+                                        Icon(Icons.Default.Check, null)
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text(stringResource(R.string.complete_set), fontWeight = FontWeight.ExtraBold, fontSize = 16.sp)
+                                    }
+                                } else {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Button(
+                                            onClick = { isTimerRunning = !isTimerRunning },
+                                            modifier = Modifier
+                                                .weight(1.5f)
+                                                .height(56.dp),
+                                            colors = ButtonDefaults.buttonColors(
+                                                containerColor = if (isTimerRunning) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
+                                            ),
+                                            shape = RoundedCornerShape(16.dp)
+                                        ) {
+                                            Icon(if (isTimerRunning) Icons.Default.Pause else Icons.Default.PlayArrow, null)
+                                            Spacer(modifier = Modifier.width(8.dp))
+                                            Text(if (isTimerRunning) stringResource(R.string.pause) else stringResource(R.string.resume_start), fontWeight = FontWeight.ExtraBold)
+                                        }
+
+                                        Button(
+                                            onClick = {
+                                                completedSteps[currentStepIndex] = true
+                                                if (currentStepIndex < executionQueue.size - 1) {
+                                                    isRestingState = true
+                                                } else {
+                                                    finishWorkout()
+                                                }
+                                            },
+                                            modifier = Modifier
+                                                .weight(1f)
+                                                .height(56.dp),
+                                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary),
+                                            shape = RoundedCornerShape(16.dp)
+                                        ) {
+                                            Text(stringResource(R.string.skip_complete), fontWeight = FontWeight.Bold)
+                                        }
+                                    }
                                 }
-                            }
-                            Box(modifier = Modifier.width(1.dp).height(32.dp).background(Color.White.copy(alpha = 0.1f)))
-                            
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Text(stringResource(R.string.weight), color = Color.White.copy(alpha = 0.5f), fontSize = 11.sp)
-                                Text("${currentExerciseWeight} kg", color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.Black)
                             }
                         }
                     }
                 }
-
-                // 3. Bottom controls
+            } else {
+                // Adaptive Landscape Two-Column Layout
                 Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 24.dp, vertical = 12.dp)
+                        .statusBarsPadding()
+                        .navigationBarsPadding()
                 ) {
-                    if (isAwaitingConfirmation) {
-                        Column(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            Button(
-                                onClick = {
-                                    isAwaitingConfirmation = false
-                                    val step = executionQueue.getOrNull(currentStepIndex)
-                                    if (step != null) {
-                                        if (step.exercise.type == "Timer") {
-                                            prepSecondsRemaining = 5
-                                            isPrepState = true
-                                            secondsRemaining = step.exercise.targetTimeSeconds
-                                            isTimerRunning = true
-                                        } else {
-                                            secondsRemaining = 0
-                                            isTimerRunning = false
-                                            isPrepState = false
-                                            prepSecondsRemaining = 0
-                                        }
-                                    }
-                                },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(56.dp)
-                                    .testTag("confirm_start_exercise_button"),
-                                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
-                                shape = RoundedCornerShape(16.dp)
-                            ) {
-                                Icon(Icons.Default.PlayArrow, null)
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(stringResource(R.string.start_exercise_btn), fontWeight = FontWeight.ExtraBold, fontSize = 16.sp)
-                            }
+                    // Top Bar & Progress in landscape
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        IconButton(onClick = { showExitConfirmDialog = true }) {
+                            Icon(Icons.Default.Close, stringResource(R.string.close), tint = Color.White.copy(alpha = 0.6f))
+                        }
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                            Text(
+                                workoutName,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White,
+                                fontSize = 16.sp
+                            )
+                            Text(
+                                stringResource(R.string.step_indicator, currentStepIndex + 1, executionQueue.size),
+                                color = Color.White.copy(alpha = 0.5f),
+                                fontSize = 12.sp
+                            )
+                        }
+                        IconButton(onClick = { finishWorkout() }, enabled = !isFinishing) {
+                            Icon(Icons.Default.DoneAll, stringResource(R.string.finish_workout), tint = MaterialTheme.colorScheme.primary)
+                        }
+                    }
 
-                            OutlinedButton(
-                                onClick = { skipCurrentExercise() },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(50.dp)
-                                    .testTag("skip_exercise_start_screen_button"),
-                                colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White),
-                                border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.3f)),
-                                shape = RoundedCornerShape(16.dp)
-                            ) {
-                                Icon(Icons.Default.Schedule, null, modifier = Modifier.size(18.dp), tint = Color.White)
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(stringResource(R.string.do_this_later), fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                            }
-                        }
-                    } else if (isPrepState) {
-                        Button(
-                            onClick = {
-                                isPrepState = false
-                                prepSecondsRemaining = 0
-                                val step = executionQueue.getOrNull(currentStepIndex)
-                                if (step != null) {
-                                    secondsRemaining = step.exercise.targetTimeSeconds
-                                    isTimerRunning = true
-                                }
-                            },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(56.dp)
-                                .testTag("skip_prep_countdown_button"),
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF59E0B)),
-                            shape = RoundedCornerShape(16.dp)
-                        ) {
-                            Icon(Icons.Default.SkipNext, null)
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(stringResource(R.string.skip_countdown), fontWeight = FontWeight.ExtraBold, fontSize = 16.sp)
-                        }
-                    } else if (isRestingState) {
-                        // Rest screen quick action buttons
+                    LinearProgressIndicator(
+                        progress = { completedSteps.count { it.value }.toFloat() / executionQueue.size.toFloat() },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp)
+                            .clip(RoundedCornerShape(4.dp)),
+                        color = MaterialTheme.colorScheme.primary,
+                        trackColor = Color.White.copy(alpha = 0.1f)
+                    )
+
+                    if (currentStep != null) {
+                        val ex = currentStep.exercise
                         Row(
-                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(top = 8.dp),
+                            horizontalArrangement = Arrangement.spacedBy(20.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            TextButton(onClick = { secondsRemaining += 15 }) {
-                                Text(stringResource(R.string.add_15s_rest), color = MaterialTheme.colorScheme.primary)
-                            }
-                            Button(
-                                onClick = {
-                                    moveToNextStep()
-                                },
-                                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
-                            ) {
-                                Text(stringResource(R.string.skip_rest), fontWeight = FontWeight.Bold)
-                            }
-                        }
-                    } else {
-                        // Action buttons based on exercise type
-                        if (ex.type == "Reps") {
-                            Button(
-                                onClick = {
-                                    completedSteps[currentStepIndex] = true
-                                    if (currentStepIndex < executionQueue.size - 1) {
-                                        isRestingState = true
-                                    } else {
-                                        finishWorkout()
-                                    }
-                                },
+                            // Left Column: Muscle Visualizer and Exercise info
+                            Column(
                                 modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(56.dp)
-                                    .testTag("complete_set_button"),
-                                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
-                                shape = RoundedCornerShape(16.dp)
+                                    .weight(1f)
+                                    .fillMaxHeight()
+                                    .verticalScroll(rememberScrollState()),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center
                             ) {
-                                Icon(Icons.Default.Check, null)
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(stringResource(R.string.complete_set), fontWeight = FontWeight.ExtraBold, fontSize = 16.sp)
-                            }
-                        } else {
-                            // Timer control buttons
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Button(
-                                    onClick = { isTimerRunning = !isTimerRunning },
+                                Text(
+                                    ex.name.uppercase(),
+                                    fontWeight = FontWeight.Black,
+                                    fontSize = 20.sp,
+                                    color = Color.White,
+                                    textAlign = TextAlign.Center
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Box(
                                     modifier = Modifier
-                                        .weight(1.5f)
-                                        .height(56.dp),
-                                    colors = ButtonDefaults.buttonColors(
-                                        containerColor = if (isTimerRunning) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
-                                    ),
-                                    shape = RoundedCornerShape(16.dp)
+                                        .size(130.dp)
+                                        .padding(4.dp),
+                                    contentAlignment = Alignment.Center
                                 ) {
-                                    Icon(if (isTimerRunning) Icons.Default.Pause else Icons.Default.PlayArrow, null)
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Text(if (isTimerRunning) stringResource(R.string.pause) else stringResource(R.string.resume_start), fontWeight = FontWeight.ExtraBold)
+                                    MuscleGroupVisualizer(targetMuscles = ex.targetMuscles)
                                 }
+                                if (currentStep.isSuperset) {
+                                    Spacer(modifier = Modifier.height(6.dp))
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        modifier = Modifier
+                                            .background(
+                                                MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
+                                                RoundedCornerShape(8.dp)
+                                            )
+                                            .padding(horizontal = 8.dp, vertical = 2.dp)
+                                    ) {
+                                        Icon(Icons.Default.Sync, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(12.dp))
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Text(
+                                            stringResource(R.string.hybrid_superset, ex.supersetGroupId),
+                                            color = MaterialTheme.colorScheme.primary,
+                                            fontSize = 9.sp,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    }
+                                }
+                            }
 
-                                Button(
-                                    onClick = {
-                                        completedSteps[currentStepIndex] = true
-                                        if (currentStepIndex < executionQueue.size - 1) {
-                                            isRestingState = true
-                                        } else {
-                                            finishWorkout()
+                            // Right Column: Countdown, Stats and Controls
+                            Column(
+                                modifier = Modifier
+                                    .weight(1.2f)
+                                    .fillMaxHeight()
+                                    .verticalScroll(rememberScrollState()),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.SpaceEvenly
+                            ) {
+                                if (isAwaitingConfirmation) {
+                                    Column(
+                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        Text(
+                                            stringResource(R.string.next_exercise_header),
+                                            fontWeight = FontWeight.ExtraBold,
+                                            color = MaterialTheme.colorScheme.primary,
+                                            fontSize = 12.sp,
+                                            letterSpacing = 2.sp
+                                        )
+                                        Row(
+                                            horizontalArrangement = Arrangement.spacedBy(16.dp),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                                Text(stringResource(R.string.sets_count), color = Color.White.copy(alpha = 0.5f), fontSize = 10.sp)
+                                                Text("${ex.setsCount}", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Black)
+                                            }
+                                            Box(modifier = Modifier.width(1.dp).height(20.dp).background(Color.White.copy(alpha = 0.1f)))
+                                            if (ex.type == "Reps") {
+                                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                                    Text(stringResource(R.string.target_reps), color = Color.White.copy(alpha = 0.5f), fontSize = 10.sp)
+                                                    Text("${ex.targetReps}", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Black)
+                                                }
+                                            } else {
+                                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                                    Text(stringResource(R.string.target_time), color = Color.White.copy(alpha = 0.5f), fontSize = 10.sp)
+                                                    Text("${ex.targetTimeSeconds}s", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Black)
+                                                }
+                                            }
+                                            Box(modifier = Modifier.width(1.dp).height(20.dp).background(Color.White.copy(alpha = 0.1f)))
+                                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                                Text(stringResource(R.string.weight), color = Color.White.copy(alpha = 0.5f), fontSize = 10.sp)
+                                                Text("${ex.weightKg} kg", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Black)
+                                            }
                                         }
-                                    },
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .height(56.dp),
-                                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary),
-                                    shape = RoundedCornerShape(16.dp)
-                                ) {
-                                    Text(stringResource(R.string.skip_complete), fontWeight = FontWeight.Bold)
+                                    }
+                                    Spacer(modifier = Modifier.height(10.dp))
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                    ) {
+                                        Button(
+                                            onClick = {
+                                                isAwaitingConfirmation = false
+                                                val step = executionQueue.getOrNull(currentStepIndex)
+                                                if (step != null) {
+                                                    if (step.exercise.type == "Timer") {
+                                                        prepSecondsRemaining = 5
+                                                        isPrepState = true
+                                                        secondsRemaining = step.exercise.targetTimeSeconds
+                                                        isTimerRunning = true
+                                                    } else {
+                                                        secondsRemaining = 0
+                                                        isTimerRunning = false
+                                                        isPrepState = false
+                                                        prepSecondsRemaining = 0
+                                                    }
+                                                }
+                                            },
+                                            modifier = Modifier.weight(1.5f).height(48.dp),
+                                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                                            shape = RoundedCornerShape(12.dp)
+                                        ) {
+                                            Icon(Icons.Default.PlayArrow, null)
+                                            Spacer(modifier = Modifier.width(4.dp))
+                                            Text(stringResource(R.string.start_exercise_btn), fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                                        }
+                                        OutlinedButton(
+                                            onClick = { skipCurrentExercise() },
+                                            modifier = Modifier.weight(1f).height(48.dp),
+                                            colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White),
+                                            border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.3f)),
+                                            shape = RoundedCornerShape(12.dp)
+                                        ) {
+                                            Text(stringResource(R.string.do_this_later), fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                                        }
+                                    }
+                                } else if (isPrepState) {
+                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                        Text(
+                                            stringResource(R.string.get_ready),
+                                            fontWeight = FontWeight.ExtraBold,
+                                            color = Color(0xFFF59E0B),
+                                            fontSize = 14.sp,
+                                            letterSpacing = 2.sp
+                                        )
+                                        Spacer(modifier = Modifier.height(6.dp))
+                                        Text(
+                                            text = "$prepSecondsRemaining",
+                                            fontWeight = FontWeight.Black,
+                                            fontSize = 48.sp,
+                                            color = Color(0xFFF59E0B)
+                                        )
+                                        Spacer(modifier = Modifier.height(8.dp))
+                                        Button(
+                                            onClick = {
+                                                isPrepState = false
+                                                prepSecondsRemaining = 0
+                                                val step = executionQueue.getOrNull(currentStepIndex)
+                                                if (step != null) {
+                                                    secondsRemaining = step.exercise.targetTimeSeconds
+                                                    isTimerRunning = true
+                                                }
+                                            },
+                                            modifier = Modifier.fillMaxWidth().height(48.dp),
+                                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF59E0B)),
+                                            shape = RoundedCornerShape(12.dp)
+                                        ) {
+                                            Text(stringResource(R.string.skip_countdown), fontWeight = FontWeight.Bold)
+                                        }
+                                    }
+                                } else if (isRestingState) {
+                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                        Text(
+                                            stringResource(R.string.rest_time),
+                                            fontWeight = FontWeight.ExtraBold,
+                                            color = MaterialTheme.colorScheme.secondary,
+                                            fontSize = 12.sp,
+                                            letterSpacing = 2.sp
+                                        )
+                                        Text(
+                                            "${secondsRemaining}s",
+                                            fontWeight = FontWeight.Black,
+                                            fontSize = 48.sp,
+                                            color = Color.White
+                                        )
+                                        Text(
+                                            stringResource(R.string.next_label, executionQueue.getOrNull(currentStepIndex + 1)?.let { next ->
+                                                "${next.exercise.name} (${next.setNumber}/${next.exercise.setsCount})"
+                                            }.orEmpty()),
+                                            color = Color.White.copy(alpha = 0.7f),
+                                            fontSize = 12.sp,
+                                            textAlign = TextAlign.Center
+                                        )
+                                        Spacer(modifier = Modifier.height(8.dp))
+                                        Row(
+                                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            TextButton(onClick = { secondsRemaining += 15 }) {
+                                                Text(stringResource(R.string.add_15s_rest), color = MaterialTheme.colorScheme.primary)
+                                            }
+                                            Button(
+                                                onClick = { moveToNextStep() },
+                                                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary),
+                                                shape = RoundedCornerShape(12.dp)
+                                            ) {
+                                                Text(stringResource(R.string.skip_rest), fontWeight = FontWeight.Bold)
+                                            }
+                                        }
+                                    }
+                                } else {
+                                    Row(
+                                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                            Text(stringResource(R.string.sets_count), color = Color.White.copy(alpha = 0.5f), fontSize = 10.sp)
+                                            Text("${currentStep.setNumber} / ${ex.setsCount}", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Black)
+                                        }
+                                        Box(modifier = Modifier.width(1.dp).height(24.dp).background(Color.White.copy(alpha = 0.1f)))
+                                        if (ex.type == "Reps") {
+                                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                                Text(stringResource(R.string.target_reps), color = Color.White.copy(alpha = 0.5f), fontSize = 10.sp)
+                                                Text("${ex.targetReps}", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Black)
+                                            }
+                                        } else {
+                                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                                Text(stringResource(R.string.target_time), color = Color.White.copy(alpha = 0.5f), fontSize = 10.sp)
+                                                Text("${secondsRemaining}s", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Black)
+                                            }
+                                        }
+                                        Box(modifier = Modifier.width(1.dp).height(24.dp).background(Color.White.copy(alpha = 0.1f)))
+                                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                            Text(stringResource(R.string.weight), color = Color.White.copy(alpha = 0.5f), fontSize = 10.sp)
+                                            Text("${currentExerciseWeight} kg", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Black)
+                                        }
+                                    }
+
+                                    Spacer(modifier = Modifier.height(12.dp))
+
+                                    if (ex.type == "Reps") {
+                                        Button(
+                                            onClick = {
+                                                completedSteps[currentStepIndex] = true
+                                                if (currentStepIndex < executionQueue.size - 1) {
+                                                    isRestingState = true
+                                                } else {
+                                                    finishWorkout()
+                                                }
+                                            },
+                                            modifier = Modifier.fillMaxWidth().height(48.dp),
+                                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                                            shape = RoundedCornerShape(12.dp)
+                                        ) {
+                                            Icon(Icons.Default.Check, null)
+                                            Spacer(modifier = Modifier.width(6.dp))
+                                            Text(stringResource(R.string.complete_set), fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                                        }
+                                    } else {
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                        ) {
+                                            Button(
+                                                onClick = { isTimerRunning = !isTimerRunning },
+                                                modifier = Modifier.weight(1.3f).height(48.dp),
+                                                colors = ButtonDefaults.buttonColors(
+                                                    containerColor = if (isTimerRunning) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
+                                                ),
+                                                shape = RoundedCornerShape(12.dp)
+                                            ) {
+                                                Icon(if (isTimerRunning) Icons.Default.Pause else Icons.Default.PlayArrow, null)
+                                                Spacer(modifier = Modifier.width(4.dp))
+                                                Text(if (isTimerRunning) stringResource(R.string.pause) else stringResource(R.string.resume_start), fontWeight = FontWeight.Bold)
+                                            }
+                                            Button(
+                                                onClick = {
+                                                    completedSteps[currentStepIndex] = true
+                                                    if (currentStepIndex < executionQueue.size - 1) {
+                                                        isRestingState = true
+                                                    } else {
+                                                        finishWorkout()
+                                                    }
+                                                },
+                                                modifier = Modifier.weight(1f).height(48.dp),
+                                                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary),
+                                                shape = RoundedCornerShape(12.dp)
+                                            ) {
+                                                Text(stringResource(R.string.skip_complete), fontWeight = FontWeight.Bold)
+                                            }
+                                        }
+                                    }
                                 }
                             }
                         }

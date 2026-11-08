@@ -804,15 +804,15 @@ fun NotebookDialog(
     onDismiss: () -> Unit,
     onSave: (String, String, String, Int, String, String) -> Unit
 ) {
-    var name by varRemember { mutableStateOf(notebook?.name ?: "") }
-    var description by varRemember { mutableStateOf(notebook?.description ?: "") }
-    var emoji by varRemember { mutableStateOf(notebook?.emoji ?: "📝") }
-    var selectedColorIndex by varRemember { mutableStateOf(notebook?.color ?: 0) }
-    var selectedType by varRemember { mutableStateOf(notebook?.type ?: "Normal") }
+    var name by rememberSaveable { mutableStateOf(notebook?.name ?: "") }
+    var description by rememberSaveable { mutableStateOf(notebook?.description ?: "") }
+    var emoji by rememberSaveable { mutableStateOf(notebook?.emoji ?: "📝") }
+    var selectedColorIndex by rememberSaveable { mutableStateOf(notebook?.color ?: 0) }
+    var selectedType by rememberSaveable { mutableStateOf(notebook?.type ?: "Normal") }
 
     val initialPriorityOptions = notebook?.getPriorityConfig() ?: NotebookEntity.DEFAULT_PRIORITIES
-    var priorityOptions by varRemember { mutableStateOf(initialPriorityOptions) }
-    var showPriorityCustomizationDialog by varRemember { mutableStateOf(false) }
+    var priorityOptions by remember { mutableStateOf(initialPriorityOptions) }
+    var showPriorityCustomizationDialog by rememberSaveable { mutableStateOf(false) }
 
     val initialCfg = if (notebook?.description?.startsWith("[WORKOUT_CFG]") == true) {
         val clean = notebook.description.removePrefix("[WORKOUT_CFG]")
@@ -831,11 +831,13 @@ fun NotebookDialog(
         WorkoutScheduleConfig()
     }
 
-    var frequency by varRemember { mutableStateOf(initialCfg.frequency) }
-    var consecutiveWorkoutDays by varRemember { mutableStateOf(initialCfg.workoutDurationDays) }
-    var consecutiveRestDays by varRemember { mutableStateOf(initialCfg.restDurationDays) }
-    var weeklyDays by varRemember { mutableStateOf(initialCfg.weeklyDays.toSet()) }
-    var monthlyDays by varRemember { mutableStateOf(initialCfg.monthlyDays.toSet()) }
+    var frequency by rememberSaveable { mutableStateOf(initialCfg.frequency) }
+    var consecutiveWorkoutDays by rememberSaveable { mutableStateOf(initialCfg.workoutDurationDays) }
+    var consecutiveRestDays by rememberSaveable { mutableStateOf(initialCfg.restDurationDays) }
+    var weeklyDaysList by rememberSaveable { mutableStateOf(ArrayList(initialCfg.weeklyDays)) }
+    val weeklyDays = weeklyDaysList.toSet()
+    var monthlyDaysList by rememberSaveable { mutableStateOf(ArrayList(initialCfg.monthlyDays)) }
+    val monthlyDays = monthlyDaysList.toSet()
 
     val notebookTypes = listOf("Normal", "ToDo", "Checklist", "Habit Tracker", "Workout Planner", "Reading List", "Collection")
     val defaultEmojis = listOf("📝", "📚", "🎬", "🏋", "🛒", "💼", "🏠", "🎮", "💊", "✈", "🍔", "🎨", "💰", "💡")
@@ -844,8 +846,10 @@ fun NotebookDialog(
         Card(
             modifier = Modifier
                 .fillMaxWidth(0.96f)
-                .widthIn(max = 480.dp)
-                .padding(vertical = 12.dp),
+                .widthIn(max = 500.dp)
+                .heightIn(max = (androidx.compose.ui.platform.LocalConfiguration.current.screenHeightDp * 0.92f).dp)
+                .padding(vertical = 8.dp)
+                .imePadding(),
             shape = RoundedCornerShape(24.dp),
             border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
         ) {
@@ -984,7 +988,7 @@ fun NotebookDialog(
                                                         shape = CircleShape
                                                     )
                                                     .clickable {
-                                                        weeklyDays = if (isSelected) weeklyDays - num else weeklyDays + num
+                                                        weeklyDaysList = if (isSelected) ArrayList(weeklyDaysList - num) else ArrayList(weeklyDaysList + num)
                                                     },
                                                 contentAlignment = Alignment.Center
                                             ) {
@@ -1019,7 +1023,7 @@ fun NotebookDialog(
                                                         if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent
                                                     )
                                                     .clickable {
-                                                        monthlyDays = if (isSelected) monthlyDays - day else monthlyDays + day
+                                                        monthlyDaysList = if (isSelected) ArrayList(monthlyDaysList - day) else ArrayList(monthlyDaysList + day)
                                                     },
                                                 contentAlignment = Alignment.Center
                                             ) {
@@ -1135,16 +1139,19 @@ fun CloudSyncDialog(
     onDismiss: () -> Unit
 ) {
     val context = LocalContext.current
-    var syncCode by varRemember { mutableStateOf("") }
-    var isUploading by varRemember { mutableStateOf(false) }
-    var isDownloading by varRemember { mutableStateOf(false) }
-    var statusMessage by varRemember { mutableStateOf("") }
+    var syncCode by rememberSaveable { mutableStateOf("") }
+    var isUploading by rememberSaveable { mutableStateOf(false) }
+    var isDownloading by rememberSaveable { mutableStateOf(false) }
+    var statusMessage by rememberSaveable { mutableStateOf("") }
 
     Dialog(onDismissRequest = onDismiss) {
         Card(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(12.dp),
+                .fillMaxWidth(0.96f)
+                .widthIn(max = 500.dp)
+                .heightIn(max = (androidx.compose.ui.platform.LocalConfiguration.current.screenHeightDp * 0.92f).dp)
+                .padding(vertical = 8.dp)
+                .imePadding(),
             shape = RoundedCornerShape(20.dp),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
             border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
@@ -1152,7 +1159,8 @@ fun CloudSyncDialog(
             Column(
                 modifier = Modifier
                     .padding(18.dp)
-                    .fillMaxWidth(),
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState()),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 // Header with Cloud Icon
