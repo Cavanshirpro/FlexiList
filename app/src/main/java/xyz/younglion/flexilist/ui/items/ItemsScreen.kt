@@ -33,6 +33,7 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -101,8 +102,8 @@ fun ItemsScreen(
     val todayDayOfMonthStr = remember(todayDate) {
         java.util.Calendar.getInstance().get(java.util.Calendar.DAY_OF_MONTH).toString()
     }
-    var selectedDayFilter by remember(notebook?.id, todayDate) { mutableStateOf(todayDayOfWeekAbbreviation) }
-    var selectedMonthlyDayFilter by remember(notebook?.id, todayDate) { mutableStateOf(todayDayOfMonthStr) }
+    var selectedDayFilter by rememberSaveable(notebook?.id, todayDate) { mutableStateOf(todayDayOfWeekAbbreviation) }
+    var selectedMonthlyDayFilter by rememberSaveable(notebook?.id, todayDate) { mutableStateOf(todayDayOfMonthStr) }
     
     // Drag-and-drop state synchronization
     var localItems by remember { mutableStateOf<List<ListItemEntity>>(emptyList()) }
@@ -145,15 +146,15 @@ fun ItemsScreen(
     val availableTags by viewModel.availableTags.collectAsState()
     val availableCategories by viewModel.availableCategories.collectAsState()
 
-    var showNotebookSettingsDialog by varRemember { mutableStateOf(false) }
-    var showEditNotebookDialog by remember { mutableStateOf(false) }
-    var showQuickAddDialog by varRemember { mutableStateOf(false) }
-    var showBulkMoveDialog by varRemember { mutableStateOf(false) }
-    var showStatsDialog by varRemember { mutableStateOf(false) }
-    var showWorkoutExecution by remember { mutableStateOf(false) }
-    var showReminderDialog by remember { mutableStateOf(false) }
-    var showPriorityCustomizationDialog by remember { mutableStateOf(false) }
-    var selectedWorkoutTab by remember { mutableStateOf(0) }
+    var showNotebookSettingsDialog by rememberSaveable { mutableStateOf(false) }
+    var showEditNotebookDialog by rememberSaveable { mutableStateOf(false) }
+    var showQuickAddDialog by rememberSaveable { mutableStateOf(false) }
+    var showBulkMoveDialog by rememberSaveable { mutableStateOf(false) }
+    var showStatsDialog by rememberSaveable { mutableStateOf(false) }
+    var showWorkoutExecution by rememberSaveable { mutableStateOf(false) }
+    var showReminderDialog by rememberSaveable { mutableStateOf(false) }
+    var showPriorityCustomizationDialog by rememberSaveable { mutableStateOf(false) }
+    var selectedWorkoutTab by rememberSaveable { mutableStateOf(0) }
 
     val isBulkMode = selectedItemIds.isNotEmpty()
 

@@ -2,6 +2,7 @@ package xyz.younglion.flexilist.ui.workout
 
 import android.content.Context
 import android.widget.Toast
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
@@ -14,6 +15,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -199,13 +201,13 @@ fun WorkoutPlayerScreen(
     }
 
     // Timing Engine State
-    var isTimerRunning by remember { mutableStateOf(false) }
-    var secondsRemaining by remember { mutableStateOf(0) }
-    var isRestingState by remember { mutableStateOf(false) } // true if in post-set rest countdown
-    var isPrepState by remember { mutableStateOf(false) } // true if in pre-timer preparation countdown
-    var prepSecondsRemaining by remember { mutableStateOf(0) }
-    var currentExerciseWeight by remember { mutableStateOf(0.0) }
-    var isAwaitingConfirmation by remember { mutableStateOf(true) }
+    var isTimerRunning by rememberSaveable { mutableStateOf(false) }
+    var secondsRemaining by rememberSaveable { mutableStateOf(0) }
+    var isRestingState by rememberSaveable { mutableStateOf(false) } // true if in post-set rest countdown
+    var isPrepState by rememberSaveable { mutableStateOf(false) } // true if in pre-timer preparation countdown
+    var prepSecondsRemaining by rememberSaveable { mutableStateOf(0) }
+    var currentExerciseWeight by rememberSaveable { mutableStateOf(0.0) }
+    var isAwaitingConfirmation by rememberSaveable { mutableStateOf(true) }
 
     // Live Ongoing Notification Manager for Active Workout
     LaunchedEffect(currentStepIndex, isRestingState, isPrepState, prepSecondsRemaining, secondsRemaining, isTimerRunning) {

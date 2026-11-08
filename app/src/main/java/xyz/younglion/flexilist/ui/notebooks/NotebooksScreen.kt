@@ -29,6 +29,7 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -73,16 +74,28 @@ fun NotebooksScreen(
     val isDarkMode by viewModel.isDarkMode.collectAsState()
     val isOnline = xyz.younglion.flexilist.util.rememberIsOnline()
     
-    var showAddDialog by varRemember { mutableStateOf(false) }
-    var notebookToEdit by varRemember { mutableStateOf<NotebookEntity?>(null) }
-    var notebookForReminder by varRemember { mutableStateOf<NotebookEntity?>(null) }
-    var searchNotebookQuery by varRemember { mutableStateOf("") }
-    var showMenu by varRemember { mutableStateOf(false) }
-    var showCloudSyncDialog by varRemember { mutableStateOf(false) }
-    var showThemeDialog by varRemember { mutableStateOf(false) }
-    var showLanguageMenu by varRemember { mutableStateOf(false) }
-    var notebookForPriorityCustomization by varRemember { mutableStateOf<NotebookEntity?>(null) }
-    var notebookForStats by varRemember { mutableStateOf<NotebookEntity?>(null) }
+    var showAddDialog by rememberSaveable { mutableStateOf(false) }
+    var notebookToEditId by rememberSaveable { mutableStateOf<Long?>(null) }
+    val notebookToEdit = remember(notebookToEditId, notebooks) {
+        notebookToEditId?.let { id -> notebooks.find { it.id == id } }
+    }
+    var notebookForReminderId by rememberSaveable { mutableStateOf<Long?>(null) }
+    val notebookForReminder = remember(notebookForReminderId, notebooks) {
+        notebookForReminderId?.let { id -> notebooks.find { it.id == id } }
+    }
+    var searchNotebookQuery by rememberSaveable { mutableStateOf("") }
+    var showMenu by rememberSaveable { mutableStateOf(false) }
+    var showCloudSyncDialog by rememberSaveable { mutableStateOf(false) }
+    var showThemeDialog by rememberSaveable { mutableStateOf(false) }
+    var showLanguageMenu by rememberSaveable { mutableStateOf(false) }
+    var notebookForPriorityCustomizationId by rememberSaveable { mutableStateOf<Long?>(null) }
+    val notebookForPriorityCustomization = remember(notebookForPriorityCustomizationId, notebooks) {
+        notebookForPriorityCustomizationId?.let { id -> notebooks.find { it.id == id } }
+    }
+    var notebookForStatsId by rememberSaveable { mutableStateOf<Long?>(null) }
+    val notebookForStats = remember(notebookForStatsId, notebooks) {
+        notebookForStatsId?.let { id -> notebooks.find { it.id == id } }
+    }
 
     // Activity result launchers for custom file picker backup export/import
     val exportJsonLauncher = rememberLauncherForActivityResult(
@@ -453,7 +466,7 @@ fun NotebooksScreen(
                                 onNavigateToItems(notebook.id)
                             },
                             onLongClick = {
-                                notebookToEdit = notebook
+                                notebookToEditId = notebook.id
                             },
                             onTogglePin = {
                                 viewModel.updateNotebook(notebook.copy(pinned = !notebook.pinned))
@@ -462,7 +475,7 @@ fun NotebooksScreen(
                                 viewModel.updateNotebook(notebook.copy(favorite = !notebook.favorite))
                             },
                             onOpenReminder = {
-                                notebookForReminder = notebook
+                                notebookForReminderId = notebook.id
                             },
                             onShare = {
                                 coroutineScope.launch {
@@ -505,7 +518,7 @@ fun NotebooksScreen(
                 notebook = notebook,
                 onDismiss = {
                     showDetailsDialog = false
-                    notebookToEdit = null
+                    notebookToEditId = null
                 },
                 onSave = { name, desc, emoji, color, type, priorityCfg ->
                     viewModel.updateNotebook(
@@ -520,7 +533,7 @@ fun NotebooksScreen(
                         )
                     )
                     showDetailsDialog = false
-                    notebookToEdit = null
+                    notebookToEditId = null
                 }
             )
         } else {
@@ -529,39 +542,39 @@ fun NotebooksScreen(
                 WorkoutPlannerSettingsDialog(
                     notebook = notebook,
                     viewModel = viewModel,
-                    onDismiss = { notebookToEdit = null },
+                    onDismiss = { notebookToEditId = null },
                     onEditWorkout = { showDetailsDialog = true },
                     onOpenReminder = {
-                        val target = notebook
-                        notebookToEdit = null
-                        notebookForReminder = target
+                        val targetId = notebook.id
+                        notebookToEditId = null
+                        notebookForReminderId = targetId
                     },
                     onOpenStats = {
-                        val target = notebook
-                        notebookToEdit = null
-                        notebookForStats = target
+                        val targetId = notebook.id
+                        notebookToEditId = null
+                        notebookForStatsId = targetId
                     }
                 )
             } else {
                 StandardListSettingsDialog(
                     notebook = notebook,
                     viewModel = viewModel,
-                    onDismiss = { notebookToEdit = null },
+                    onDismiss = { notebookToEditId = null },
                     onEditNotebook = { showDetailsDialog = true },
                     onOpenReminder = {
-                        val target = notebook
-                        notebookToEdit = null
-                        notebookForReminder = target
+                        val targetId = notebook.id
+                        notebookToEditId = null
+                        notebookForReminderId = targetId
                     },
                     onOpenPriorityCustomization = {
-                        val target = notebook
-                        notebookToEdit = null
-                        notebookForPriorityCustomization = target
+                        val targetId = notebook.id
+                        notebookToEditId = null
+                        notebookForPriorityCustomizationId = targetId
                     },
                     onOpenStats = {
-                        val target = notebook
-                        notebookToEdit = null
-                        notebookForStats = target
+                        val targetId = notebook.id
+                        notebookToEditId = null
+                        notebookForStatsId = targetId
                     }
                 )
             }
@@ -581,7 +594,7 @@ fun NotebooksScreen(
         ListReminderDialog(
             notebook = targetNotebook,
             viewModel = viewModel,
-            onDismiss = { notebookForReminder = null }
+            onDismiss = { notebookForReminderId = null }
         )
     }
 
@@ -589,11 +602,11 @@ fun NotebooksScreen(
     notebookForPriorityCustomization?.let { targetNotebook ->
         PriorityCustomizationDialog(
             initialOptions = targetNotebook.getPriorityConfig(),
-            onDismiss = { notebookForPriorityCustomization = null },
+            onDismiss = { notebookForPriorityCustomizationId = null },
             onSave = { updatedList ->
                 val priorityCfgJson = NotebookEntity.serializePriorityConfig(updatedList)
                 viewModel.updateNotebook(targetNotebook.copy(priorityConfigJson = priorityCfgJson))
-                notebookForPriorityCustomization = null
+                notebookForPriorityCustomizationId = null
                 Toast.makeText(context, "Öncelik seviyeleri güncellendi!", Toast.LENGTH_SHORT).show()
             }
         )
@@ -604,7 +617,7 @@ fun NotebooksScreen(
         NotebookStatisticsDialog(
             notebook = targetNotebook,
             viewModel = viewModel,
-            onDismiss = { notebookForStats = null }
+            onDismiss = { notebookForStatsId = null }
         )
     }
 }

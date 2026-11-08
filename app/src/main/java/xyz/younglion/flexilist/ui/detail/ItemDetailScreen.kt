@@ -23,6 +23,8 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.saveable.listSaver
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -57,62 +59,80 @@ fun ItemDetailScreen(
     }
     val existingItem by existingItemFlow.collectAsState(initial = null)
 
-    var itemTitle by varRemember { mutableStateOf("") }
-    var itemDescription by varRemember { mutableStateOf("") }
-    var priority by varRemember { mutableStateOf(0) }
-    var tagsInput by varRemember { mutableStateOf("") } // comma-separated
-    var itemCategory by varRemember { mutableStateOf("") }
-    var starred by varRemember { mutableStateOf(false) }
+    var hasLoadedInitialData by rememberSaveable { mutableStateOf(false) }
+
+    var itemTitle by rememberSaveable { mutableStateOf("") }
+    var itemDescription by rememberSaveable { mutableStateOf("") }
+    var priority by rememberSaveable { mutableStateOf(0) }
+    var tagsInput by rememberSaveable { mutableStateOf("") } // comma-separated
+    var itemCategory by rememberSaveable { mutableStateOf("") }
+    var starred by rememberSaveable { mutableStateOf(false) }
 
     // Date/Time triggers
-    var dueDate by varRemember { mutableStateOf<Long?>(null) }
-    var reminderTime by varRemember { mutableStateOf<Long?>(null) }
-    var isRecurring by varRemember { mutableStateOf(false) }
-    var recurrenceRule by varRemember { mutableStateOf<String?>(null) }
+    var dueDate by rememberSaveable { mutableStateOf<Long?>(null) }
+    var reminderTime by rememberSaveable { mutableStateOf<Long?>(null) }
+    var isRecurring by rememberSaveable { mutableStateOf(false) }
+    var recurrenceRule by rememberSaveable { mutableStateOf<String?>(null) }
 
-    // Structured subtasks and custom fields
-    var subtasks by varRemember { mutableStateOf<List<ListItemEntity.Subtask>>(emptyList()) }
-    var customFields by varRemember { mutableStateOf<List<ListItemEntity.CustomField>>(emptyList()) }
+    // Structured subtasks and custom fields using custom listSavers
+    val subtasksSaver = remember {
+        listSaver<List<ListItemEntity.Subtask>, String>(
+            save = { list -> listOf(ListItemEntity.serializeSubtasks(list)) },
+            restore = { saved -> ListItemEntity.deserializeSubtasks(saved.firstOrNull().orEmpty()) }
+        )
+    }
+    var subtasks by rememberSaveable(stateSaver = subtasksSaver) { mutableStateOf(emptyList()) }
+
+    val customFieldsSaver = remember {
+        listSaver<List<ListItemEntity.CustomField>, String>(
+            save = { list -> listOf(ListItemEntity.serializeCustomFields(list)) },
+            restore = { saved -> ListItemEntity.deserializeCustomFields(saved.firstOrNull().orEmpty()) }
+        )
+    }
+    var customFields by rememberSaveable(stateSaver = customFieldsSaver) { mutableStateOf(emptyList()) }
 
     // Workout specific states
     val isWorkoutNotebook = viewModel.selectedNotebook.collectAsState().value?.type.let { it == "Workout Planner" || it == "WorkoutPlanner" }
-    var exerciseType by varRemember { mutableStateOf("Reps") }
-    var setsCount by varRemember { mutableStateOf(3) }
-    var targetReps by varRemember { mutableStateOf(10) }
-    var targetTimeSeconds by varRemember { mutableStateOf(30) }
-    var restTimeSeconds by varRemember { mutableStateOf(60) }
-    var weightKg by varRemember { mutableStateOf(0.0) }
-    var targetMuscles by varRemember { mutableStateOf(emptySet<String>()) }
-    var supersetGroupId by varRemember { mutableStateOf("") }
-    var workoutDays by varRemember { mutableStateOf(emptySet<String>()) }
+    var exerciseType by rememberSaveable { mutableStateOf("Reps") }
+    var setsCount by rememberSaveable { mutableStateOf(3) }
+    var targetReps by rememberSaveable { mutableStateOf(10) }
+    var targetTimeSeconds by rememberSaveable { mutableStateOf(30) }
+    var restTimeSeconds by rememberSaveable { mutableStateOf(60) }
+    var weightKg by rememberSaveable { mutableStateOf(0.0) }
+    var targetMuscles by rememberSaveable { mutableStateOf(emptySet<String>()) }
+    var supersetGroupId by rememberSaveable { mutableStateOf("") }
+    var workoutDays by rememberSaveable { mutableStateOf(emptySet<String>()) }
 
-    // Once existing item loads, initialize the states
+    // Once existing item loads for the first time, initialize the states
     LaunchedEffect(existingItem) {
-        existingItem?.let { item ->
-            itemTitle = item.title
-            itemDescription = item.description
-            priority = item.priority
-            tagsInput = item.tags
-            itemCategory = item.category
-            starred = item.starred
-            dueDate = item.dueDate
-            reminderTime = item.reminderTime
-            isRecurring = item.isRecurring
-            recurrenceRule = item.recurrenceRule
-            subtasks = ListItemEntity.deserializeSubtasks(item.subtasksJson)
-            customFields = ListItemEntity.deserializeCustomFields(item.customFieldsJson)
+        if (!hasLoadedInitialData) {
+            existingItem?.let { item ->
+                itemTitle = item.title
+                itemDescription = item.description
+                priority = item.priority
+                tagsInput = item.tags
+                itemCategory = item.category
+                starred = item.starred
+                dueDate = item.dueDate
+                reminderTime = item.reminderTime
+                isRecurring = item.isRecurring
+                recurrenceRule = item.recurrenceRule
+                subtasks = ListItemEntity.deserializeSubtasks(item.subtasksJson)
+                customFields = ListItemEntity.deserializeCustomFields(item.customFieldsJson)
 
-            if (isWorkoutNotebook && item.description.startsWith("[EXERCISE_CFG]")) {
-                val cfg = parseExerciseConfig(item.description)
-                exerciseType = cfg.type
-                setsCount = cfg.setsCount
-                targetReps = cfg.targetReps
-                targetTimeSeconds = cfg.targetTimeSeconds
-                restTimeSeconds = cfg.restTimeSeconds
-                weightKg = cfg.weightKg
-                targetMuscles = cfg.targetMuscles.toSet()
-                supersetGroupId = cfg.supersetGroupId
-                workoutDays = cfg.workoutDays.toSet()
+                if (isWorkoutNotebook && item.description.startsWith("[EXERCISE_CFG]")) {
+                    val cfg = parseExerciseConfig(item.description)
+                    exerciseType = cfg.type
+                    setsCount = cfg.setsCount
+                    targetReps = cfg.targetReps
+                    targetTimeSeconds = cfg.targetTimeSeconds
+                    restTimeSeconds = cfg.restTimeSeconds
+                    weightKg = cfg.weightKg
+                    targetMuscles = cfg.targetMuscles.toSet()
+                    supersetGroupId = cfg.supersetGroupId
+                    workoutDays = cfg.workoutDays.toSet()
+                }
+                hasLoadedInitialData = true
             }
         }
     }
