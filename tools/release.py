@@ -94,7 +94,8 @@ def inspect_apk(apk, data, signed):
                           ('version-name', data['version']), ('version-code', str(data['version_code']))]:
         assert run(str(analyzer), 'manifest', key, str(apk)) == expected, f'APK {key} mismatch'
     if signed:
-        result = run(str(sdk / 'build-tools/36.0.0/apksigner'), 'verify', '--print-certs', str(apk))
+        signer = shutil.which('apksigner') or str(sdk / 'build-tools/36.0.0/apksigner')
+        result = run(signer, 'verify', '--print-certs', str(apk))
         cert = re.search(r'Signer #1 certificate SHA-256 digest: ([0-9a-fA-F]+)', result)
         assert cert and cert[1].lower() == data['signing_cert_sha256'], 'Release signing certificate mismatch'
 
@@ -149,7 +150,7 @@ def collect(source, sha, allow_unsigned=False):
     assert not destination.exists(), 'Release staging directory already exists'
     selected = []
     for flavor in FLAVORS:
-        directory = source / ('android-' + flavor)
+        directory = (source / ('android-' + flavor)) if (source / ('android-' + flavor)).exists() else (source / flavor)
         selected.append((directory, verify_candidate(directory, flavor, sha, data, require_signed=not allow_unsigned)))
     destination.mkdir(parents=True)
     assets = []

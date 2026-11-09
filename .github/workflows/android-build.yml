@@ -46,7 +46,7 @@ jobs:
       - name: Install F-Droid validation tools
         run: python -m pip install -r tools/requirements-fdroid.txt
       - name: Validate recipe with upstream F-Droid tooling
-        run: python tools/check_fdroid.py --commit "$GITHUB_SHA"
+        run: python3 tools/check_fdroid.py --commit "$GITHUB_SHA"
 
   android:
     name: Android ${{ matrix.flavor }}
@@ -65,7 +65,9 @@ jobs:
           java-version: '21'
       - uses: android-actions/setup-android@v4
       - name: Install Android SDK
-        run: sdkmanager 'platforms;android-36.1' 'build-tools;36.0.0'
+        run: echo "y" | sdkmanager 'platforms;android-36.1' 'build-tools;36.0.0'
+      - name: Make gradlew executable
+        run: chmod +x gradlew
       - uses: gradle/actions/setup-gradle@v6
         with:
           cache-read-only: ${{ github.event_name == 'pull_request' }}

@@ -31,7 +31,6 @@ android {
     }
     create("fdroid") {
       dimension = "mode"
-      signingConfig = null
     }
   }
 
@@ -46,7 +45,6 @@ android {
         keyPassword = System.getenv("KEY_PASSWORD")
       }
     }
-
   }
 
   buildTypes {
@@ -56,9 +54,7 @@ android {
       isMinifyEnabled = false
       proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
       val releaseSigning = signingConfigs.findByName("release")
-      if (releaseSigning != null) {
-        signingConfig = releaseSigning
-      }
+      signingConfig = releaseSigning ?: signingConfigs.getByName("debug")
     }
   }
   dependenciesInfo {
