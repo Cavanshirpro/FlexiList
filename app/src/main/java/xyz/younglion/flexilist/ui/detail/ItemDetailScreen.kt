@@ -536,25 +536,53 @@ fun ItemDetailScreen(
 
             // Category & Tags Row
             item {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    OutlinedTextField(
-                        value = itemCategory,
-                        onValueChange = { itemCategory = it },
-                        label = { Text(stringResource(R.string.category)) },
-                        singleLine = true,
-                        modifier = Modifier.weight(1f)
-                    )
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        OutlinedTextField(
+                            value = itemCategory,
+                            onValueChange = { itemCategory = it },
+                            label = { Text(stringResource(R.string.category)) },
+                            singleLine = true,
+                            modifier = Modifier.weight(1f)
+                        )
 
-                    OutlinedTextField(
-                        value = tagsInput,
-                        onValueChange = { tagsInput = it },
-                        label = { Text(stringResource(R.string.tags_hint)) },
-                        singleLine = true,
-                        modifier = Modifier.weight(1f)
-                    )
+                        OutlinedTextField(
+                            value = tagsInput,
+                            onValueChange = { tagsInput = it },
+                            label = { Text(stringResource(R.string.tags_hint)) },
+                            singleLine = true,
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+
+                    // Quick category pills
+                    val quickItemCategories = listOf("Work", "Personal", "Groceries", "Fitness", "Study")
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(rememberScrollState())
+                    ) {
+                        quickItemCategories.forEach { cat ->
+                            val isSelected = itemCategory.equals(cat, ignoreCase = true)
+                            val catEmoji = when (cat.lowercase(Locale.ROOT)) {
+                                "work" -> "💼"
+                                "personal" -> "👤"
+                                "groceries" -> "🛒"
+                                "fitness" -> "🏋️"
+                                "study" -> "📚"
+                                else -> "🏷️"
+                            }
+                            FilterChip(
+                                selected = isSelected,
+                                onClick = { itemCategory = if (isSelected) "" else cat },
+                                label = { Text("$catEmoji $cat", fontSize = 11.sp) }
+                            )
+                        }
+                    }
                 }
             }
 

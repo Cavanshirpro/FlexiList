@@ -12,7 +12,8 @@ import xyz.younglion.flexilist.R
     tableName = "notebooks",
     indices = [
         Index(value = ["pinned", "sortOrder"]),
-        Index(value = ["type"])
+        Index(value = ["type"]),
+        Index(value = ["category"])
     ]
 )
 data class NotebookEntity(
@@ -22,6 +23,7 @@ data class NotebookEntity(
     val emoji: String = "📝",
     val color: Int = 0, // Index of color palette or specific Color Int
     val type: String = "Normal", // Normal, ToDo, Checklist, HabitTracker, WorkoutPlanner, ReadingList, Collection
+    val category: String = "", // e.g. Work, Personal, Groceries
     val pinned: Boolean = false,
     val archived: Boolean = false,
     val favorite: Boolean = false,

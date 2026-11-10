@@ -869,6 +869,26 @@ fun ItemsScreen(
                     }
                 }
 
+                // Distinct category filters for items
+                items(availableCategories) { cat ->
+                    val isSelected = selectedCategory == cat
+                    val catEmoji = when (cat.lowercase()) {
+                        "work", "iş" -> "💼"
+                        "personal", "kişisel" -> "👤"
+                        "groceries", "market", "alışveriş" -> "🛒"
+                        "fitness", "spor" -> "🏋️"
+                        "study", "ders" -> "📚"
+                        else -> "🏷️"
+                    }
+                    FilterChip(
+                        selected = isSelected,
+                        onClick = {
+                            viewModel.selectedCategory.value = if (isSelected) null else cat
+                        },
+                        label = { Text("$catEmoji $cat") }
+                    )
+                }
+
                 // Distinct dynamic tags filters
                 items(availableTags) { tag ->
                     val isSelected = selectedTags.contains(tag)
@@ -1681,7 +1701,7 @@ fun ItemsScreen(
         NotebookDialog(
             notebook = currentNb,
             onDismiss = { showEditNotebookDialog = false },
-            onSave = { name, desc, emoji, color, type, extraCfg ->
+            onSave = { name, desc, emoji, color, type, extraCfg, category ->
                 var finalDesc = desc
                 if (type == "Workout Planner") {
                     val cfgStr = extraCfg.ifBlank {
@@ -1696,6 +1716,7 @@ fun ItemsScreen(
                     emoji = emoji,
                     color = color,
                     type = type,
+                    category = category,
                     updatedAt = System.currentTimeMillis()
                 ))
                 showEditNotebookDialog = false

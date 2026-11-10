@@ -385,4 +385,8 @@
     <string name="generate_code">Generate Code</string>
     <string name="copy_code">Copy Code</string>
     <string name="workout_save_failed">Workout could not be saved. Please try again.</string>
+    <string name="all_categories">All</string>
+    <string name="notebook_category_label">Category (e.g. Work, Personal, Groceries)</string>
+    <string name="filter_by_category">Filter by Category</string>
+    <string name="no_category">Uncategorized</string>
 </resources>

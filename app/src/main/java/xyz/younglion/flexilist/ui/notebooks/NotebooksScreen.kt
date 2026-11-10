@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -71,6 +72,8 @@ fun NotebooksScreen(
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
     val notebooks by viewModel.notebooks.collectAsState()
+    val availableNotebookCategories by viewModel.availableNotebookCategories.collectAsState()
+    val selectedNotebookCategory by viewModel.selectedNotebookCategory.collectAsState()
     val isDarkMode by viewModel.isDarkMode.collectAsState()
     val isOnline = xyz.younglion.flexilist.util.rememberIsOnline()
     
@@ -392,9 +395,72 @@ fun NotebooksScreen(
                 }
             }
 
-            val filteredNotebooks = notebooks.filter {
-                it.name.contains(searchNotebookQuery, ignoreCase = true) ||
-                it.description.contains(searchNotebookQuery, ignoreCase = true)
+            // Category Filter Chips for Notebooks
+            val categoriesForFilter = remember(availableNotebookCategories) {
+                listOf(
+                    "Work" to "Work",
+                    "Personal" to "Personal",
+                    "Groceries" to "Groceries"
+                ).map { it.first } + availableNotebookCategories.filter { it !in listOf("Work", "Personal", "Groceries") }
+            }
+
+            LazyRow(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 4.dp),
+                contentPadding = PaddingValues(horizontal = 16.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                item {
+                    FilterChip(
+                        selected = selectedNotebookCategory == null,
+                        onClick = { viewModel.selectedNotebookCategory.value = null },
+                        label = { Text(stringResource(R.string.all_categories), fontSize = 12.sp, fontWeight = if (selectedNotebookCategory == null) FontWeight.Bold else FontWeight.Normal) },
+                        leadingIcon = if (selectedNotebookCategory == null) {
+                            { Icon(Icons.Default.Check, null, modifier = Modifier.size(16.dp)) }
+                        } else null,
+                        modifier = Modifier.testTag("filter_category_all")
+                    )
+                }
+
+                items(categoriesForFilter) { cat ->
+                    val isSelected = selectedNotebookCategory == cat
+                    val chipEmoji = when (cat.lowercase()) {
+                        "work", "iş" -> "💼"
+                        "personal", "kişisel" -> "👤"
+                        "groceries", "market", "alışveriş" -> "🛒"
+                        "fitness", "spor" -> "🏋️"
+                        "study", "ders" -> "📚"
+                        else -> "🏷️"
+                    }
+                    FilterChip(
+                        selected = isSelected,
+                        onClick = {
+                            viewModel.selectedNotebookCategory.value = if (isSelected) null else cat
+                        },
+                        label = {
+                            Text(
+                                text = "$chipEmoji $cat",
+                                fontSize = 12.sp,
+                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                            )
+                        },
+                        leadingIcon = if (isSelected) {
+                            { Icon(Icons.Default.Check, null, modifier = Modifier.size(16.dp)) }
+                        } else null,
+                        modifier = Modifier.testTag("filter_category_${cat.lowercase()}")
+                    )
+                }
+            }
+
+            val filteredNotebooks = notebooks.filter { nb ->
+                val matchesQuery = searchNotebookQuery.isBlank() ||
+                    nb.name.contains(searchNotebookQuery, ignoreCase = true) ||
+                    nb.description.contains(searchNotebookQuery, ignoreCase = true) ||
+                    nb.category.contains(searchNotebookQuery, ignoreCase = true)
+                val matchesCategory = selectedNotebookCategory == null || nb.category.equals(selectedNotebookCategory, ignoreCase = true)
+                matchesQuery && matchesCategory
             }
 
             if (filteredNotebooks.isEmpty()) {
@@ -494,8 +560,8 @@ fun NotebooksScreen(
     if (showAddDialog) {
         NotebookDialog(
             onDismiss = { showAddDialog = false },
-            onSave = { name, desc, emoji, color, type, priorityCfg ->
-                viewModel.createNotebook(name, desc, emoji, color, type, priorityCfg)
+            onSave = { name, desc, emoji, color, type, priorityCfg, category ->
+                viewModel.createNotebook(name, desc, emoji, color, type, priorityCfg, category)
                 showAddDialog = false
             }
         )
@@ -520,7 +586,7 @@ fun NotebooksScreen(
                     showDetailsDialog = false
                     notebookToEditId = null
                 },
-                onSave = { name, desc, emoji, color, type, priorityCfg ->
+                onSave = { name, desc, emoji, color, type, priorityCfg, category ->
                     viewModel.updateNotebook(
                         notebook.copy(
                             name = name,
@@ -528,6 +594,7 @@ fun NotebooksScreen(
                             emoji = emoji,
                             color = color,
                             type = type,
+                            category = category,
                             priorityConfigJson = priorityCfg,
                             updatedAt = System.currentTimeMillis()
                         )
@@ -717,6 +784,31 @@ fun NotebookCard(
                                 color = coverColor
                             )
                         }
+
+                        // Category Label Badge if assigned
+                        if (notebook.category.isNotBlank()) {
+                            val catEmoji = when (notebook.category.lowercase()) {
+                                "work", "iş" -> "💼"
+                                "personal", "kişisel" -> "👤"
+                                "groceries", "market", "alışveriş" -> "🛒"
+                                "fitness", "spor" -> "🏋️"
+                                "study", "ders" -> "📚"
+                                else -> "🏷️"
+                            }
+                            Box(
+                                modifier = Modifier
+                                    .background(MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.7f), RoundedCornerShape(6.dp))
+                                    .border(0.5.dp, MaterialTheme.colorScheme.secondary.copy(alpha = 0.4f), RoundedCornerShape(6.dp))
+                                    .padding(horizontal = 6.dp, vertical = 2.dp)
+                            ) {
+                                Text(
+                                    text = "$catEmoji ${notebook.category}",
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onSecondaryContainer
+                                )
+                            }
+                        }
                     }
 
                     Text(
@@ -802,10 +894,11 @@ fun NotebookCard(
 fun NotebookDialog(
     notebook: NotebookEntity? = null,
     onDismiss: () -> Unit,
-    onSave: (String, String, String, Int, String, String) -> Unit
+    onSave: (String, String, String, Int, String, String, String) -> Unit
 ) {
     var name by rememberSaveable { mutableStateOf(notebook?.name ?: "") }
     var description by rememberSaveable { mutableStateOf(notebook?.description ?: "") }
+    var category by rememberSaveable { mutableStateOf(notebook?.category ?: "") }
     var emoji by rememberSaveable { mutableStateOf(notebook?.emoji ?: "📝") }
     var selectedColorIndex by rememberSaveable { mutableStateOf(notebook?.color ?: 0) }
     var selectedType by rememberSaveable { mutableStateOf(notebook?.type ?: "Normal") }
@@ -882,6 +975,48 @@ fun NotebookDialog(
                     label = { Text(stringResource(R.string.notebook_description)) },
                     modifier = Modifier.fillMaxWidth()
                 )
+
+                // Category Selection & Input (e.g., Work, Personal, Groceries)
+                Column {
+                    OutlinedTextField(
+                        value = category,
+                        onValueChange = { category = it },
+                        label = { Text(stringResource(R.string.notebook_category_label)) },
+                        singleLine = true,
+                        leadingIcon = { Icon(Icons.Default.Label, null, modifier = Modifier.size(18.dp)) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .testTag("notebook_category_input")
+                    )
+
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    val quickCategories = listOf("Work", "Personal", "Groceries", "Fitness", "Study")
+                    FlowRow(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        quickCategories.forEach { cat ->
+                            val isChosen = category.equals(cat, ignoreCase = true)
+                            val catEmoji = when (cat.lowercase()) {
+                                "work" -> "💼"
+                                "personal" -> "👤"
+                                "groceries" -> "🛒"
+                                "fitness" -> "🏋️"
+                                "study" -> "📚"
+                                else -> "🏷️"
+                            }
+                            FilterChip(
+                                selected = isChosen,
+                                onClick = {
+                                    category = if (isChosen) "" else cat
+                                },
+                                label = { Text("$catEmoji $cat", fontSize = 11.sp) }
+                            )
+                        }
+                    }
+                }
 
                 // Notebook Type Selection
                 Column {
@@ -1116,7 +1251,7 @@ fun NotebookDialog(
                                     description
                                 }
                                 val priorityCfgJson = NotebookEntity.serializePriorityConfig(priorityOptions)
-                                onSave(name, finalDesc, emoji, selectedColorIndex, selectedType, priorityCfgJson)
+                                onSave(name, finalDesc, emoji, selectedColorIndex, selectedType, priorityCfgJson, category.trim())
                             }
                         },
                         enabled = name.isNotBlank()

@@ -371,4 +371,8 @@
     <string name="generate_code">Generar código</string>
     <string name="copy_code">Copiar código</string>
     <string name="workout_save_failed">No se pudo guardar el entrenamiento. Inténtalo de nuevo.</string>
+    <string name="all_categories">Todo</string>
+    <string name="notebook_category_label">Categoría (p. ej. Trabajo, Personal, Compras)</string>
+    <string name="filter_by_category">Filtrar por categoría</string>
+    <string name="no_category">Sin categoría</string>
 </resources>

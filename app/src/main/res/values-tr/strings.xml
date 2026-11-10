@@ -385,4 +385,8 @@
     <string name="generate_code">Kod Üret</string>
     <string name="copy_code">Kodu Kopyala</string>
     <string name="workout_save_failed">Antrenman kaydedilemedi. Lütfen tekrar deneyin.</string>
+    <string name="all_categories">Tümü</string>
+    <string name="notebook_category_label">Kategori (örn. İş, Kişisel, Alışveriş)</string>
+    <string name="filter_by_category">Kategoriye Göre Filtrele</string>
+    <string name="no_category">Kategorisiz</string>
 </resources>

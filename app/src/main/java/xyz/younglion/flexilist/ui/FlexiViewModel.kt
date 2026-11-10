@@ -280,8 +280,19 @@ class FlexiViewModel(
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    // Notebooks Category filter state & available categories
+    val selectedNotebookCategory = MutableStateFlow<String?>(null)
+
+    val availableNotebookCategories: StateFlow<List<String>> = notebooks
+        .map { list ->
+            list.map { it.category.trim() }
+                .filter { it.isNotEmpty() }
+                .distinct()
+        }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
     // Notebook Database Operations
-    fun createNotebook(name: String, desc: String, emoji: String, color: Int, type: String, priorityConfigJson: String = "") {
+    fun createNotebook(name: String, desc: String, emoji: String, color: Int, type: String, priorityConfigJson: String = "", category: String = "") {
         viewModelScope.launch {
             repository.insertNotebook(
                 NotebookEntity(
@@ -290,6 +301,7 @@ class FlexiViewModel(
                     emoji = emoji,
                     color = color,
                     type = type,
+                    category = category,
                     priorityConfigJson = priorityConfigJson
                 )
             )
