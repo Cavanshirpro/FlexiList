@@ -1,9 +1,9 @@
 {
-  "version": "1.0.4",
-  "version_code": 5,
-  "tag": "v1.0.4",
-  "title": "FlexiList 1.0.4",
-  "notes": "release/notes/1.0.4.md",
+  "version": "1.1.0",
+  "version_code": 6,
+  "tag": "v1.1.0",
+  "title": "FlexiList 1.1.0",
+  "notes": "release/notes/1.1.0.md",
   "prerelease": false,
   "signing_cert_sha256": "1f69d377fc891db13ffe8c8744a7e14cd22fffd82df4caaaf704567b14c9dba3"
 }

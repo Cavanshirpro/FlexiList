@@ -1,0 +1,1 @@
+Recherche dans tous les espaces, vue du jour pour tâches et habitudes, modèles facultatifs et ajout de plusieurs entrées. Nouvelles couvertures, progression et typographie. Annulation groupée des suppressions successives. Carnets et sauvegardes existants restent compatibles.

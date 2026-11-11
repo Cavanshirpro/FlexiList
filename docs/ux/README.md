@@ -13,3 +13,5 @@ Captured from `WorkspaceFlowTest` using Robolectric SDK 36 and Roborazzi native 
 | Preserved workout player | [Player](workout-player.png) |
 | Habit context | [Habits](habits.png) |
 | Reading context | [Reading](reading.png) |
+
+The [1.1.0 journey captures](1.1/README.md) show the subsequent search, starter, batch entry and visual refinement pass.

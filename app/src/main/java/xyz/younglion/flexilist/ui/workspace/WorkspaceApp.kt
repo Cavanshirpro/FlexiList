@@ -41,6 +41,8 @@ fun WorkspaceApp(viewModel: FlexiViewModel) {
     val active = WorkspaceId.valueOf(activeName)
     var fullScreen by remember { mutableStateOf(false) }
     var requestedNotebook by rememberSaveable { mutableStateOf<Long?>(null) }
+    var requestedEntry by rememberSaveable { mutableStateOf<Long?>(null) }
+    var searchFocus by rememberSaveable { mutableStateOf<String?>(null) }
     val holder = rememberSaveableStateHolder()
     val snackbar = remember { SnackbarHostState() }
     val deleted by controller.deletion.collectAsState()
@@ -112,8 +114,9 @@ fun WorkspaceApp(viewModel: FlexiViewModel) {
                 }
                 holder.SaveableStateProvider(active.name) {
                     WorkspaceGraph(
-                        active, viewModel, requestedNotebook, expanded = expandedLayout,
-                        onRequestConsumed = { requestedNotebook = null },
+                        active, viewModel, requestedNotebook, requestedEntry, expanded = expandedLayout,
+                        onSearch = { searchFocus = it.name },
+                        onRequestConsumed = { requestedNotebook = null; requestedEntry = null },
                         onFocus = { fullScreen = it },
                         onTransfer = { workspace, id ->
                             controller.rememberNotebook(workspace, id)
@@ -125,6 +128,11 @@ fun WorkspaceApp(viewModel: FlexiViewModel) {
             }
         }
     }
+    searchFocus?.let { value -> LibrarySearchDialog(controller, SearchFocus.valueOf(value), onClose = { searchFocus = null }, onOpen = { book, item ->
+        requestedNotebook = book.id; requestedEntry = item
+        select(NotebookKind.parse(book.type).workspace)
+        searchFocus = null
+    }) }
     ImportReview(controller)
 }
 
@@ -133,6 +141,8 @@ private fun WorkspaceGraph(
     workspace: WorkspaceId,
     viewModel: FlexiViewModel,
     request: Long?,
+    requestedEntry: Long?,
+    onSearch: (SearchFocus) -> Unit,
     expanded: Boolean,
     onRequestConsumed: () -> Unit,
     onFocus: (Boolean) -> Unit,
@@ -166,7 +176,11 @@ private fun WorkspaceGraph(
             else if (id != null) controller.rememberNotebook(workspace, null)
         }
     }
-    LaunchedEffect(request) { request?.let { open(it); onRequestConsumed() } }
+    LaunchedEffect(request, requestedEntry) { request?.let {
+        open(it)
+        requestedEntry?.let { item -> nav.navigate("editor/$it/$item") }
+        onRequestConsumed()
+    } }
     BackHandler(enabled = route != "home" && route.isNotEmpty()) {
         if (route.startsWith("notebook/")) home() else nav.popBackStack()
     }
@@ -174,7 +188,7 @@ private fun WorkspaceGraph(
         WorkspaceHome(workspace, viewModel, ::open,
             onCreate = { nav.navigate("notebook-edit/0") },
             onEdit = { nav.navigate("notebook-edit/$it") },
-            onSettings = { nav.navigate("settings") })
+            onSettings = { nav.navigate("settings") }, onSearch = onSearch)
     }
     NavHost(navController = nav, startDestination = "home", modifier = Modifier.fillMaxSize(), enterTransition = { androidx.compose.animation.EnterTransition.None }, exitTransition = { androidx.compose.animation.ExitTransition.None }) {
         composable("home") { overview() }
@@ -212,7 +226,7 @@ private fun WorkspaceGraph(
                                 }
                                 if (selected?.id != id || items.any { it.notebookId != id }) LoadingNotebook()
                                 else ItemsScreen(viewModel, onNavigateBack = ::home,
-                                    onNavigateToAddEdit = { nav.navigate("editor/$id/$it") }, onFocusChanged = { childFocus = it })
+                                    onNavigateToAddEdit = { nav.navigate("editor/$id/$it") }, onFocusChanged = { childFocus = it }, onGlobalSearch = { onSearch(SearchFocus.ALL) })
                             }
                             NotebookUiState.Loading -> LoadingNotebook()
                         }

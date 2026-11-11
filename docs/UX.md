@@ -44,3 +44,17 @@ python3 -m unittest discover -s tools/tests -v
 Robolectric/Roborazzi evidence is native UI rendering, not a physical-device certification. Real keyboard/inset behavior, TalkBack traversal, Android notification permission/settings, background workout timing, and live JSONBlob upload/download still require device/service verification. The release signing contract and F-Droid recipe are unchanged by this UX work; a locally generated candidate is not a publication with the developer's release certificate.
 
 Selected rendered evidence is kept in [ux/](ux/).
+
+## 1.1.0: find, start and capture
+
+The second UX pass adds three complete journeys on top of the four-area shell:
+
+- **Find:** Search everything from the overview toolbar or notebook menu. Names, notes, tags and categories remain local. Today includes open tasks due by the end of the device's current day and undated unfinished habits; future-dated habits wait until their due day. Starred includes starred entries and favorite notebooks. Workspace filters narrow results; archive inclusion is explicit. Selecting an entry opens its ID-scoped editor in the correct workspace. Queries survive activity recreation. Results are displayed in pages of 30 and computed off the main thread. The search corpus is collected only while the search screen is open and released when it closes.
+- **Start:** Choose Blank or a previewed localized notebook starter. Weekly review, groceries, daily routine and workout starters contain the visible entries; Reading queue starts empty. A name/type change remains editable. No starter writes before Save, and the notebook plus entries commit in one Room transaction. Editing an existing notebook never reseeds it.
+- **Capture:** Quick entry supports one entry or one entry per line, with a 100-entry limit and optional Keep open. Blank lines are ignored; intentional duplicates remain. Draft details apply to every line. Lines append in their entered order, and single entries append to the manual order as well. Reattaching to an in-flight save does not insert a second batch.
+
+Overview cards use the notebook's chosen cover color, real completion counts, restrained progress and shared typography/shapes. One aggregate Room projection replaces the per-card item subscriptions and avoids loading full entry bodies for counts. Category chips scroll in their own row. Favorites and ordering remain available. Program controls, search, filters and entries share one lazy vertical scroller, so a large workout header cannot reduce the exercise list to zero height.
+
+Consecutive entry deletions now merge into the current Undo snapshot and restart its accessible timeout. An expired older token cannot clear the newer batch. The original IDs, order, custom fields and parent checks remain intact.
+
+`Experience11Test` covers search scope, Unicode/literal queries, stored metadata exclusion, archive/favorite policy, date boundaries, atomic starters/batches, duplicate/order preservation, parent/size failures, Undo accumulation and aggregate counts. `WorkspaceFlowTest` adds actual starter → batch → recreation → continued entry → search → editor, Today/archive/cross-workspace navigation, and 320 dp/200% workout reachability. V01/V03/V04/V07/V08 have native rendered evidence; physical-device keyboard, TalkBack and service verification remain explicit gaps. Public-site hero/footer gates are N/A to this native task shell. No decorative motion or new runtime dependency was added.

@@ -208,13 +208,13 @@ class WorkspaceFlowTest {
         launch(); click("workspace-WORKOUTS")
         ui.onNodeWithText("Full body training").performClick(); frame(); awaitTag("start_workout_button")
         shot("16-workout")
-        ui.onNodeWithText(app.getString(R.string.water_tracker)).performClick(); frame()
+        ui.onNodeWithText(app.getString(R.string.water_tracker)).performScrollTo().performClick(); frame()
         ui.onNodeWithTag("add_entry_button").assertDoesNotExist()
         ui.onNodeWithTag("surahi_750").performClick(); frame()
         ui.waitUntil(10000) { ui.mainClock.advanceTimeBy(100); ui.onAllNodesWithText("750 / 2,500 ml").fetchSemanticsNodes().isNotEmpty() }
         shot("17-water")
-        ui.onNodeWithText(app.getString(R.string.analytics_report)).performClick(); frame(); shot("18-analytics")
-        ui.onNodeWithText(app.getString(R.string.exercises)).performClick(); frame()
+        ui.onNodeWithText(app.getString(R.string.analytics_report)).performScrollTo().performClick(); frame(); shot("18-analytics")
+        ui.onNodeWithText(app.getString(R.string.exercises)).performScrollTo().performClick(); frame()
         ui.onNodeWithTag("start_workout_button").assertIsEnabled().performClick(); frame()
         shot("19-workout-player")
         ui.onNodeWithTag("workspace-WORKOUTS").assertDoesNotExist()
@@ -253,6 +253,95 @@ class WorkspaceFlowTest {
         ui.onNodeWithText("A book to read").assertExists()
         ui.onNodeWithText("Read", substring = false).assertExists()
         shot("21-reading")
+    }
+
+    @Test fun previewedStarterAndBatchEntrySurviveRecreationAndKeepAdding() {
+        launch(); click("add_notebook_button")
+        ui.onNodeWithTag("starter-GROCERIES").performScrollTo().performClick(); frame()
+        shot("22-starter-form")
+        click("save_notebook_button"); awaitTag("add_entry_button")
+        val database = AppDatabase.getDatabase(app)
+        val notebook = runBlocking(Dispatchers.IO) { database.notebookDao().getAllNotebooksSuspend().single() }
+        assertEquals(3, runBlocking(Dispatchers.IO) { database.listItemDao().getItemsForNotebookSuspend(notebook.id).size })
+        click("add_entry_button"); click("quick_entry_multiple")
+        ui.onNodeWithTag("quick_entry_title").performTextInput("Tea\nCoffee\nTea")
+        ui.onNodeWithTag("quick_keep_open").performScrollTo().performClick(); frame()
+        scenario!!.recreate(); frame(); awaitTag("quick_entry_title")
+        ui.onNodeWithTag("quick_entry_title").assertTextContains("Tea\nCoffee\nTea")
+        shot("23-batch-entry", dialog = true)
+        ui.onNodeWithTag("quick_entry_save").performScrollTo().performClick(); frame()
+        ui.waitUntil(10000) { ui.mainClock.advanceTimeBy(100); runBlocking(Dispatchers.IO) { database.listItemDao().getItemsForNotebookSuspend(notebook.id).size == 6 } }
+        ui.waitUntil(10000) { ui.mainClock.advanceTimeBy(100); ui.onNodeWithTag("quick_entry_title").fetchSemanticsNode().config[androidx.compose.ui.semantics.SemanticsProperties.EditableText].text.isEmpty() }
+        ui.onNodeWithTag("quick_entry_title").assert(SemanticsMatcher.expectValue(androidx.compose.ui.semantics.SemanticsProperties.EditableText, androidx.compose.ui.text.AnnotatedString("")))
+        ui.onNodeWithTag("quick_entry_title").performTextInput("Rice")
+        ui.onNodeWithTag("quick_entry_save").performScrollTo().performClick(); frame()
+        ui.waitUntil(10000) { ui.mainClock.advanceTimeBy(100); runBlocking(Dispatchers.IO) { database.listItemDao().getItemsForNotebookSuspend(notebook.id).size == 7 } }
+        val entries = runBlocking(Dispatchers.IO) { database.listItemDao().getItemsForNotebookSuspend(notebook.id) }
+        assertEquals(listOf("Tea", "Coffee", "Tea", "Rice"), entries.takeLast(4).map { it.title })
+        ui.onNodeWithText("Done").performScrollTo().performClick(); frame()
+        ui.onNodeWithContentDescription("Back").performClick(); frame(); awaitTag("global_search_button")
+        shot("24-v11-overview")
+        click("global_search_button"); awaitTag("global_search_input")
+        ui.onNodeWithTag("global_search_input").performTextInput("Tea")
+        awaitTag("search-entry-${entries.first { it.title == "Tea" }.id}")
+        shot("25-search", dialog = true)
+        scenario!!.recreate(); frame(); awaitTag("global_search_input")
+        ui.onNodeWithTag("global_search_input").assertTextContains("Tea")
+        awaitTag("search-entry-${entries.first { it.title == "Tea" }.id}")
+        ui.onNodeWithTag("search-entry-${entries.first { it.title == "Tea" }.id}").performScrollTo().performClick(); frame(); awaitTag("save_item_button")
+        ui.onNodeWithText("Tea").assertExists()
+    }
+
+    @Test fun globalTodayAndArchivedSearchOpenTheCorrectWorkspaceEntry() {
+        val database = AppDatabase.getDatabase(app)
+        var archivedEntry = 0L
+        runBlocking(Dispatchers.IO) {
+            val tasks = database.notebookDao().insertNotebook(NotebookEntity(name = "Daily tasks", type = "ToDo"))
+            database.listItemDao().insertItem(ListItemEntity(notebookId = tasks, title = "Due task", dueDate = System.currentTimeMillis() - 1000))
+            val habits = database.notebookDao().insertNotebook(NotebookEntity(name = "Routine", type = "HabitTracker"))
+            database.listItemDao().insertItem(ListItemEntity(notebookId = habits, title = "Stretch"))
+            val archive = database.notebookDao().insertNotebook(NotebookEntity(name = "Archived books", type = "ReadingList", archived = true))
+            archivedEntry = database.listItemDao().insertItem(ListItemEntity(notebookId = archive, title = "Hidden chapter"))
+        }
+        app.getSharedPreferences("flexilist_prefs", Context.MODE_PRIVATE).edit().putString("app_language", "tr").putString("theme_mode", "DARK").commit()
+        launch(); click("global_search_button"); awaitTag("global_search_input")
+        click("search-focus-TODAY")
+        ui.waitUntil(10000) { ui.mainClock.advanceTimeBy(100); ui.onAllNodesWithText("Due task").fetchSemanticsNodes().isNotEmpty() }
+        ui.onNodeWithText("Stretch").assertExists(); shot("26-today", dialog = true)
+        click("search-focus-ALL")
+        ui.onNodeWithTag("global_search_input").performTextInput("Hidden")
+        frame(); ui.onNodeWithTag("search-entry-$archivedEntry").assertDoesNotExist()
+        ui.onNodeWithTag("search_include_archive").performScrollTo().performClick(); frame()
+        awaitTag("search-entry-$archivedEntry")
+        ui.onNodeWithTag("search-entry-$archivedEntry").performScrollTo().performClick(); frame(); awaitTag("save_item_button")
+        ui.onNodeWithText("Hidden chapter").assertExists()
+        scenario!!.onActivity { it.onBackPressedDispatcher.onBackPressed() }; frame(); awaitTag("add_entry_button")
+        ui.onNodeWithText("Archived books").assertExists()
+        ui.onNodeWithTag("workspace-LIBRARY").assertIsSelected()
+    }
+
+    @Test
+    @Config(qualifiers = "w320dp-h740dp-mdpi", sdk = [36])
+    fun largeTextWorkoutKeepsTheProgramAndExercisesReachableInOneScroller() {
+        val configuration = Configuration(app.resources.configuration).apply { fontScale = 2f }
+        @Suppress("DEPRECATION")
+        app.resources.updateConfiguration(configuration, app.resources.displayMetrics)
+        val database = AppDatabase.getDatabase(app)
+        runBlocking(Dispatchers.IO) {
+            val id = database.notebookDao().insertNotebook(NotebookEntity(name = "Large text training", type = "WorkoutPlanner", description = "[WORKOUT_CFG]frequency=Weekly|weekly=1,2,3,4,5,6,7"))
+            database.listItemDao().insertItem(ListItemEntity(notebookId = id, title = "Squat", description = "[EXERCISE_CFG]type=Reps|sets=2|reps=10|rest=30"))
+        }
+        launch(); click("workspace-WORKOUTS")
+        ui.mainClock.autoAdvance = true
+        shot("28-large-overview")
+        ui.onNodeWithText("Large text training").performScrollTo().performClick(); frame(); awaitTag("notebook_content")
+        ui.onNodeWithTag("notebook_content").performScrollToNode(hasText("Squat")); frame()
+        ui.onNodeWithText("Squat").assertIsDisplayed(); shot("27-large-workout")
+        ui.onNodeWithTag("notebook_content").performScrollToNode(hasTestTag("start_workout_button")); frame()
+        ui.onNodeWithTag("start_workout_button").performScrollTo().assertIsEnabled()
+        ui.mainClock.autoAdvance = false
+        ui.onNodeWithTag("start_workout_button").performClick(); frame()
+        ui.onNodeWithTag("workspace-WORKOUTS").assertDoesNotExist()
     }
 
 }

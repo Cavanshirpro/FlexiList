@@ -74,6 +74,10 @@ class FlexiRepository(private val database: xyz.younglion.flexilist.data.db.AppD
 
     suspend fun deleteNotebook(notebook: NotebookEntity) = notebookDao.deleteNotebook(notebook)
 
+    suspend fun maxSortOrder(id: Long) = listItemDao.maxSortOrder(id)
+
+    fun notebookStats() = listItemDao.notebookStats()
+
     // ListItem actions
     fun getItemsForNotebook(notebookId: Long): Flow<List<ListItemEntity>> =
         listItemDao.getAllItemsForNotebook(notebookId)
