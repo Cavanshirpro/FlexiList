@@ -29,7 +29,7 @@ Run the same native journeys and optionally record their actual rendered screens
   -PcaptureUx=true --no-configuration-cache
 ```
 
-Images are written to `app/build/outputs/ux`. Tests exercise long notebook names, all four workspaces, quick-to-full draft transfer, activity recreation, actual database saves, task completion, System/Light/Dark changes, 320 dp with 200% font scaling, 900 dp master/detail layout, import review/cancel/confirm, visible Undo, and workout/player/water/analytics navigation. Controller tests cover draft serialization, legacy type/theme/selection compatibility, exact deletion restoration, missing parents, concurrent edits, interrupted saves, import limits and malformed backup handling. Existing data/backup/workout tests continue to run for both flavors.
+Images are written to `app/build/outputs/ux`. Tests exercise long notebook names, all four workspaces, quick-to-full draft transfer, activity recreation, actual database saves, task completion, System/Light/Dark changes, 320 dp with 200% font scaling, 900 dp master/detail layout, import review/cancel/confirm, visible Undo, and workout/player/water/analytics navigation. Controller tests cover draft serialization, legacy type/theme/selection compatibility, exact deletion restoration, missing parents, concurrent edits, interrupted saves, import limits, malformed backup handling, and granted share-file contents for short, Unicode and long notebook names. Existing data/backup/workout tests continue to run for both flavors.
 
 Full checks:
 

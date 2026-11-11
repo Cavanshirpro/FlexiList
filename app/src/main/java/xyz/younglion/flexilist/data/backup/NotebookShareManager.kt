@@ -50,7 +50,7 @@ object NotebookShareManager {
         val shareIntent = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
             val jsonContent = createFlexiJson(notebook, items)
             val cleanName = notebook.name.replace(Regex("[^\\p{L}\\p{N}_ -]"), "_").trim().take(64).ifEmpty { "Notebook" }
-            val file = File.createTempFile("$cleanName-", ".flexi", context.cacheDir)
+            val file = File.createTempFile("flx-$cleanName-", ".flexi", context.cacheDir)
             file.writeText(jsonContent, Charsets.UTF_8)
             val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
             Intent(Intent.ACTION_SEND).apply {

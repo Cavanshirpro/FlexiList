@@ -2,6 +2,7 @@ package xyz.younglion.flexilist
 
 import android.app.Application
 import android.content.Context
+import android.content.ContextWrapper
 import android.content.Intent
 import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.SavedStateHandle
@@ -269,6 +270,37 @@ class WorkspaceControllerTest {
             viewModel?.viewModelScope?.coroutineContext?.get(Job)?.cancelAndJoin()
             Dispatchers.resetMain()
         }
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    @Test fun sharedFilesSupportShortUnicodeAndLongNamesWithoutBinderPayloads() = runBlocking {
+        Dispatchers.setMain(UnconfinedTestDispatcher())
+        try {
+            var chooser: Intent? = null
+            val sharingContext = object : ContextWrapper(app) {
+                override fun startActivity(intent: Intent) { chooser = intent }
+            }
+            for (name in listOf("A", "İşlər və qeydlər", "A very long notebook name ".repeat(30))) {
+                val notebook = NotebookEntity(id = 91, name = name, category = "Preserved category")
+                val item = ListItemEntity(notebookId = 91, title = "Preserved entry", tags = "custom", description = "Long content ".repeat(200))
+                NotebookShareManager.shareNotebook(sharingContext, notebook, listOf(item))
+                assertEquals(Intent.ACTION_CHOOSER, chooser?.action)
+                @Suppress("DEPRECATION")
+                val sent = requireNotNull(chooser?.getParcelableExtra<Intent>(Intent.EXTRA_INTENT))
+                assertEquals(Intent.ACTION_SEND, sent.action)
+                assertTrue(sent.flags and Intent.FLAG_GRANT_READ_URI_PERMISSION != 0)
+                assertFalse(sent.hasExtra(Intent.EXTRA_TEXT))
+                @Suppress("DEPRECATION")
+                val uri = requireNotNull(sent.getParcelableExtra<android.net.Uri>(Intent.EXTRA_STREAM))
+                val text = requireNotNull(app.contentResolver.openInputStream(uri)).bufferedReader().use { it.readText() }
+                val (sharedNotebook, sharedItems) = NotebookShareManager.parseFlexiJson(text)
+                assertEquals(name, sharedNotebook.name)
+                assertEquals(notebook.category, sharedNotebook.category)
+                assertEquals(item.title, sharedItems.single().title)
+                assertEquals(item.description, sharedItems.single().description)
+                app.contentResolver.delete(uri, null, null)
+            }
+        } finally { Dispatchers.resetMain() }
     }
 
 }
