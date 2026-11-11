@@ -1,1 +1,1 @@
-Çok amaçlı hızlı liste yöneticisi ve antrenman asistanı.
+Liste, alışkanlık, antrenman ve okuma için çevrimdışı defterler
