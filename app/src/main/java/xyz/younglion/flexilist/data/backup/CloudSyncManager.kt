@@ -109,7 +109,17 @@ class CloudSyncManager {
 
                 client.newCall(request).execute().use { response ->
                     if (response.isSuccessful) {
-                        response.body?.string()
+                        response.body?.byteStream()?.use { input ->
+                            val output = java.io.ByteArrayOutputStream()
+                            val buffer = ByteArray(8192)
+                            while (true) {
+                                val count = input.read(buffer)
+                                if (count < 0) break
+                                if (output.size().toLong() + count > 16 * 1024 * 1024) throw IOException("Backup exceeds import limit")
+                                output.write(buffer, 0, count)
+                            }
+                            output.toString("UTF-8")
+                        }
                     } else {
                         null
                     }

@@ -6,6 +6,11 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.SavedStateHandle
+import androidx.lifecycle.createSavedStateHandle
+import androidx.lifecycle.viewmodel.CreationExtras
+import xyz.younglion.flexilist.ui.workspace.WorkspaceController
+import xyz.younglion.flexilist.ui.workspace.ThemeMode
 import xyz.younglion.flexilist.data.backup.BackupManager
 import xyz.younglion.flexilist.data.model.ListItemEntity
 import xyz.younglion.flexilist.data.model.NotebookEntity
@@ -25,48 +30,31 @@ import java.util.Calendar
 class FlexiViewModel(
     application: Application,
     private val repository: FlexiRepository,
-    val backupManager: BackupManager
+    val backupManager: BackupManager,
+    private val savedState: SavedStateHandle = SavedStateHandle()
 ) : AndroidViewModel(application) {
 
     private val prefs = application.getSharedPreferences("flexilist_prefs", Context.MODE_PRIVATE)
+
+    val workspace = WorkspaceController(application, repository, backupManager, viewModelScope, savedState)
 
     // Language state
     private val _appLanguage = MutableStateFlow(prefs.getString("app_language", "en") ?: "en")
     val appLanguage: StateFlow<String> = _appLanguage.asStateFlow()
 
-    init {
-        updateLocale(_appLanguage.value)
-    }
-
     fun setAppLanguage(lang: String) {
-        _appLanguage.value = lang
+        if (lang !in setOf("en", "tr", "ru", "de", "es", "fr")) return
         prefs.edit().putString("app_language", lang).apply()
-        updateLocale(lang)
+        _appLanguage.value = lang
     }
 
-    private fun updateLocale(lang: String) {
-        try {
-            val locale = java.util.Locale.forLanguageTag(lang)
-            java.util.Locale.setDefault(locale)
-            val resources = getApplication<Application>().resources
-            val config = resources.configuration
-            config.setLocale(locale)
-            @Suppress("DEPRECATION")
-            resources.updateConfiguration(config, resources.displayMetrics)
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
-    }
+    val themeMode = workspace.themeMode
+    fun setThemeMode(mode: ThemeMode) = workspace.setTheme(mode)
+    val isDarkMode: StateFlow<Boolean> = themeMode.map { mode ->
+        mode.isDark((getApplication<Application>().resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK) == android.content.res.Configuration.UI_MODE_NIGHT_YES)
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, themeMode.value == ThemeMode.DARK)
 
-    // Theme state
-    private val _isDarkMode = MutableStateFlow(prefs.getBoolean("is_dark_mode", true))
-    val isDarkMode: StateFlow<Boolean> = _isDarkMode.asStateFlow()
-
-    fun toggleTheme() {
-        val newValue = !_isDarkMode.value
-        _isDarkMode.value = newValue
-        prefs.edit().putBoolean("is_dark_mode", newValue).apply()
-    }
+    fun toggleTheme() = setThemeMode(if (isDarkMode.value) ThemeMode.LIGHT else ThemeMode.DARK)
 
     private val _selectedAccentIndex = MutableStateFlow(prefs.getInt("accent_color_index", 0))
     val selectedAccentIndex: StateFlow<Int> = _selectedAccentIndex.asStateFlow()
@@ -123,11 +111,13 @@ class FlexiViewModel(
     val selectedNotebookId: StateFlow<Long?> = _selectedNotebookId.asStateFlow()
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    val selectedNotebook: StateFlow<NotebookEntity?> = _selectedNotebookId
-        .flatMapLatest { id ->
-            if (id == null) flowOf(null) else repository.getNotebookById(id)
-        }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+    val notebookContent: StateFlow<xyz.younglion.flexilist.ui.workspace.NotebookUiState> = _selectedNotebookId
+        .flatMapLatest { id -> if (id == null) flowOf(xyz.younglion.flexilist.ui.workspace.NotebookUiState.Missing) else workspace.notebook(id) }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, xyz.younglion.flexilist.ui.workspace.NotebookUiState.Loading)
+
+    val selectedNotebook: StateFlow<NotebookEntity?> = notebookContent
+        .map { (it as? xyz.younglion.flexilist.ui.workspace.NotebookUiState.Ready)?.notebook }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
     // Workout history log flow for the selected notebook
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -153,15 +143,44 @@ class FlexiViewModel(
         return sdf.format(java.util.Date())
     }
 
+    private var changingNotebook = false
+    private fun persistFilters(id: Long) {
+        savedState["filters-$id"] = org.json.JSONObject().apply {
+            put("query", searchQuery.value); put("tags", org.json.JSONArray(selectedTags.value.toList()))
+            put("priorities", org.json.JSONArray(selectedPriorities.value.toList()))
+            put("category", selectedCategory.value); put("starred", filterStarred.value)
+            put("completed", filterCompleted.value); put("explicit", completionFilterExplicit.value); put("sort", sortType.value)
+        }.toString()
+    }
     fun selectNotebook(id: Long?) {
-        _selectedNotebookId.value = id
-        if (id != null) {
-            prefs.edit().putLong("selected_notebook_id", id).apply()
-        } else {
-            prefs.edit().remove("selected_notebook_id").apply()
+        if (_selectedNotebookId.value == id) return
+        _selectedNotebookId.value?.let(::persistFilters)
+        val targetFilters = id?.let { savedState.get<String>("filters-$it") }
+        changingNotebook = true
+        try {
+            _selectedNotebookId.value = id
+            if (id != null) prefs.edit().putLong("selected_notebook_id", id).apply()
+            else prefs.edit().remove("selected_notebook_id").apply()
+            clearFilters()
+            restoreFilters(targetFilters)
+        } finally { changingNotebook = false }
+        id?.let(::persistFilters)
+    }
+
+    private fun restoreFilters(json: String?) {
+        json?.let {
+            runCatching {
+                val state = org.json.JSONObject(json)
+                searchQuery.value = state.optString("query")
+                selectedTags.value = state.optJSONArray("tags")?.let { array -> (0 until array.length()).map { array.getString(it) }.toSet() }.orEmpty()
+                selectedPriorities.value = state.optJSONArray("priorities")?.let { array -> (0 until array.length()).map { array.getInt(it) }.toSet() }.orEmpty()
+                selectedCategory.value = if (state.isNull("category")) null else state.getString("category")
+                filterStarred.value = state.optBoolean("starred")
+                completionFilterExplicit.value = state.optBoolean("explicit")
+                filterCompleted.value = if (state.isNull("completed")) null else state.getBoolean("completed")
+                sortType.value = state.optString("sort", "Manuel")
+            }
         }
-        // Reset local filters on notebook change
-        clearFilters()
     }
 
     // Filter & Search states
@@ -170,6 +189,7 @@ class FlexiViewModel(
     val selectedPriorities = MutableStateFlow<Set<Int>>(emptySet())
     val selectedCategory = MutableStateFlow<String?>(null)
     val filterStarred = MutableStateFlow(false)
+    val completionFilterExplicit = MutableStateFlow(false)
     val filterCompleted = MutableStateFlow<Boolean?>(null) // null = use notebook setting, true = completed, false = active
     val sortType = MutableStateFlow("Manuel") // Manuel, A-Z, Z-A, Öncelik, Tarih, Yıldızlı
 
@@ -183,21 +203,16 @@ class FlexiViewModel(
         selectedCategory.value = null
         filterStarred.value = false
         filterCompleted.value = null
+        completionFilterExplicit.value = false
         sortType.value = "Manuel"
         selectedItemIds.value = emptySet()
     }
 
     // ListItems flow for selected notebook with combining search, filters, sorting and notebook settings
     @OptIn(ExperimentalCoroutinesApi::class)
-    val items: StateFlow<List<ListItemEntity>> = _selectedNotebookId
-        .flatMapLatest { id ->
-            if (id == null) {
-                // If no notebook is selected, show global items for cross-notebook search
-                repository.getAllItemsGlobal()
-            } else {
-                repository.getItemsForNotebook(id)
-            }
-        }
+    val items: StateFlow<List<ListItemEntity>> = notebookContent
+        .map { (it as? xyz.younglion.flexilist.ui.workspace.NotebookUiState.Ready)?.items.orEmpty() }
+        .combine(_selectedNotebookId) { list, id -> list.filter { it.notebookId == id } }
         .combine(searchQuery) { list, query ->
             if (query.isBlank()) list else {
                 list.filter { item ->
@@ -229,11 +244,11 @@ class FlexiViewModel(
         .combine(filterStarred) { list, starred ->
             if (!starred) list else list.filter { it.starred }
         }
-        .combine(combine(filterCompleted, selectedNotebook) { completed, notebook -> completed to notebook }) { list, (completed, notebook) ->
+        .combine(combine(filterCompleted, selectedNotebook, completionFilterExplicit) { completed, notebook, explicit -> Triple(completed, notebook, explicit) }) { list, (completed, notebook, explicit) ->
             val showComp = notebook?.showCompleted ?: true
             if (completed != null) {
                 list.filter { it.completed == completed }
-            } else if (!showComp) {
+            } else if (!explicit && !showComp) {
                 list.filter { !it.completed }
             } else {
                 list
@@ -263,7 +278,7 @@ class FlexiViewModel(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     // All distinct categories and tags for quick filter listings
-    val availableTags: StateFlow<List<String>> = items
+    val availableTags: StateFlow<List<String>> = notebookContent.map { (it as? xyz.younglion.flexilist.ui.workspace.NotebookUiState.Ready)?.items.orEmpty() }
         .map { list ->
             list.flatMap { it.tags.split(",") }
                 .map { it.trim() }
@@ -272,7 +287,7 @@ class FlexiViewModel(
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    val availableCategories: StateFlow<List<String>> = items
+    val availableCategories: StateFlow<List<String>> = notebookContent.map { (it as? xyz.younglion.flexilist.ui.workspace.NotebookUiState.Ready)?.items.orEmpty() }
         .map { list ->
             list.map { it.category.trim() }
                 .filter { it.isNotEmpty() }
@@ -314,17 +329,17 @@ class FlexiViewModel(
         }
     }
 
+    suspend fun deleteNotebookConfirmed(notebook: NotebookEntity) {
+        workspace.deleteNotebook(notebook)
+        resetWorkoutStepIndex(notebook.id)
+        if (_selectedNotebookId.value == notebook.id) selectNotebook(null)
+    }
+
     fun deleteNotebook(notebook: NotebookEntity) {
         viewModelScope.launch {
-            if (_selectedNotebookId.value == notebook.id) {
-                _selectedNotebookId.value = null
-            }
-            repository.getItemsForNotebook(notebook.id).first().forEach {
-                ReminderScheduler.cancel(getApplication(), it.id)
-            }
-            cancelNotebookReminder(notebook.id)
-            resetWorkoutStepIndex(notebook.id)
-            repository.deleteNotebook(notebook)
+            try { deleteNotebookConfirmed(notebook) }
+            catch (e: CancellationException) { throw e }
+            catch (_: Exception) { workspace.notices.emit(xyz.younglion.flexilist.R.string.ux_save_failed) }
         }
     }
 
@@ -434,8 +449,9 @@ class FlexiViewModel(
 
     fun deleteListItem(item: ListItemEntity) {
         viewModelScope.launch {
-            ReminderScheduler.cancel(getApplication(), item.id)
-            repository.deleteItem(item)
+            try { workspace.deleteItems(setOf(item.id)) }
+            catch (e: CancellationException) { throw e }
+            catch (_: Exception) { workspace.notices.emit(xyz.younglion.flexilist.R.string.ux_save_failed) }
         }
     }
 
@@ -542,11 +558,9 @@ class FlexiViewModel(
 
     fun bulkDelete() {
         viewModelScope.launch {
-            val ids = selectedItemIds.value
-            val list = items.value.filter { it.id in ids }
-            list.forEach { ReminderScheduler.cancel(getApplication(), it.id) }
-            repository.deleteItems(list)
-            clearSelections()
+            try { workspace.deleteItems(selectedItemIds.value); clearSelections() }
+            catch (e: CancellationException) { throw e }
+            catch (_: Exception) { workspace.notices.emit(xyz.younglion.flexilist.R.string.ux_save_failed) }
         }
     }
 
@@ -673,6 +687,15 @@ class FlexiViewModel(
 
     // Reset from the complete database, independently of the selected notebook or UI filters.
     init {
+        restoreFilters(_selectedNotebookId.value?.let { savedState.get<String>("filters-$it") })
+        viewModelScope.launch {
+            // Capture the active filter state too, so process recreation does not require a prior area switch.
+            combine(searchQuery, selectedTags, selectedPriorities, selectedCategory, filterStarred) { _, _, _, _, _ -> Unit }
+                .combine(combine(filterCompleted, completionFilterExplicit, sortType) { _, _, _ -> Unit }) { _, _ -> Unit }
+                .collect {
+                    if (!changingNotebook) _selectedNotebookId.value?.let(::persistFilters)
+                }
+        }
         viewModelScope.launch {
             while (true) {
                 _todayDate.value = getTodayDateString()
@@ -802,6 +825,12 @@ class FlexiViewModelFactory(
     private val repository: FlexiRepository,
     private val backupManager: BackupManager
 ) : ViewModelProvider.Factory {
+    override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
+        require(modelClass.isAssignableFrom(FlexiViewModel::class.java))
+        @Suppress("UNCHECKED_CAST")
+        return FlexiViewModel(application, repository, backupManager, extras.createSavedStateHandle()) as T
+    }
+
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(FlexiViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")

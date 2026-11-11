@@ -16,6 +16,8 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.CancellationException
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -49,11 +51,15 @@ fun WorkoutPlannerSettingsDialog(
     onOpenStats: () -> Unit
 ) {
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    var deleting by remember { mutableStateOf(false) }
+    var deletionError by remember { mutableStateOf(false) }
+    val deletionItems by remember(notebook.id) { viewModel.getItemsForNotebook(notebook.id) }.collectAsState(initial = null)
     var showDeleteConfirm by rememberSaveable { mutableStateOf(false) }
     val workoutConfig = remember(notebook.description) { notebook.getWorkoutScheduleConfig() }
     val reminderTime = remember(notebook.id) { viewModel.getNotebookReminderTime(notebook.id) }
 
-    Dialog(onDismissRequest = onDismiss) {
+    Dialog(onDismissRequest = { if (!deleting) onDismiss() }) {
         Card(
             modifier = Modifier
                 .fillMaxWidth(0.96f)
@@ -370,6 +376,7 @@ fun WorkoutPlannerSettingsDialog(
                 HorizontalDivider()
 
                 // Delete Section
+                if (deletionError) Text(stringResource(R.string.ux_save_failed), color = MaterialTheme.colorScheme.error)
                 if (!showDeleteConfirm) {
                     TextButton(
                         onClick = { showDeleteConfirm = true },
@@ -391,7 +398,7 @@ fun WorkoutPlannerSettingsDialog(
                             verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             Text(
-                                text = stringResource(R.string.confirm_delete_workout_program),
+                                text = if (deletionItems == null) stringResource(R.string.ux_working) else stringResource(R.string.ux_delete_notebook_message, notebook.name, deletionItems!!.size),
                                 fontSize = 11.sp,
                                 color = MaterialTheme.colorScheme.onErrorContainer,
                                 fontWeight = FontWeight.Bold
@@ -401,18 +408,23 @@ fun WorkoutPlannerSettingsDialog(
                                 horizontalArrangement = Arrangement.End,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                TextButton(onClick = { showDeleteConfirm = false }) {
+                                TextButton(enabled = !deleting, onClick = { showDeleteConfirm = false }) {
                                     Text(stringResource(R.string.cancel), color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 }
                                 Button(
+                                    enabled = !deleting && deletionItems != null,
                                     onClick = {
-                                        viewModel.deleteNotebook(notebook)
-                                        Toast.makeText(context, context.getString(R.string.workout_schedule_deleted), Toast.LENGTH_SHORT).show()
-                                        onDismiss()
+                                        deleting = true; deletionError = false
+                                        scope.launch {
+                                            try { viewModel.deleteNotebookConfirmed(notebook); onDismiss() }
+                                            catch (e: CancellationException) { throw e }
+                                            catch (_: Exception) { deletionError = true }
+                                            finally { deleting = false }
+                                        }
                                     },
                                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
                                 ) {
-                                    Text(stringResource(R.string.yes_delete), fontWeight = FontWeight.Bold)
+                                    Text(stringResource(if (deleting) R.string.ux_working else R.string.yes_delete), fontWeight = FontWeight.Bold)
                                 }
                             }
                         }
@@ -435,6 +447,10 @@ fun StandardListSettingsDialog(
     onOpenStats: () -> Unit
 ) {
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    var deleting by remember { mutableStateOf(false) }
+    var deletionError by remember { mutableStateOf(false) }
+    val deletionItems by remember(notebook.id) { viewModel.getItemsForNotebook(notebook.id) }.collectAsState(initial = null)
     var showDeleteConfirm by rememberSaveable { mutableStateOf(false) }
     val coverColor = NotebookColors.getOrElse(notebook.color) { NotebookColors[0] }
     val reminderTime = remember(notebook.id) { viewModel.getNotebookReminderTime(notebook.id) }
@@ -443,7 +459,7 @@ fun StandardListSettingsDialog(
         sdf.format(Date(notebook.createdAt))
     }
 
-    Dialog(onDismissRequest = onDismiss) {
+    Dialog(onDismissRequest = { if (!deleting) onDismiss() }) {
         Card(
             modifier = Modifier
                 .fillMaxWidth(0.96f)
@@ -733,6 +749,7 @@ fun StandardListSettingsDialog(
                 HorizontalDivider()
 
                 // Delete Section
+                if (deletionError) Text(stringResource(R.string.ux_save_failed), color = MaterialTheme.colorScheme.error)
                 if (!showDeleteConfirm) {
                     TextButton(
                         onClick = { showDeleteConfirm = true },
@@ -754,7 +771,7 @@ fun StandardListSettingsDialog(
                             verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             Text(
-                                text = stringResource(R.string.confirm_delete_notebook),
+                                text = if (deletionItems == null) stringResource(R.string.ux_working) else stringResource(R.string.ux_delete_notebook_message, notebook.name, deletionItems!!.size),
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onErrorContainer
@@ -764,18 +781,23 @@ fun StandardListSettingsDialog(
                                 horizontalArrangement = Arrangement.End,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                TextButton(onClick = { showDeleteConfirm = false }) {
+                                TextButton(enabled = !deleting, onClick = { showDeleteConfirm = false }) {
                                     Text(stringResource(R.string.cancel))
                                 }
                                  Button(
+                                    enabled = !deleting && deletionItems != null,
                                     onClick = {
-                                        viewModel.deleteNotebook(notebook)
-                                        Toast.makeText(context, context.getString(R.string.notebook_deleted), Toast.LENGTH_SHORT).show()
-                                        onDismiss()
+                                        deleting = true; deletionError = false
+                                        scope.launch {
+                                            try { viewModel.deleteNotebookConfirmed(notebook); onDismiss() }
+                                            catch (e: CancellationException) { throw e }
+                                            catch (_: Exception) { deletionError = true }
+                                            finally { deleting = false }
+                                        }
                                     },
                                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
                                 ) {
-                                    Text(stringResource(R.string.yes_delete), fontWeight = FontWeight.Bold)
+                                    Text(stringResource(if (deleting) R.string.ux_working else R.string.yes_delete), fontWeight = FontWeight.Bold)
                                 }
                             }
                         }

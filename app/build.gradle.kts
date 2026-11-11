@@ -123,3 +123,10 @@ dependencies {
   "ksp"(libs.androidx.room.compiler)
   "ksp"(libs.moshi.kotlin.codegen)
 }
+
+// Opt-in screenshots exercise the same native journeys used by the ordinary UI tests.
+tasks.withType<Test>().configureEach {
+  val captureUx = providers.gradleProperty("captureUx").getOrElse("false")
+  systemProperty("flexilist.captureUx", captureUx)
+  if (captureUx == "true") systemProperty("roborazzi.test.record", "true")
+}

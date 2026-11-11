@@ -144,12 +144,18 @@ class BackupManager(private val repository: FlexiRepository) {
         }
     }
 
+    /** Pure parsing/validation shared by preview and atomic import. */
+    fun decodeBackup(jsonString: String): BackupWrapper {
+        val wrapper = requireNotNull(adapter.fromJson(jsonString))
+        require(wrapper.schemaVersion in 1..2) { "Unsupported backup version" }
+        val ids = wrapper.notebooks.mapNotNull { it.id }
+        require(ids.distinct().size == ids.size) { "Duplicate notebook IDs" }
+        return wrapper
+    }
+
     suspend fun importFromJsonString(jsonString: String): Boolean = withContext(Dispatchers.IO) {
         try {
-            val wrapper = adapter.fromJson(jsonString) ?: return@withContext false
-            require(wrapper.schemaVersion in 1..2) { "Unsupported backup version" }
-            val sourceIds = wrapper.notebooks.mapNotNull { it.id }
-            require(sourceIds.distinct().size == sourceIds.size) { "Duplicate notebook IDs" }
+            val wrapper = decodeBackup(jsonString)
             // An import adds copies. A failed import must never leave a partial notebook behind.
             repository.withTransaction {
                 val importedIds = mutableMapOf<Long, Long>()

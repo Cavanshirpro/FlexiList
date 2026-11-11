@@ -33,17 +33,23 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.activity.compose.BackHandler
 import androidx.compose.runtime.saveable.rememberSaveable
+import xyz.younglion.flexilist.ui.workspace.NotebookKind
+import xyz.younglion.flexilist.ui.workspace.NotebookFilters
+import xyz.younglion.flexilist.ui.workspace.QuickEntrySheet
+import xyz.younglion.flexilist.ui.workspace.entryAction
+import xyz.younglion.flexilist.ui.workspace.rememberReminderPermissionAction
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import xyz.younglion.flexilist.ui.dialogs.ListReminderDialog
 import xyz.younglion.flexilist.ui.dialogs.StandardListSettingsDialog
 import xyz.younglion.flexilist.ui.dialogs.WorkoutPlannerSettingsDialog
-import xyz.younglion.flexilist.ui.notebooks.NotebookDialog
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
@@ -68,19 +74,20 @@ import androidx.compose.foundation.border
 import java.text.SimpleDateFormat
 import java.util.*
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class, ExperimentalLayoutApi::class)
 @Composable
 fun ItemsScreen(
     viewModel: FlexiViewModel,
     onNavigateBack: () -> Unit,
-    onNavigateToAddEdit: (Long) -> Unit
+    onNavigateToAddEdit: (Long) -> Unit,
+    onFocusChanged: (Boolean) -> Unit = {}
 ) {
     val context = LocalContext.current
     val notebook by viewModel.selectedNotebook.collectAsState()
     val items by viewModel.items.collectAsState()
     val notebooks by viewModel.notebooks.collectAsState()
 
-    val isWorkout = notebook?.type == "Workout Planner" || notebook?.type == "WorkoutPlanner"
+    val isWorkout = NotebookKind.parse(notebook?.type.orEmpty()) == NotebookKind.WORKOUT
     val workoutConfig = remember(notebook?.description) {
         NotebookEntity.parseWorkoutScheduleConfig(notebook?.description)
     }
@@ -104,7 +111,7 @@ fun ItemsScreen(
     }
     var selectedDayFilter by rememberSaveable(notebook?.id, todayDate) { mutableStateOf(todayDayOfWeekAbbreviation) }
     var selectedMonthlyDayFilter by rememberSaveable(notebook?.id, todayDate) { mutableStateOf(todayDayOfMonthStr) }
-    
+
     // Drag-and-drop state synchronization
     var localItems by remember { mutableStateOf<List<ListItemEntity>>(emptyList()) }
     var isDragging by remember { mutableStateOf(false) }
@@ -115,7 +122,7 @@ fun ItemsScreen(
             localItems = items
         }
     }
-    
+
     val searchQuery by viewModel.searchQuery.collectAsState()
     val selectedTags by viewModel.selectedTags.collectAsState()
     val selectedPriorities by viewModel.selectedPriorities.collectAsState()
@@ -141,7 +148,7 @@ fun ItemsScreen(
             }
         }
     }
-    
+
     val selectedItemIds by viewModel.selectedItemIds.collectAsState()
     val availableTags by viewModel.availableTags.collectAsState()
     val availableCategories by viewModel.availableCategories.collectAsState()
@@ -156,11 +163,33 @@ fun ItemsScreen(
     var showPriorityCustomizationDialog by rememberSaveable { mutableStateOf(false) }
     var selectedWorkoutTab by rememberSaveable { mutableStateOf(0) }
 
+    val notebookSnapshot by viewModel.notebookContent.collectAsState()
+    val unfilteredItems = (notebookSnapshot as? xyz.younglion.flexilist.ui.workspace.NotebookUiState.Ready)?.items.orEmpty()
+    val hasFilter = searchQuery.isNotBlank() || selectedTags.isNotEmpty() || selectedPriorities.isNotEmpty() || selectedCategory != null || filterStarred || filterCompleted != null
+    val textScale = LocalDensity.current.fontScale.coerceAtLeast(1f)
     val isBulkMode = selectedItemIds.isNotEmpty()
+    var reordering by rememberSaveable { mutableStateOf(false) }
+    var toolbarMenu by remember { mutableStateOf(false) }
+    var resetConfirmation by rememberSaveable { mutableStateOf(false) }
+    var resetWaterConfirmation by rememberSaveable { mutableStateOf(false) }
+    val reminderPermission = rememberReminderPermissionAction()
+    LaunchedEffect(showWorkoutExecution, showEditNotebookDialog) { onFocusChanged(showWorkoutExecution || showEditNotebookDialog) }
+    BackHandler(enabled = isBulkMode || reordering) { viewModel.clearSelections(); reordering = false }
+
+
+    if (showEditNotebookDialog && notebook != null) {
+        xyz.younglion.flexilist.ui.workspace.NotebookForm(
+            viewModel.workspace, notebook, NotebookKind.parse(notebook!!.type).workspace,
+            onDismiss = { showEditNotebookDialog = false },
+            onSaved = { showEditNotebookDialog = false }
+        )
+        return
+    }
 
     Scaffold(
         topBar = {
             TopAppBar(
+                expandedHeight = (64 * textScale.coerceAtMost(2f)).dp,
                 title = {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(notebook?.emoji ?: "📝", fontSize = 24.sp, modifier = Modifier.padding(end = 8.dp))
@@ -169,19 +198,15 @@ fun ItemsScreen(
                                 text = notebook?.name ?: stringResource(R.string.list_items),
                                 fontWeight = FontWeight.Bold,
                                 style = MaterialTheme.typography.titleMedium,
-                                maxLines = 1,
+                                maxLines = 2,
                                 overflow = TextOverflow.Ellipsis
                             )
-                            Text(
-                                text = stringResource(R.string.active_items_count, items.filter { !it.completed }.size, items.filter { it.completed }.size),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
+
                         }
                     }
                 },
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
+                    IconButton(onClick = { if (isBulkMode) viewModel.clearSelections() else if (reordering) reordering = false else onNavigateBack() }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
                     }
                 },
@@ -191,23 +216,17 @@ fun ItemsScreen(
                             Icon(Icons.Default.Close, contentDescription = stringResource(R.string.clear_selections), tint = MaterialTheme.colorScheme.error)
                         }
                     } else {
-                        notebook?.let { nb ->
-                            IconButton(onClick = { showReminderDialog = true }) {
-                                val reminderTime = viewModel.getNotebookReminderTime(nb.id)
-                                Icon(
-                                    imageVector = if (reminderTime != null) Icons.Filled.NotificationsActive else Icons.Outlined.Notifications,
-                                    contentDescription = stringResource(R.string.reminder_time),
-                                    tint = if (reminderTime != null) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
-                                )
+                        Box {
+                            IconButton(onClick = { toolbarMenu = true }) { Icon(Icons.Default.MoreVert, stringResource(R.string.ux_more_actions)) }
+                            DropdownMenu(expanded = toolbarMenu, onDismissRequest = { toolbarMenu = false }) {
+                                DropdownMenuItem(text = { Text(stringResource(R.string.notebook_settings)) }, onClick = { toolbarMenu = false; showNotebookSettingsDialog = true })
+                                DropdownMenuItem(text = { Text(stringResource(R.string.reminder_time)) }, onClick = { toolbarMenu = false; reminderPermission { showReminderDialog = true } })
+                                DropdownMenuItem(text = { Text(stringResource(R.string.stats_analytics)) }, onClick = { toolbarMenu = false; showStatsDialog = true })
+                                DropdownMenuItem(text = { Text(stringResource(R.string.ux_reorder)) }, onClick = {
+                                    toolbarMenu = false; reordering = true; viewModel.clearFilters(); viewModel.completionFilterExplicit.value = true
+                                })
+                                DropdownMenuItem(text = { Text(stringResource(R.string.ux_select_items)) }, onClick = { toolbarMenu = false; items.firstOrNull()?.let { viewModel.toggleItemSelection(it.id) } })
                             }
-                        }
-                        if (!isWorkout) {
-                            IconButton(onClick = { showStatsDialog = true }) {
-                                Icon(Icons.Default.PieChart, contentDescription = stringResource(R.string.stats_analytics), tint = MaterialTheme.colorScheme.primary)
-                            }
-                        }
-                        IconButton(onClick = { showNotebookSettingsDialog = true }) {
-                            Icon(Icons.Default.Settings, contentDescription = stringResource(R.string.notebook_settings))
                         }
                     }
                 },
@@ -217,9 +236,9 @@ fun ItemsScreen(
             )
         },
         floatingActionButton = {
-            if (!isBulkMode && !showWorkoutExecution) {
-                val isWorkout = notebook?.type == "Workout Planner" || notebook?.type == "WorkoutPlanner"
-                FloatingActionButton(
+            if (!isBulkMode && !showWorkoutExecution && (!isWorkout || selectedWorkoutTab == 0)) {
+                val isWorkout = NotebookKind.parse(notebook?.type.orEmpty()) == NotebookKind.WORKOUT
+                ExtendedFloatingActionButton(
                     onClick = {
                         if (isWorkout) {
                             onNavigateToAddEdit(0L)
@@ -230,10 +249,10 @@ fun ItemsScreen(
                     containerColor = MaterialTheme.colorScheme.primary,
                     contentColor = MaterialTheme.colorScheme.onPrimary,
                     shape = RoundedCornerShape(16.dp),
-                    modifier = Modifier.padding(8.dp)
-                ) {
-                    Icon(Icons.Default.Add, contentDescription = stringResource(R.string.add))
-                }
+                    modifier = Modifier.padding(8.dp).testTag("add_entry_button"),
+                    icon = { Icon(Icons.Default.Add, null) },
+                    text = { Text(stringResource(entryAction(NotebookKind.parse(notebook?.type.orEmpty())))) }
+                )
             }
         },
         bottomBar = {
@@ -275,7 +294,7 @@ fun ItemsScreen(
                         }
 
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            IconButton(onClick = { viewModel.bulkDelete() }) {
+                            IconButton(onClick = { viewModel.bulkDelete() }, modifier = Modifier.testTag("bulk_delete")) {
                                 Icon(Icons.Default.Delete, stringResource(R.string.delete), tint = MaterialTheme.colorScheme.error)
                             }
                             Text(stringResource(R.string.delete), fontSize = 10.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.error)
@@ -291,7 +310,7 @@ fun ItemsScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            val isWorkout = notebook?.type == "Workout Planner" || notebook?.type == "WorkoutPlanner"
+            val isWorkout = NotebookKind.parse(notebook?.type.orEmpty()) == NotebookKind.WORKOUT
 
             if (isWorkout) {
                 TabRow(
@@ -469,7 +488,7 @@ fun ItemsScreen(
                                         onClick = { selectedDayFilter = dayName },
                                         label = {
                                             Text(
-                                                text = if (dayName == todayDayOfWeekAbbreviation) "$dayName ($todayText)" else dayName,
+                                                text = if (dayName == todayDayOfWeekAbbreviation) "${localizedDay(dayName)} ($todayText)" else localizedDay(dayName),
                                                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
                                                 fontSize = 11.sp
                                             )
@@ -501,7 +520,7 @@ fun ItemsScreen(
                     val cardTitle = when (workoutConfig.frequency) {
                         "Daily" -> stringResource(R.string.daily_workout_program)
                         "Monthly" -> stringResource(R.string.monthly_workout_program, selectedMonthlyDayFilter)
-                        else -> stringResource(R.string.weekly_workout_program, selectedDayFilter)
+                        else -> stringResource(R.string.weekly_workout_program, localizedDay(selectedDayFilter))
                     }
 
                     Card(
@@ -574,8 +593,7 @@ fun ItemsScreen(
                             ) {
                                 OutlinedButton(
                                     onClick = {
-                                        viewModel.resetAllExercisesInNotebook()
-                                        viewModel.resetWorkoutStepIndex(notebook?.id ?: 0L)
+                                        resetConfirmation = true
                                     },
                                     shape = RoundedCornerShape(12.dp),
                                     modifier = Modifier.weight(0.35f)
@@ -623,6 +641,7 @@ fun ItemsScreen(
                     }
                 }
 
+            if (unfilteredItems.isNotEmpty() || hasFilter) {
             // Fast Search Bar
             OutlinedTextField(
                 value = searchQuery,
@@ -650,258 +669,22 @@ fun ItemsScreen(
                 singleLine = true
             )
 
-            // Summary Dashboard (Completion progress and total count)
-            if (items.isNotEmpty() && !isWorkout) {
-                val totalCount = items.size
-                val completedCount = items.count { it.completed }
-                val activeCount = totalCount - completedCount
-                val progress = if (totalCount > 0) completedCount.toFloat() / totalCount else 0f
-                val progressPercent = (progress * 100).toInt()
-
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 6.dp)
-                        .testTag("summary_dashboard"),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surface
-                    ),
-                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                                Icon(
-                                    imageVector = Icons.Default.DonutLarge,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.primary,
-                                    modifier = Modifier.size(18.dp)
-                                )
-                                Text(
-                                    text = stringResource(R.string.completion_rate),
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    letterSpacing = 0.5.sp,
-                                    color = MaterialTheme.colorScheme.primary
-                                )
-                            }
-                            Text(
-                                text = "%$progressPercent",
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.ExtraBold,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                        }
-
-                        // Custom Progress Bar
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(8.dp)
-                                .clip(RoundedCornerShape(4.dp))
-                                .background(MaterialTheme.colorScheme.surfaceVariant)
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxHeight()
-                                    .fillMaxWidth(fraction = progress)
-                                    .clip(RoundedCornerShape(4.dp))
-                                    .background(MaterialTheme.colorScheme.primary)
-                            )
-                        }
-
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                                    Box(
-                                        modifier = Modifier
-                                            .size(6.dp)
-                                            .background(MaterialTheme.colorScheme.primary, CircleShape)
-                                    )
-                                    Text(
-                                        text = stringResource(R.string.completed_count, completedCount),
-                                        style = MaterialTheme.typography.bodySmall,
-                                        fontSize = 11.sp,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                }
-                                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                                    Box(
-                                        modifier = Modifier
-                                            .size(6.dp)
-                                            .background(MaterialTheme.colorScheme.outline, CircleShape)
-                                    )
-                                    Text(
-                                        text = stringResource(R.string.active_count, activeCount),
-                                        style = MaterialTheme.typography.bodySmall,
-                                        fontSize = 11.sp,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                }
-                            }
-
-                            Text(
-                                text = stringResource(R.string.total_items_count, totalCount),
-                                style = MaterialTheme.typography.bodySmall,
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    }
+            if (!isWorkout) {
+                val content by viewModel.notebookContent.collectAsState()
+                val completeList = (content as? xyz.younglion.flexilist.ui.workspace.NotebookUiState.Ready)?.items.orEmpty()
+                val count = completeList.count { it.completed }
+                val kind = NotebookKind.parse(notebook?.type.orEmpty())
+                val summary = when (kind) {
+                    NotebookKind.HABIT -> stringResource(R.string.ux_today_summary, count, completeList.size)
+                    NotebookKind.READING -> stringResource(R.string.ux_read_summary, count, completeList.size)
+                    else -> stringResource(R.string.active_items_count, completeList.size - count, count)
                 }
+                Text(summary, Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp), style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
+            NotebookFilters(viewModel, notebook)
+            if (reordering) TextButton(onClick = { reordering = false }) { Text(stringResource(R.string.ux_done)) }
 
-            // Horizontal Filter Chips and Tag Rows
-            LazyRow(
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                // Starred filter chip
-                item {
-                    FilterChip(
-                        selected = filterStarred,
-                        onClick = { viewModel.filterStarred.value = !filterStarred },
-                        label = { Text(stringResource(R.string.starred_filter)) }
-                    )
-                }
-
-                // Completed/Active filter chip
-                item {
-                    FilterChip(
-                        selected = filterCompleted == false,
-                        onClick = {
-                            viewModel.filterCompleted.value = if (filterCompleted == false) null else false
-                        },
-                        label = { Text(stringResource(R.string.active_filter)) }
-                    )
-                }
-                item {
-                    FilterChip(
-                        selected = filterCompleted == true,
-                        onClick = {
-                            viewModel.filterCompleted.value = if (filterCompleted == true) null else true
-                        },
-                        label = { Text(stringResource(R.string.completed_filter)) }
-                    )
-                }
-
-                // Priorities filters
-                if (!isWorkout) {
-                    val pConfigs = notebook?.getPriorityConfig() ?: NotebookEntity.DEFAULT_PRIORITIES
-                    items(pConfigs.filter { it.level > 0 && it.enabled }) { opt ->
-                        val pColor = getPriorityColor(opt.level, notebook)
-                        FilterChip(
-                            selected = selectedPriorities.contains(opt.level),
-                            onClick = {
-                                val current = selectedPriorities
-                                viewModel.selectedPriorities.value = if (current.contains(opt.level)) current - opt.level else current + opt.level
-                            },
-                            label = {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Box(
-                                        modifier = Modifier
-                                            .size(8.dp)
-                                            .clip(CircleShape)
-                                            .background(pColor)
-                                    )
-                                    Spacer(modifier = Modifier.width(4.dp))
-                                    Text(opt.name)
-                                }
-                            }
-                        )
-                    }
-                }
-
-                // Sort Dropdown Selector
-                item {
-                    var showSortMenu by varRemember { mutableStateOf(false) }
-                    val displaySortType = when(sortType) {
-                        "Manuel" -> stringResource(R.string.sort_manual)
-                        "A-Z" -> stringResource(R.string.sort_az)
-                        "Z-A" -> stringResource(R.string.sort_za)
-                        "Öncelik" -> stringResource(R.string.sort_priority)
-                        "Tarih" -> stringResource(R.string.sort_date)
-                        "Yıldızlı" -> stringResource(R.string.sort_starred)
-                        else -> sortType
-                    }
-                    Box {
-                        FilterChip(
-                            selected = sortType != "Manuel",
-                            onClick = { showSortMenu = true },
-                            label = { Text(stringResource(R.string.sort_by, displaySortType)) },
-                            trailingIcon = { Icon(Icons.Default.ArrowDropDown, null) }
-                        )
-                        DropdownMenu(expanded = showSortMenu, onDismissRequest = { showSortMenu = false }) {
-                            listOf(
-                                "Manuel" to stringResource(R.string.sort_manual),
-                                "A-Z" to stringResource(R.string.sort_az),
-                                "Z-A" to stringResource(R.string.sort_za),
-                                "Öncelik" to stringResource(R.string.sort_priority),
-                                "Tarih" to stringResource(R.string.sort_date),
-                                "Yıldızlı" to stringResource(R.string.sort_starred)
-                            ).forEach { (rawType, label) ->
-                                DropdownMenuItem(
-                                    text = { Text(label) },
-                                    onClick = {
-                                        viewModel.sortType.value = rawType
-                                        showSortMenu = false
-                                    }
-                                )
-                            }
-                        }
-                    }
-                }
-
-                // Distinct category filters for items
-                items(availableCategories) { cat ->
-                    val isSelected = selectedCategory == cat
-                    val catEmoji = when (cat.lowercase()) {
-                        "work", "iş" -> "💼"
-                        "personal", "kişisel" -> "👤"
-                        "groceries", "market", "alışveriş" -> "🛒"
-                        "fitness", "spor" -> "🏋️"
-                        "study", "ders" -> "📚"
-                        else -> "🏷️"
-                    }
-                    FilterChip(
-                        selected = isSelected,
-                        onClick = {
-                            viewModel.selectedCategory.value = if (isSelected) null else cat
-                        },
-                        label = { Text("$catEmoji $cat") }
-                    )
-                }
-
-                // Distinct dynamic tags filters
-                items(availableTags) { tag ->
-                    val isSelected = selectedTags.contains(tag)
-                    FilterChip(
-                        selected = isSelected,
-                        onClick = {
-                            val current = selectedTags
-                            viewModel.selectedTags.value = if (isSelected) current - tag else current + tag
-                        },
-                        label = { Text("#$tag") }
-                    )
-                }
-            }
+            } // Search and filtering are unnecessary for a new empty notebook.
 
             // Items List
             val showEmptyToday = isWorkout && selectedWorkoutTab == 0 && displayItems.isEmpty() && localItems.isNotEmpty()
@@ -915,7 +698,7 @@ fun ItemsScreen(
                 ) {
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier.padding(32.dp)
+                        modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 24.dp, vertical = 16.dp).padding(bottom = 80.dp)
                     ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ListAlt,
@@ -924,9 +707,12 @@ fun ItemsScreen(
                             tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
                         )
                         Spacer(modifier = Modifier.height(16.dp))
-                        Text(stringResource(R.string.no_items_title), fontWeight = FontWeight.Bold)
+                        Text(stringResource(if (searchQuery.isNotBlank() || selectedTags.isNotEmpty() || selectedPriorities.isNotEmpty() || selectedCategory != null || filterStarred || filterCompleted != null) R.string.ux_no_results else R.string.no_items_title), fontWeight = FontWeight.Bold)
+                        if (searchQuery.isNotBlank() || selectedTags.isNotEmpty() || selectedPriorities.isNotEmpty() || selectedCategory != null || filterStarred || filterCompleted != null) {
+                            TextButton(onClick = { viewModel.clearFilters() }) { Text(stringResource(R.string.ux_clear_filters)) }
+                        }
                         Text(
-                            text = stringResource(R.string.no_items_sub),
+                            text = stringResource(if (searchQuery.isNotBlank() || selectedTags.isNotEmpty() || selectedPriorities.isNotEmpty() || selectedCategory != null || filterStarred || filterCompleted != null) R.string.ux_clear_filters else R.string.ux_empty_entries_hint),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             textAlign = androidx.compose.ui.text.style.TextAlign.Center,
@@ -943,7 +729,7 @@ fun ItemsScreen(
                 ) {
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier.padding(32.dp)
+                        modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 24.dp, vertical = 16.dp).padding(bottom = 80.dp)
                     ) {
                         Icon(
                             imageVector = Icons.Default.FitnessCenter,
@@ -952,7 +738,7 @@ fun ItemsScreen(
                             tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
                         )
                         Spacer(modifier = Modifier.height(16.dp))
-                        Text(stringResource(R.string.no_workout_plan_title, selectedDayFilter), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+                        Text(stringResource(R.string.no_workout_plan_title, localizedDay(selectedDayFilter)), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
                         Text(
                             text = stringResource(R.string.no_workout_plan_sub),
                             style = MaterialTheme.typography.bodySmall,
@@ -1064,7 +850,7 @@ fun ItemsScreen(
                                 onToggleStar = {
                                     viewModel.updateListItem(item.copy(starred = !item.starred))
                                 },
-                                reorderEnabled = !isBulkMode,
+                                reorderEnabled = reordering && !isBulkMode,
                                 dragModifier = dragMod,
                                 onMoveUp = onMoveUp,
                                 onMoveDown = onMoveDown
@@ -1092,7 +878,7 @@ fun ItemsScreen(
                                 onToggleStar = {
                                     viewModel.updateListItem(item.copy(starred = !item.starred))
                                 },
-                                reorderEnabled = !isBulkMode,
+                                reorderEnabled = reordering && !isBulkMode,
                                 dragModifier = dragMod,
                                 onMoveUp = onMoveUp,
                                 onMoveDown = onMoveDown
@@ -1113,6 +899,7 @@ fun ItemsScreen(
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
+                        .verticalScroll(rememberScrollState())
                         .padding(16.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(20.dp)
@@ -1126,10 +913,10 @@ fun ItemsScreen(
                             modifier = Modifier.padding(24.dp),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            Text("GÜNLÜK HEDEF", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                            Text(stringResource(R.string.ux_daily_goal), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
                             Spacer(modifier = Modifier.height(8.dp))
-                            Text("$waterAmount / $goal ml", fontWeight = FontWeight.Black, fontSize = 36.sp, color = MaterialTheme.colorScheme.onPrimaryContainer)
-                            
+                            Text(stringResource(R.string.ux_water_progress, java.text.NumberFormat.getIntegerInstance().format(waterAmount), java.text.NumberFormat.getIntegerInstance().format(goal)), fontWeight = FontWeight.Black, fontSize = 36.sp, color = MaterialTheme.colorScheme.onPrimaryContainer)
+
                             Spacer(modifier = Modifier.height(16.dp))
 
                             Box(
@@ -1146,25 +933,27 @@ fun ItemsScreen(
                                         .fillMaxHeight(percent)
                                         .background(MaterialTheme.colorScheme.primary)
                                 )
-                                Text(
-                                    "${(percent * 100).toInt()}%",
-                                    fontWeight = FontWeight.Bold,
-                                    color = if (percent > 0.4f) Color.White else MaterialTheme.colorScheme.onSurface,
-                                    modifier = Modifier.padding(bottom = 8.dp)
-                                )
+
                             }
+                            Text(
+                                java.text.NumberFormat.getPercentInstance().format(percent),
+                                modifier = Modifier.padding(top = 8.dp),
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
                         }
                     }
 
                     Text(stringResource(R.string.quick_add_water), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    FlowRow(
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         listOf(250 to "bardak_250", 500 to "sise_500", 750 to "surahi_750").forEach { (ml, tag) ->
                             Button(
                                 onClick = { viewModel.addWater(ml) },
                                 shape = RoundedCornerShape(12.dp),
-                                modifier = Modifier.testTag(tag)
+                                modifier = Modifier.heightIn(min = 48.dp).testTag(tag)
                             ) {
                                 Icon(Icons.Default.LocalCafe, null)
                                 Spacer(modifier = Modifier.width(4.dp))
@@ -1174,7 +963,7 @@ fun ItemsScreen(
                     }
 
                     TextButton(
-                        onClick = { viewModel.resetWater() },
+                        onClick = { resetWaterConfirmation = true },
                         colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
                     ) {
                         Icon(Icons.Default.Refresh, null)
@@ -1505,94 +1294,16 @@ fun ItemsScreen(
     }
 
     // Quick Add Mini Widget Dialog
-    if (showQuickAddDialog) {
-        var quickTitle by rememberSaveable { mutableStateOf("") }
-        var quickPriority by rememberSaveable { mutableStateOf(0) }
-        
-        AlertDialog(
-            modifier = Modifier
-                .widthIn(max = 480.dp)
-                .imePadding(),
-            onDismissRequest = { showQuickAddDialog = false },
-            title = { Text(stringResource(R.string.quick_add_title), fontWeight = FontWeight.Bold) },
-            text = {
-                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    OutlinedTextField(
-                        value = quickTitle,
-                        onValueChange = { quickTitle = it },
-                        label = { Text(stringResource(R.string.item_title_label)) },
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    
-                    Column {
-                        Text(stringResource(R.string.priority_level_label), style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold)
-                        val pOpts = notebook?.getPriorityConfig() ?: NotebookEntity.DEFAULT_PRIORITIES
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .horizontalScroll(rememberScrollState())
-                                .padding(vertical = 4.dp)
-                        ) {
-                            pOpts.filter { it.enabled }.forEach { opt ->
-                                val pColor = getPriorityColor(opt.level, notebook)
-                                FilterChip(
-                                    selected = quickPriority == opt.level,
-                                    onClick = { quickPriority = opt.level },
-                                    label = {
-                                        Row(verticalAlignment = Alignment.CenterVertically) {
-                                            if (opt.level > 0 && pColor != Color.Transparent) {
-                                                Box(
-                                                    modifier = Modifier
-                                                        .size(8.dp)
-                                                        .clip(CircleShape)
-                                                        .background(pColor)
-                                                )
-                                                Spacer(modifier = Modifier.width(4.dp))
-                                            }
-                                            Text(opt.name)
-                                        }
-                                    }
-                                )
-                            }
-                        }
-                    }
-                }
-            },
-            confirmButton = {
-                Row {
-                    TextButton(
-                        onClick = {
-                            showQuickAddDialog = false
-                            // Open full Add detail screen with empty draft
-                            onNavigateToAddEdit(0L)
-                        }
-                    ) {
-                        Text(stringResource(R.string.detailed_add))
-                    }
-                    Button(
-                        onClick = {
-                            if (quickTitle.isNotBlank()) {
-                                viewModel.createListItem(
-                                    title = quickTitle,
-                                    priority = quickPriority
-                                )
-                                showQuickAddDialog = false
-                            }
-                        },
-                        enabled = quickTitle.isNotBlank()
-                    ) {
-                        Text(stringResource(R.string.add))
-                    }
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showQuickAddDialog = false }) {
-                    Text(stringResource(R.string.cancel))
-                }
-            }
-        )
+    if (resetWaterConfirmation) AlertDialog(
+        onDismissRequest = { resetWaterConfirmation = false },
+        text = { Text(stringResource(R.string.ux_water_reset_message)) },
+        confirmButton = { TextButton(onClick = { viewModel.resetWater(); resetWaterConfirmation = false }) { Text(stringResource(R.string.reset)) } },
+        dismissButton = { TextButton(onClick = { resetWaterConfirmation = false }) { Text(stringResource(R.string.cancel)) } }
+    )
+    if (showQuickAddDialog && notebook != null) {
+        QuickEntrySheet(viewModel, notebook!!,
+            onDismiss = { showQuickAddDialog = false },
+            onDetailed = { showQuickAddDialog = false; onNavigateToAddEdit(0L) })
     }
 
     // Bulk Move Dialog selection
@@ -1639,6 +1350,12 @@ fun ItemsScreen(
         )
     }
 
+    if (resetConfirmation) AlertDialog(
+        onDismissRequest = { resetConfirmation = false }, text = { Text(stringResource(R.string.ux_reset_confirmation)) },
+        confirmButton = { TextButton(onClick = { viewModel.resetAllExercisesInNotebook(); viewModel.resetWorkoutStepIndex(notebook?.id ?: 0L); resetConfirmation = false }) { Text(stringResource(R.string.reset)) } },
+        dismissButton = { TextButton(onClick = { resetConfirmation = false }) { Text(stringResource(R.string.cancel)) } }
+    )
+
     // Statistics & Analytics Dialog
     if (showStatsDialog) {
         NotebookStatisticsDialog(
@@ -1651,7 +1368,7 @@ fun ItemsScreen(
     // Notebook Settings Dialog (Specialized for Workout Planner or Standard List)
     if (showNotebookSettingsDialog && notebook != null) {
         val n = notebook!!
-        val isWorkout = n.type == "Workout Planner" || n.type == "WorkoutPlanner"
+        val isWorkout = NotebookKind.parse(n.type) == NotebookKind.WORKOUT
         if (isWorkout) {
             WorkoutPlannerSettingsDialog(
                 notebook = n,
@@ -1663,7 +1380,7 @@ fun ItemsScreen(
                 },
                 onOpenReminder = {
                     showNotebookSettingsDialog = false
-                    showReminderDialog = true
+                    reminderPermission { showReminderDialog = true }
                 },
                 onOpenStats = {
                     showNotebookSettingsDialog = false
@@ -1681,7 +1398,7 @@ fun ItemsScreen(
                 },
                 onOpenReminder = {
                     showNotebookSettingsDialog = false
-                    showReminderDialog = true
+                    reminderPermission { showReminderDialog = true }
                 },
                 onOpenPriorityCustomization = {
                     showNotebookSettingsDialog = false
@@ -1693,36 +1410,6 @@ fun ItemsScreen(
                 }
             )
         }
-    }
-
-    // Edit Notebook Dialog
-    if (showEditNotebookDialog && notebook != null) {
-        val currentNb = notebook!!
-        NotebookDialog(
-            notebook = currentNb,
-            onDismiss = { showEditNotebookDialog = false },
-            onSave = { name, desc, emoji, color, type, extraCfg, category ->
-                var finalDesc = desc
-                if (type == "Workout Planner") {
-                    val cfgStr = extraCfg.ifBlank {
-                        val cfg = currentNb.getWorkoutScheduleConfig()
-                        "frequency=${cfg.frequency}|workoutDays=${cfg.workoutDurationDays}|restDays=${cfg.restDurationDays}|startDate=${cfg.startDate}|weekly=${cfg.weeklyDays.joinToString(",")}|monthly=${cfg.monthlyDays.joinToString(",")}"
-                    }
-                    finalDesc = "[WORKOUT_CFG]$cfgStr"
-                }
-                viewModel.updateNotebook(currentNb.copy(
-                    name = name,
-                    description = finalDesc,
-                    emoji = emoji,
-                    color = color,
-                    type = type,
-                    category = category,
-                    updatedAt = System.currentTimeMillis()
-                ))
-                showEditNotebookDialog = false
-                Toast.makeText(context, context.getString(R.string.notebook_updated), Toast.LENGTH_SHORT).show()
-            }
-        )
     }
 
     // Priority Customization Dialog
@@ -1761,7 +1448,7 @@ fun getPriorityColor(priorityLevel: Int, notebook: NotebookEntity?): Color {
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
+@OptIn(ExperimentalFoundationApi::class, ExperimentalLayoutApi::class)
 @Composable
 fun ListItemCard(
     item: ListItemEntity,
@@ -1780,7 +1467,7 @@ fun ListItemCard(
     val formatter = SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.getDefault())
     val priorityColor = getPriorityColor(item.priority, notebook)
     val pOption = notebook?.getPriorityConfig()?.firstOrNull { it.level == item.priority }
-    val pName = pOption?.name ?: if (item.priority > 0) "Derece ${item.priority}" else ""
+    val pName = pOption?.getLocalizedName() ?: ""
     val haptic = LocalHapticFeedback.current
 
     Card(
@@ -1836,11 +1523,11 @@ fun ListItemCard(
                         IconButton(
                             onClick = { onMoveUp?.invoke() },
                             enabled = onMoveUp != null,
-                            modifier = Modifier.size(24.dp)
+                            modifier = Modifier.size(48.dp)
                         ) {
                             Icon(
                                 imageVector = Icons.Default.KeyboardArrowUp,
-                                contentDescription = "Yukarı Taşı",
+                                contentDescription = stringResource(R.string.ux_move_up),
                                 modifier = Modifier.size(20.dp),
                                 tint = if (onMoveUp != null) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
                             )
@@ -1848,7 +1535,7 @@ fun ListItemCard(
 
                         Icon(
                             imageVector = Icons.Default.DragHandle,
-                            contentDescription = "Sürükle",
+                            contentDescription = stringResource(R.string.ux_drag),
                             tint = MaterialTheme.colorScheme.outline.copy(alpha = 0.6f),
                             modifier = dragModifier
                                 .size(24.dp)
@@ -1858,35 +1545,25 @@ fun ListItemCard(
                         IconButton(
                             onClick = { onMoveDown?.invoke() },
                             enabled = onMoveDown != null,
-                            modifier = Modifier.size(24.dp)
+                            modifier = Modifier.size(48.dp)
                         ) {
                             Icon(
                                 imageVector = Icons.Default.KeyboardArrowDown,
-                                contentDescription = "Aşağı Taşı",
+                                contentDescription = stringResource(R.string.ux_move_down),
                                 modifier = Modifier.size(20.dp),
                                 tint = if (onMoveDown != null) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
                             )
                         }
                     }
-                    
+
                     Spacer(modifier = Modifier.width(4.dp))
                 }
 
-                // Checkbox status toggler
-                IconButton(
-                    onClick = {
-                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                        onToggleComplete()
-                    },
-                    modifier = Modifier.size(32.dp)
-                ) {
-                    Icon(
-                        imageVector = if (item.completed) Icons.Default.CheckCircle else Icons.Default.RadioButtonUnchecked,
-                        contentDescription = "Tamamla",
-                        tint = if (item.completed) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline,
-                        modifier = Modifier.size(24.dp)
-                    )
-                }
+                Checkbox(
+                    checked = item.completed,
+                    onCheckedChange = { haptic.performHapticFeedback(HapticFeedbackType.LongPress); onToggleComplete() },
+                    modifier = Modifier.sizeIn(minWidth = 48.dp, minHeight = 48.dp).testTag("complete-item-${item.id}")
+                )
 
                 Spacer(modifier = Modifier.width(8.dp))
 
@@ -1896,12 +1573,12 @@ fun ListItemCard(
                         text = item.title,
                         fontWeight = FontWeight.Bold,
                         style = MaterialTheme.typography.titleMedium,
-                        color = if (item.completed) MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f) else MaterialTheme.colorScheme.onSurface,
+                        color = if (item.completed) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface,
                         textDecoration = if (item.completed) TextDecoration.LineThrough else TextDecoration.None,
-                        maxLines = 1,
+                        maxLines = 2,
                         overflow = TextOverflow.Ellipsis
                     )
-                    
+
                     // Description or Notes quick previews
                     if (item.description.isNotBlank()) {
                         Text(
@@ -1914,12 +1591,10 @@ fun ListItemCard(
                     }
 
                     // Metadata Row: Tags, DueDate, Recurrence Badge, Priority Tag
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 4.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    FlowRow(
+                        modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
                         // Priority Badge Tag
                         if (item.priority > 0 && priorityColor != Color.Transparent) {
@@ -1941,9 +1616,9 @@ fun ListItemCard(
                                     )
                                     Text(
                                         text = pName,
-                                        fontSize = 10.sp,
+                                        fontSize = 12.sp,
                                         fontWeight = FontWeight.ExtraBold,
-                                        color = priorityColor
+                                        color = MaterialTheme.colorScheme.onSurface
                                     )
                                 }
                             }
@@ -1955,7 +1630,7 @@ fun ListItemCard(
                                 Spacer(modifier = Modifier.width(2.dp))
                                 Text(
                                     text = SimpleDateFormat("dd MMM", Locale.getDefault()).format(Date(item.dueDate)),
-                                    fontSize = 10.sp,
+                                    fontSize = 12.sp,
                                     color = MaterialTheme.colorScheme.primary,
                                     fontWeight = FontWeight.Bold
                                 )
@@ -1967,7 +1642,7 @@ fun ListItemCard(
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Icon(Icons.Default.Repeat, null, modifier = Modifier.size(12.dp), tint = MaterialTheme.colorScheme.tertiary)
                                 Spacer(modifier = Modifier.width(2.dp))
-                                Text(item.recurrenceRule, fontSize = 10.sp, color = MaterialTheme.colorScheme.tertiary, fontWeight = FontWeight.Bold)
+                                Text(item.recurrenceRule, fontSize = 12.sp, color = MaterialTheme.colorScheme.tertiary, fontWeight = FontWeight.Bold)
                             }
                         }
 
@@ -1978,7 +1653,7 @@ fun ListItemCard(
                                     .background(MaterialTheme.colorScheme.outline.copy(alpha = 0.1f), RoundedCornerShape(4.dp))
                                     .padding(horizontal = 4.dp, vertical = 2.dp)
                             ) {
-                                Text(item.category, fontSize = 9.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.outline)
+                                Text(item.category, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.outline)
                             }
                         }
                     }
@@ -1990,12 +1665,12 @@ fun ListItemCard(
                         haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                         onToggleStar()
                     },
-                    modifier = Modifier.size(32.dp)
+                    modifier = Modifier.size(48.dp)
                 ) {
                     Icon(
                         imageVector = if (item.starred) Icons.Filled.Star else Icons.Outlined.StarBorder,
-                        contentDescription = "Favori",
-                        tint = if (item.starred) Color(0xFFFFD600) else MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
+                        contentDescription = stringResource(if (item.starred) R.string.ux_unfavorite else R.string.ux_favorite),
+                        tint = if (item.starred) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.size(20.dp)
                     )
                 }
@@ -2023,7 +1698,7 @@ fun WorkoutExerciseCard(
     val cfg = remember(item.description) { parseExerciseConfig(item.description) }
     val priorityColor = getPriorityColor(item.priority, notebook)
     val pOption = notebook?.getPriorityConfig()?.firstOrNull { it.level == item.priority }
-    val pName = pOption?.name ?: if (item.priority > 0) "Derece ${item.priority}" else ""
+    val pName = pOption?.getLocalizedName() ?: ""
     val haptic = LocalHapticFeedback.current
 
     Card(
@@ -2079,11 +1754,11 @@ fun WorkoutExerciseCard(
                     IconButton(
                         onClick = { onMoveUp?.invoke() },
                         enabled = onMoveUp != null,
-                        modifier = Modifier.size(24.dp)
+                        modifier = Modifier.size(48.dp)
                     ) {
                         Icon(
                             imageVector = Icons.Default.KeyboardArrowUp,
-                            contentDescription = "Yukarı Taşı",
+                            contentDescription = stringResource(R.string.ux_move_up),
                             modifier = Modifier.size(20.dp),
                             tint = if (onMoveUp != null) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
                         )
@@ -2091,7 +1766,7 @@ fun WorkoutExerciseCard(
 
                     Icon(
                         imageVector = Icons.Default.DragHandle,
-                        contentDescription = "Sürükle",
+                        contentDescription = stringResource(R.string.ux_drag),
                         tint = MaterialTheme.colorScheme.outline.copy(alpha = 0.6f),
                         modifier = dragModifier
                             .size(24.dp)
@@ -2101,11 +1776,11 @@ fun WorkoutExerciseCard(
                     IconButton(
                         onClick = { onMoveDown?.invoke() },
                         enabled = onMoveDown != null,
-                        modifier = Modifier.size(24.dp)
+                        modifier = Modifier.size(48.dp)
                     ) {
                         Icon(
                             imageVector = Icons.Default.KeyboardArrowDown,
-                            contentDescription = "Aşağı Taşı",
+                            contentDescription = stringResource(R.string.ux_move_down),
                             modifier = Modifier.size(20.dp),
                             tint = if (onMoveDown != null) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
                         )
@@ -2124,7 +1799,7 @@ fun WorkoutExerciseCard(
             ) {
                 Icon(
                     imageVector = if (item.completed) Icons.Default.CheckCircle else Icons.Default.RadioButtonUnchecked,
-                    contentDescription = "Tamamla",
+                    contentDescription = stringResource(if (item.completed) R.string.make_active else R.string.complete),
                     tint = if (item.completed) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline,
                     modifier = Modifier.size(26.dp)
                 )
@@ -2144,7 +1819,7 @@ fun WorkoutExerciseCard(
                         text = item.title,
                         fontWeight = FontWeight.Bold,
                         style = MaterialTheme.typography.titleMedium,
-                        color = if (item.completed) MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f) else MaterialTheme.colorScheme.onSurface,
+                        color = if (item.completed) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface,
                         textDecoration = if (item.completed) TextDecoration.LineThrough else TextDecoration.None,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
@@ -2188,9 +1863,9 @@ fun WorkoutExerciseCard(
                                 )
                                 Text(
                                     text = pName,
-                                    fontSize = 9.sp,
+                                    fontSize = 12.sp,
                                     fontWeight = FontWeight.ExtraBold,
-                                    color = priorityColor
+                                    color = MaterialTheme.colorScheme.onSurface
                                 )
                             }
                         }
@@ -2230,10 +1905,10 @@ fun WorkoutExerciseCard(
                                     .padding(horizontal = 6.dp, vertical = 2.dp)
                             ) {
                                 Text(
-                                    text = muscle.uppercase(),
-                                    fontSize = 9.sp,
+                                    text = localizedMuscle(muscle),
+                                    fontSize = 12.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = muscleColor
+                                    color = xyz.younglion.flexilist.ui.theme.lightAccent(muscleColor)
                                 )
                             }
                         }
@@ -2250,28 +1925,28 @@ fun WorkoutExerciseCard(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     // Sets pill
-                    ParameterPill(label = "${cfg.setsCount} Set", color = MaterialTheme.colorScheme.primary)
-                    
+                    ParameterPill(label = stringResource(R.string.ux_sets_short, cfg.setsCount), color = MaterialTheme.colorScheme.primary)
+
                     // Reps/Time pill
-                    val goalText = if (cfg.type == "Reps") "${cfg.targetReps} Tekrar" else "${cfg.targetTimeSeconds} sn"
+                    val goalText = if (cfg.type == "Reps") stringResource(R.string.ux_reps_short, cfg.targetReps) else stringResource(R.string.ux_seconds_short, cfg.targetTimeSeconds)
                     ParameterPill(label = goalText, color = MaterialTheme.colorScheme.secondary)
 
                     // Weight pill
                     if (cfg.weightKg > 0) {
-                        ParameterPill(label = "${cfg.weightKg} kg", color = MaterialTheme.colorScheme.tertiary)
+                        ParameterPill(label = "${java.text.NumberFormat.getNumberInstance().format(cfg.weightKg)} kg", color = MaterialTheme.colorScheme.tertiary)
                     }
 
                     // Rest pill
-                    ParameterPill(label = "⏱️ ${cfg.restTimeSeconds}s Mola", color = MaterialTheme.colorScheme.outline)
+                    ParameterPill(label = stringResource(R.string.ux_rest_short, cfg.restTimeSeconds), color = MaterialTheme.colorScheme.outline)
                 }
             }
 
             // Star toggler on the far right
-            IconButton(onClick = onToggleStar, modifier = Modifier.size(32.dp)) {
+            IconButton(onClick = onToggleStar, modifier = Modifier.size(48.dp)) {
                 Icon(
                     imageVector = if (item.starred) Icons.Filled.Star else Icons.Outlined.StarBorder,
-                    contentDescription = "Yıldızla",
-                    tint = if (item.starred) Color(0xFFFFB300) else MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
+                    contentDescription = stringResource(if (item.starred) R.string.ux_unfavorite else R.string.ux_favorite),
+                    tint = if (item.starred) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.size(22.dp)
                 )
             }
@@ -2290,9 +1965,9 @@ fun ParameterPill(label: String, color: Color) {
     ) {
         Text(
             text = label,
-            fontSize = 11.sp,
+            fontSize = 12.sp,
             fontWeight = FontWeight.SemiBold,
-            color = color
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 }
@@ -2569,4 +2244,35 @@ fun NotebookStatisticsDialog(
             }
         }
     }
+}
+
+/** Translate only the display label, never the stored weekday key. */
+@Composable
+fun localizedDay(key: String): String {
+    val label = when (key) {
+        "Pzt" -> R.string.day_mon_short
+        "Sal" -> R.string.day_tue_short
+        "Çar" -> R.string.day_wed_short
+        "Per" -> R.string.day_thu_short
+        "Cum" -> R.string.day_fri_short
+        "Cmt" -> R.string.day_sat_short
+        "Paz" -> R.string.day_sun_short
+        else -> null
+    }
+    return label?.let { stringResource(it) } ?: key
+}
+
+/** Display aliases only; the serialized exercise configuration keeps its original keys. */
+@Composable
+private fun localizedMuscle(key: String): String {
+    val label = when (key.lowercase(java.util.Locale.ROOT)) {
+        "göğüs", "chest" -> R.string.muscle_chest
+        "sırt", "back" -> R.string.muscle_back
+        "bacak", "legs" -> R.string.muscle_legs
+        "omuz", "shoulders" -> R.string.muscle_shoulders
+        "kollar", "arms" -> R.string.muscle_arms
+        "karın", "abs", "core" -> R.string.muscle_core
+        else -> null
+    }
+    return label?.let { stringResource(it) } ?: key
 }

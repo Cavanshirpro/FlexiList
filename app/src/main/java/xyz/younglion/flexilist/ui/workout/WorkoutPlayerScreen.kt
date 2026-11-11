@@ -54,6 +54,9 @@ fun WorkoutPlayerScreen(
     onDismiss: () -> Unit
 ) {
     val context = LocalContext.current
+    val playerForeground = MaterialTheme.colorScheme.onSurface
+    val playerMuted = MaterialTheme.colorScheme.onSurfaceVariant
+    val restColor = MaterialTheme.colorScheme.tertiary
     val coroutineScope = rememberCoroutineScope()
 
     // Flatten exercise items into a structured sequence of exercises and sets
@@ -279,25 +282,25 @@ fun WorkoutPlayerScreen(
     fun skipCurrentExercise() {
         val step = currentStep ?: return
         val currentExId = step.exercise.id
-        
+
         // Find if there is any OTHER exercise after the current step index
         val hasOtherExercises = executionQueue.any { it.exercise.id != currentExId && executionQueue.indexOf(it) > currentStepIndex }
-        
+
         if (hasOtherExercises) {
             val newList = executionQueue.toMutableList()
-            
+
             // Steps before the current step index remain unchanged
             val listBefore = newList.subList(0, currentStepIndex)
             // Steps from the current index onwards
             val listAfter = newList.subList(currentStepIndex, newList.size)
-            
+
             val nonCurrentAfter = listAfter.filter { it.exercise.id != currentExId }
             val currentAfter = listAfter.filter { it.exercise.id == currentExId }
-            
+
             // Re-build the executionQueue
             executionQueue.clear()
             executionQueue.addAll(listBefore + nonCurrentAfter + currentAfter)
-            
+
             // After re-building, the currentStepIndex will now point to the first step of the NEXT exercise,
             // which has been moved up to the currentStepIndex spot!
             isAwaitingConfirmation = true
@@ -305,13 +308,13 @@ fun WorkoutPlayerScreen(
             isTimerRunning = false
             isPrepState = false
             prepSecondsRemaining = 0
-            
+
             val newStep = executionQueue.getOrNull(currentStepIndex)
             if (newStep != null) {
                 currentExerciseWeight = newStep.exercise.weightKg
                 secondsRemaining = if (newStep.exercise.type == "Timer") newStep.exercise.targetTimeSeconds else 0
             }
-            
+
             Toast.makeText(context, context.getString(R.string.exercise_postponed, step.exercise.name), Toast.LENGTH_SHORT).show()
         } else {
             Toast.makeText(context, context.getString(R.string.no_other_exercise_to_postpone), Toast.LENGTH_SHORT).show()
@@ -438,13 +441,13 @@ fun WorkoutPlayerScreen(
                 Text(
                     stringResource(R.string.close),
                     fontWeight = FontWeight.Bold,
-                    color = Color.White
+                    color = playerForeground
                 )
             },
             text = {
                 Text(
-                    "Antrenmandan çıkmak istiyor musunuz? İlerlemeniz kaydedilecek ve daha sonra kaldığınız yerden devam edebileceksiniz.",
-                    color = Color.White.copy(alpha = 0.8f)
+                    stringResource(R.string.ux_resume_boundary),
+                    color = playerMuted
                 )
             },
             confirmButton = {
@@ -455,15 +458,15 @@ fun WorkoutPlayerScreen(
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
                 ) {
-                    Text("Antrenmandan Çık", fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.ux_leave_workout), fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showExitConfirmDialog = false }) {
-                    Text(stringResource(R.string.cancel), color = Color.White.copy(alpha = 0.7f))
+                    Text(stringResource(R.string.cancel), color = playerMuted)
                 }
             },
-            containerColor = Color(0xFF1E293B),
+            containerColor = MaterialTheme.colorScheme.surface,
             shape = RoundedCornerShape(20.dp)
         )
     }
@@ -471,7 +474,7 @@ fun WorkoutPlayerScreen(
     // Visual Theme (Dark Distraction-free Slate Space)
     Surface(
         modifier = Modifier.fillMaxSize(),
-        color = Color(0xFF0F172A) // Sleek slate space dark background
+        color = MaterialTheme.colorScheme.background // Sleek slate space dark background
     ) {
         BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
             val isLandscape = maxWidth > maxHeight
@@ -495,18 +498,18 @@ fun WorkoutPlayerScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         IconButton(onClick = { showExitConfirmDialog = true }) {
-                            Icon(Icons.Default.Close, stringResource(R.string.close), tint = Color.White.copy(alpha = 0.6f))
+                            Icon(Icons.Default.Close, stringResource(R.string.close), tint = playerMuted)
                         }
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Text(
                                 workoutName,
                                 fontWeight = FontWeight.Bold,
-                                color = Color.White,
+                                color = playerForeground,
                                 fontSize = 18.sp
                             )
                             Text(
                                 stringResource(R.string.step_indicator, currentStepIndex + 1, executionQueue.size),
-                                color = Color.White.copy(alpha = 0.5f),
+                                color = playerMuted,
                                 fontSize = 12.sp
                             )
                         }
@@ -523,7 +526,7 @@ fun WorkoutPlayerScreen(
                             .padding(vertical = 8.dp)
                             .clip(RoundedCornerShape(4.dp)),
                         color = MaterialTheme.colorScheme.primary,
-                        trackColor = Color.White.copy(alpha = 0.1f)
+                        trackColor = playerForeground.copy(alpha = 0.1f)
                     )
 
                     if (currentStep != null) {
@@ -550,7 +553,7 @@ fun WorkoutPlayerScreen(
                                     ex.name.uppercase(),
                                     fontWeight = FontWeight.Black,
                                     fontSize = 28.sp,
-                                    color = Color.White,
+                                    color = playerForeground,
                                     textAlign = TextAlign.Center
                                 )
                                 Spacer(modifier = Modifier.height(16.dp))
@@ -568,32 +571,32 @@ fun WorkoutPlayerScreen(
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                        Text(stringResource(R.string.sets_count), color = Color.White.copy(alpha = 0.5f), fontSize = 11.sp)
-                                        Text("${ex.setsCount}", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Black)
+                                        Text(stringResource(R.string.sets_count), color = playerMuted, fontSize = 11.sp)
+                                        Text("${ex.setsCount}", color = playerForeground, fontSize = 20.sp, fontWeight = FontWeight.Black)
                                     }
-                                    Box(modifier = Modifier.width(1.dp).height(24.dp).background(Color.White.copy(alpha = 0.1f)))
+                                    Box(modifier = Modifier.width(1.dp).height(24.dp).background(playerForeground.copy(alpha = 0.1f)))
                                     if (ex.type == "Reps") {
                                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                            Text(stringResource(R.string.target_reps), color = Color.White.copy(alpha = 0.5f), fontSize = 11.sp)
-                                            Text("${ex.targetReps}", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Black)
+                                            Text(stringResource(R.string.target_reps), color = playerMuted, fontSize = 11.sp)
+                                            Text("${ex.targetReps}", color = playerForeground, fontSize = 20.sp, fontWeight = FontWeight.Black)
                                         }
                                     } else {
                                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                            Text(stringResource(R.string.target_time), color = Color.White.copy(alpha = 0.5f), fontSize = 11.sp)
-                                            Text("${ex.targetTimeSeconds}s", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Black)
+                                            Text(stringResource(R.string.target_time), color = playerMuted, fontSize = 11.sp)
+                                            Text("${ex.targetTimeSeconds}s", color = playerForeground, fontSize = 20.sp, fontWeight = FontWeight.Black)
                                         }
                                     }
-                                    Box(modifier = Modifier.width(1.dp).height(24.dp).background(Color.White.copy(alpha = 0.1f)))
+                                    Box(modifier = Modifier.width(1.dp).height(24.dp).background(playerForeground.copy(alpha = 0.1f)))
                                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                        Text(stringResource(R.string.weight), color = Color.White.copy(alpha = 0.5f), fontSize = 11.sp)
-                                        Text("${ex.weightKg} kg", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Black)
+                                        Text(stringResource(R.string.weight), color = playerMuted, fontSize = 11.sp)
+                                        Text("${ex.weightKg} kg", color = playerForeground, fontSize = 20.sp, fontWeight = FontWeight.Black)
                                     }
                                 }
                             } else if (isPrepState) {
                                 Text(
                                     stringResource(R.string.get_ready),
                                     fontWeight = FontWeight.ExtraBold,
-                                    color = Color(0xFFF59E0B),
+                                    color = restColor,
                                     fontSize = 18.sp,
                                     letterSpacing = 3.sp
                                 )
@@ -601,28 +604,28 @@ fun WorkoutPlayerScreen(
                                 Box(
                                     modifier = Modifier
                                         .size(140.dp)
-                                        .background(Color(0xFFF59E0B).copy(alpha = 0.1f), CircleShape)
-                                        .border(4.dp, Color(0xFFF59E0B), CircleShape),
+                                        .background(restColor.copy(alpha = 0.1f), CircleShape)
+                                        .border(4.dp, restColor, CircleShape),
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Text(
                                         text = "$prepSecondsRemaining",
                                         fontWeight = FontWeight.Black,
                                         fontSize = 64.sp,
-                                        color = Color(0xFFF59E0B)
+                                        color = restColor
                                     )
                                 }
                                 Spacer(modifier = Modifier.height(20.dp))
                                 Text(
                                     stringResource(R.string.next_label, ex.name),
-                                    color = Color.White.copy(alpha = 0.9f),
+                                    color = playerForeground.copy(alpha = 0.9f),
                                     fontSize = 18.sp,
                                     fontWeight = FontWeight.Bold,
                                     textAlign = TextAlign.Center
                                 )
                                 Text(
                                     stringResource(R.string.set_progress, currentStep.setNumber, ex.setsCount),
-                                    color = Color.White.copy(alpha = 0.6f),
+                                    color = playerMuted,
                                     fontSize = 14.sp,
                                     textAlign = TextAlign.Center
                                 )
@@ -639,13 +642,13 @@ fun WorkoutPlayerScreen(
                                     "${secondsRemaining}s",
                                     fontWeight = FontWeight.Black,
                                     fontSize = 64.sp,
-                                    color = Color.White
+                                    color = playerForeground
                                 )
                                 Text(
                                     stringResource(R.string.next_label, executionQueue.getOrNull(currentStepIndex + 1)?.let { next ->
                                         "${next.exercise.name} (${next.setNumber}/${next.exercise.setsCount})"
                                     }.orEmpty()),
-                                    color = Color.White.copy(alpha = 0.7f),
+                                    color = playerMuted,
                                     fontSize = 14.sp,
                                     textAlign = TextAlign.Center
                                 )
@@ -654,7 +657,7 @@ fun WorkoutPlayerScreen(
                                     ex.name.uppercase(),
                                     fontWeight = FontWeight.Black,
                                     fontSize = 24.sp,
-                                    color = Color.White,
+                                    color = playerForeground,
                                     textAlign = TextAlign.Center
                                 )
 
@@ -686,27 +689,27 @@ fun WorkoutPlayerScreen(
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                        Text(stringResource(R.string.sets_count), color = Color.White.copy(alpha = 0.5f), fontSize = 11.sp)
-                                        Text("${currentStep.setNumber} / ${ex.setsCount}", color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.Black)
+                                        Text(stringResource(R.string.sets_count), color = playerMuted, fontSize = 11.sp)
+                                        Text("${currentStep.setNumber} / ${ex.setsCount}", color = playerForeground, fontSize = 24.sp, fontWeight = FontWeight.Black)
                                     }
-                                    Box(modifier = Modifier.width(1.dp).height(32.dp).background(Color.White.copy(alpha = 0.1f)))
-                                    
+                                    Box(modifier = Modifier.width(1.dp).height(32.dp).background(playerForeground.copy(alpha = 0.1f)))
+
                                     if (ex.type == "Reps") {
                                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                            Text(stringResource(R.string.target_reps), color = Color.White.copy(alpha = 0.5f), fontSize = 11.sp)
-                                            Text("${ex.targetReps}", color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.Black)
+                                            Text(stringResource(R.string.target_reps), color = playerMuted, fontSize = 11.sp)
+                                            Text("${ex.targetReps}", color = playerForeground, fontSize = 24.sp, fontWeight = FontWeight.Black)
                                         }
                                     } else {
                                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                            Text(stringResource(R.string.target_time), color = Color.White.copy(alpha = 0.5f), fontSize = 11.sp)
-                                            Text("${secondsRemaining}s", color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.Black)
+                                            Text(stringResource(R.string.target_time), color = playerMuted, fontSize = 11.sp)
+                                            Text("${secondsRemaining}s", color = playerForeground, fontSize = 24.sp, fontWeight = FontWeight.Black)
                                         }
                                     }
-                                    Box(modifier = Modifier.width(1.dp).height(32.dp).background(Color.White.copy(alpha = 0.1f)))
-                                    
+                                    Box(modifier = Modifier.width(1.dp).height(32.dp).background(playerForeground.copy(alpha = 0.1f)))
+
                                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                        Text(stringResource(R.string.weight), color = Color.White.copy(alpha = 0.5f), fontSize = 11.sp)
-                                        Text("${currentExerciseWeight} kg", color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.Black)
+                                        Text(stringResource(R.string.weight), color = playerMuted, fontSize = 11.sp)
+                                        Text("${currentExerciseWeight} kg", color = playerForeground, fontSize = 24.sp, fontWeight = FontWeight.Black)
                                     }
                                 }
                             }
@@ -759,11 +762,11 @@ fun WorkoutPlayerScreen(
                                             .fillMaxWidth()
                                             .height(50.dp)
                                             .testTag("skip_exercise_start_screen_button"),
-                                        colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White),
-                                        border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.3f)),
+                                        colors = ButtonDefaults.outlinedButtonColors(contentColor = playerForeground),
+                                        border = androidx.compose.foundation.BorderStroke(1.dp, playerForeground.copy(alpha = 0.3f)),
                                         shape = RoundedCornerShape(16.dp)
                                     ) {
-                                        Icon(Icons.Default.Schedule, null, modifier = Modifier.size(18.dp), tint = Color.White)
+                                        Icon(Icons.Default.Schedule, null, modifier = Modifier.size(18.dp), tint = playerForeground)
                                         Spacer(modifier = Modifier.width(8.dp))
                                         Text(stringResource(R.string.do_this_later), fontWeight = FontWeight.Bold, fontSize = 14.sp)
                                     }
@@ -783,7 +786,7 @@ fun WorkoutPlayerScreen(
                                         .fillMaxWidth()
                                         .height(56.dp)
                                         .testTag("skip_prep_countdown_button"),
-                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF59E0B)),
+                                    colors = ButtonDefaults.buttonColors(containerColor = restColor),
                                     shape = RoundedCornerShape(16.dp)
                                 ) {
                                     Icon(Icons.Default.SkipNext, null)
@@ -889,18 +892,18 @@ fun WorkoutPlayerScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         IconButton(onClick = { showExitConfirmDialog = true }) {
-                            Icon(Icons.Default.Close, stringResource(R.string.close), tint = Color.White.copy(alpha = 0.6f))
+                            Icon(Icons.Default.Close, stringResource(R.string.close), tint = playerMuted)
                         }
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                             Text(
                                 workoutName,
                                 fontWeight = FontWeight.Bold,
-                                color = Color.White,
+                                color = playerForeground,
                                 fontSize = 16.sp
                             )
                             Text(
                                 stringResource(R.string.step_indicator, currentStepIndex + 1, executionQueue.size),
-                                color = Color.White.copy(alpha = 0.5f),
+                                color = playerMuted,
                                 fontSize = 12.sp
                             )
                         }
@@ -916,7 +919,7 @@ fun WorkoutPlayerScreen(
                             .padding(vertical = 4.dp)
                             .clip(RoundedCornerShape(4.dp)),
                         color = MaterialTheme.colorScheme.primary,
-                        trackColor = Color.White.copy(alpha = 0.1f)
+                        trackColor = playerForeground.copy(alpha = 0.1f)
                     )
 
                     if (currentStep != null) {
@@ -941,7 +944,7 @@ fun WorkoutPlayerScreen(
                                     ex.name.uppercase(),
                                     fontWeight = FontWeight.Black,
                                     fontSize = 20.sp,
-                                    color = Color.White,
+                                    color = playerForeground,
                                     textAlign = TextAlign.Center
                                 )
                                 Spacer(modifier = Modifier.height(8.dp))
@@ -1002,25 +1005,25 @@ fun WorkoutPlayerScreen(
                                             verticalAlignment = Alignment.CenterVertically
                                         ) {
                                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                                Text(stringResource(R.string.sets_count), color = Color.White.copy(alpha = 0.5f), fontSize = 10.sp)
-                                                Text("${ex.setsCount}", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Black)
+                                                Text(stringResource(R.string.sets_count), color = playerMuted, fontSize = 10.sp)
+                                                Text("${ex.setsCount}", color = playerForeground, fontSize = 18.sp, fontWeight = FontWeight.Black)
                                             }
-                                            Box(modifier = Modifier.width(1.dp).height(20.dp).background(Color.White.copy(alpha = 0.1f)))
+                                            Box(modifier = Modifier.width(1.dp).height(20.dp).background(playerForeground.copy(alpha = 0.1f)))
                                             if (ex.type == "Reps") {
                                                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                                    Text(stringResource(R.string.target_reps), color = Color.White.copy(alpha = 0.5f), fontSize = 10.sp)
-                                                    Text("${ex.targetReps}", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Black)
+                                                    Text(stringResource(R.string.target_reps), color = playerMuted, fontSize = 10.sp)
+                                                    Text("${ex.targetReps}", color = playerForeground, fontSize = 18.sp, fontWeight = FontWeight.Black)
                                                 }
                                             } else {
                                                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                                    Text(stringResource(R.string.target_time), color = Color.White.copy(alpha = 0.5f), fontSize = 10.sp)
-                                                    Text("${ex.targetTimeSeconds}s", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Black)
+                                                    Text(stringResource(R.string.target_time), color = playerMuted, fontSize = 10.sp)
+                                                    Text("${ex.targetTimeSeconds}s", color = playerForeground, fontSize = 18.sp, fontWeight = FontWeight.Black)
                                                 }
                                             }
-                                            Box(modifier = Modifier.width(1.dp).height(20.dp).background(Color.White.copy(alpha = 0.1f)))
+                                            Box(modifier = Modifier.width(1.dp).height(20.dp).background(playerForeground.copy(alpha = 0.1f)))
                                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                                Text(stringResource(R.string.weight), color = Color.White.copy(alpha = 0.5f), fontSize = 10.sp)
-                                                Text("${ex.weightKg} kg", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Black)
+                                                Text(stringResource(R.string.weight), color = playerMuted, fontSize = 10.sp)
+                                                Text("${ex.weightKg} kg", color = playerForeground, fontSize = 18.sp, fontWeight = FontWeight.Black)
                                             }
                                         }
                                     }
@@ -1058,8 +1061,8 @@ fun WorkoutPlayerScreen(
                                         OutlinedButton(
                                             onClick = { skipCurrentExercise() },
                                             modifier = Modifier.weight(1f).height(48.dp),
-                                            colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White),
-                                            border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.3f)),
+                                            colors = ButtonDefaults.outlinedButtonColors(contentColor = playerForeground),
+                                            border = androidx.compose.foundation.BorderStroke(1.dp, playerForeground.copy(alpha = 0.3f)),
                                             shape = RoundedCornerShape(12.dp)
                                         ) {
                                             Text(stringResource(R.string.do_this_later), fontWeight = FontWeight.Bold, fontSize = 12.sp)
@@ -1070,7 +1073,7 @@ fun WorkoutPlayerScreen(
                                         Text(
                                             stringResource(R.string.get_ready),
                                             fontWeight = FontWeight.ExtraBold,
-                                            color = Color(0xFFF59E0B),
+                                            color = restColor,
                                             fontSize = 14.sp,
                                             letterSpacing = 2.sp
                                         )
@@ -1079,7 +1082,7 @@ fun WorkoutPlayerScreen(
                                             text = "$prepSecondsRemaining",
                                             fontWeight = FontWeight.Black,
                                             fontSize = 48.sp,
-                                            color = Color(0xFFF59E0B)
+                                            color = restColor
                                         )
                                         Spacer(modifier = Modifier.height(8.dp))
                                         Button(
@@ -1093,7 +1096,7 @@ fun WorkoutPlayerScreen(
                                                 }
                                             },
                                             modifier = Modifier.fillMaxWidth().height(48.dp),
-                                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF59E0B)),
+                                            colors = ButtonDefaults.buttonColors(containerColor = restColor),
                                             shape = RoundedCornerShape(12.dp)
                                         ) {
                                             Text(stringResource(R.string.skip_countdown), fontWeight = FontWeight.Bold)
@@ -1112,13 +1115,13 @@ fun WorkoutPlayerScreen(
                                             "${secondsRemaining}s",
                                             fontWeight = FontWeight.Black,
                                             fontSize = 48.sp,
-                                            color = Color.White
+                                            color = playerForeground
                                         )
                                         Text(
                                             stringResource(R.string.next_label, executionQueue.getOrNull(currentStepIndex + 1)?.let { next ->
                                                 "${next.exercise.name} (${next.setNumber}/${next.exercise.setsCount})"
                                             }.orEmpty()),
-                                            color = Color.White.copy(alpha = 0.7f),
+                                            color = playerMuted,
                                             fontSize = 12.sp,
                                             textAlign = TextAlign.Center
                                         )
@@ -1145,25 +1148,25 @@ fun WorkoutPlayerScreen(
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
                                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                            Text(stringResource(R.string.sets_count), color = Color.White.copy(alpha = 0.5f), fontSize = 10.sp)
-                                            Text("${currentStep.setNumber} / ${ex.setsCount}", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Black)
+                                            Text(stringResource(R.string.sets_count), color = playerMuted, fontSize = 10.sp)
+                                            Text("${currentStep.setNumber} / ${ex.setsCount}", color = playerForeground, fontSize = 20.sp, fontWeight = FontWeight.Black)
                                         }
-                                        Box(modifier = Modifier.width(1.dp).height(24.dp).background(Color.White.copy(alpha = 0.1f)))
+                                        Box(modifier = Modifier.width(1.dp).height(24.dp).background(playerForeground.copy(alpha = 0.1f)))
                                         if (ex.type == "Reps") {
                                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                                Text(stringResource(R.string.target_reps), color = Color.White.copy(alpha = 0.5f), fontSize = 10.sp)
-                                                Text("${ex.targetReps}", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Black)
+                                                Text(stringResource(R.string.target_reps), color = playerMuted, fontSize = 10.sp)
+                                                Text("${ex.targetReps}", color = playerForeground, fontSize = 20.sp, fontWeight = FontWeight.Black)
                                             }
                                         } else {
                                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                                Text(stringResource(R.string.target_time), color = Color.White.copy(alpha = 0.5f), fontSize = 10.sp)
-                                                Text("${secondsRemaining}s", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Black)
+                                                Text(stringResource(R.string.target_time), color = playerMuted, fontSize = 10.sp)
+                                                Text("${secondsRemaining}s", color = playerForeground, fontSize = 20.sp, fontWeight = FontWeight.Black)
                                             }
                                         }
-                                        Box(modifier = Modifier.width(1.dp).height(24.dp).background(Color.White.copy(alpha = 0.1f)))
+                                        Box(modifier = Modifier.width(1.dp).height(24.dp).background(playerForeground.copy(alpha = 0.1f)))
                                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                            Text(stringResource(R.string.weight), color = Color.White.copy(alpha = 0.5f), fontSize = 10.sp)
-                                            Text("${currentExerciseWeight} kg", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Black)
+                                            Text(stringResource(R.string.weight), color = playerMuted, fontSize = 10.sp)
+                                            Text("${currentExerciseWeight} kg", color = playerForeground, fontSize = 20.sp, fontWeight = FontWeight.Black)
                                         }
                                     }
 
