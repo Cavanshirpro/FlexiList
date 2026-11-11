@@ -39,7 +39,7 @@ fun ThemeCustomizationDialog(
     viewModel: FlexiViewModel,
     onDismiss: () -> Unit
 ) {
-    val isDarkMode by viewModel.isDarkMode.collectAsState()
+    val mode by viewModel.themeMode.collectAsState()
     val selectedAccentIndex by viewModel.selectedAccentIndex.collectAsState()
     val currentLanguage by viewModel.appLanguage.collectAsState()
 
@@ -127,7 +127,7 @@ fun ThemeCustomizationDialog(
                         FilterChip(
                             selected = isSelected,
                             onClick = { viewModel.setAppLanguage(code) },
-                            label = { Text(label, fontSize = 11.sp) }
+                            label = { Text(label, fontSize = 14.sp) }
                         )
                     }
                 }
@@ -142,24 +142,16 @@ fun ThemeCustomizationDialog(
                     color = MaterialTheme.colorScheme.primary
                 )
 
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    FilterChip(
-                        selected = isDarkMode,
-                        onClick = { if (!isDarkMode) viewModel.toggleTheme() },
-                        label = { Text(stringResource(R.string.dark_mode)) },
-                        leadingIcon = { Icon(Icons.Default.DarkMode, null, modifier = Modifier.size(16.dp)) },
-                        modifier = Modifier.weight(1f)
-                    )
-                    FilterChip(
-                        selected = !isDarkMode,
-                        onClick = { if (isDarkMode) viewModel.toggleTheme() },
-                        label = { Text(stringResource(R.string.light_mode)) },
-                        leadingIcon = { Icon(Icons.Default.LightMode, null, modifier = Modifier.size(16.dp)) },
-                        modifier = Modifier.weight(1f)
-                    )
+                @OptIn(ExperimentalLayoutApi::class)
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    xyz.younglion.flexilist.ui.workspace.ThemeMode.entries.forEach { option ->
+                        FilterChip(
+                            selected = mode == option,
+                            onClick = { viewModel.setThemeMode(option) },
+                            label = { Text(stringResource(option.title)) },
+                            modifier = Modifier.testTag("theme-${option.name}")
+                        )
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(4.dp))
@@ -221,7 +213,7 @@ fun ThemeCustomizationDialog(
                                         }
                                         Text(
                                             text = accent.getDisplayName(),
-                                            fontSize = 12.sp,
+                                            fontSize = 14.sp,
                                             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
                                             color = MaterialTheme.colorScheme.onSurface
                                         )
@@ -247,7 +239,7 @@ fun ThemeCustomizationDialog(
                     ) {
                         Text(
                             text = stringResource(R.string.live_theme_preview),
-                            fontSize = 11.sp,
+                            fontSize = 14.sp,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -261,12 +253,12 @@ fun ThemeCustomizationDialog(
                                 shape = RoundedCornerShape(8.dp),
                                 modifier = Modifier.weight(1f)
                             ) {
-                                Text(stringResource(R.string.sample_button), fontSize = 11.sp)
+                                Text(stringResource(R.string.sample_button), fontSize = 14.sp)
                             }
                             FilterChip(
                                 selected = true,
                                 onClick = {},
-                                label = { Text(stringResource(R.string.chip), fontSize = 11.sp) }
+                                label = { Text(stringResource(R.string.chip), fontSize = 14.sp) }
                             )
                         }
                     }
@@ -392,7 +384,7 @@ fun ListReminderDialog(
                         Column {
                             Text(
                                 text = "Hatırlatma Zamanı",
-                                fontSize = 11.sp,
+                                fontSize = 14.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.primary
                             )

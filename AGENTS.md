@@ -138,3 +138,11 @@ The following checklist tracks development milestones, completed features, and f
 - Publish runs check signing-secret availability in preflight; validation mode can inspect unsigned candidates. Public publication continues to require the existing release certificate.
 - `tools/fdroid_metadata.py` generates a canonical F-Droid recipe pinned to a full release source SHA; `tools/check_fdroid.py` runs the official linter and validates store assets. Update the GitLab recipe from the tagged release revision. F-Droid signs its own APK, independently of the GitHub release key.
 - Release APKs omit dependency and VCS metadata. Staging checks ZIP integrity so corrupt binaries cannot be uploaded as APKs.
+
+## Workspace UX maintenance
+
+- `ui/workspace` owns the four-area navigation, full notebook forms, entry draft handoff, previewed import, theme preference migration, and undo coordinator. See `docs/UX.md` for interaction contracts and verification.
+- Derive workspace membership from `NotebookKind.parse`; retain legacy wire aliases and unknown imported types. Do not migrate user notebooks just to change navigation.
+- Await confirmed Room writes before success/navigation. Use `WorkspaceController` for editor saves, flag toggles, deletions/Undo and reviewed imports. Keep editor field updates separate from concurrent completion/order/pin/archive changes.
+- Translate display labels only: workout day keys, serialized exercise/schedule configurations, custom field types and user-defined content must remain compatible with existing backups.
+- `WorkspaceFlowTest` runs native Compose journeys for narrow/large-text and expanded layouts. `-PcaptureUx=true` records evidence under `app/build/outputs/ux`; generated screenshots do not substitute for device/TalkBack verification.

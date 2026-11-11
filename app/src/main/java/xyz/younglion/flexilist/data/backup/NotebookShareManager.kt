@@ -3,7 +3,6 @@ package xyz.younglion.flexilist.data.backup
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
-import android.widget.Toast
 import androidx.core.content.FileProvider
 import xyz.younglion.flexilist.data.model.ListItemEntity
 import xyz.younglion.flexilist.data.model.NotebookEntity
@@ -11,7 +10,6 @@ import xyz.younglion.flexilist.ui.FlexiViewModel
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
-import java.io.FileOutputStream
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
 
@@ -48,35 +46,24 @@ object NotebookShareManager {
     /**
      * Writes JSON to cache directory with .flexi extension and shares via system intent
      */
-    fun shareNotebook(context: Context, notebook: NotebookEntity, items: List<ListItemEntity>) {
-        try {
+    suspend fun shareNotebook(context: Context, notebook: NotebookEntity, items: List<ListItemEntity>) {
+        val shareIntent = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
             val jsonContent = createFlexiJson(notebook, items)
-            val cleanName = notebook.name.replace(Regex("[^a-zA-Z0-9_ -]"), "_").trim().ifEmpty { "Notebook" }
-            val fileName = "$cleanName.flexi"
-            val file = File(context.cacheDir, fileName)
-            
-            FileOutputStream(file).use { out ->
-                out.write(jsonContent.toByteArray(Charsets.UTF_8))
-            }
-
-            val uri: Uri = FileProvider.getUriForFile(
-                context,
-                "${context.packageName}.fileprovider",
-                file
-            )
-
-            val shareIntent = Intent(Intent.ACTION_SEND).apply {
-                type = "*/*"
+            val cleanName = notebook.name.replace(Regex("[^\\p{L}\\p{N}_ -]"), "_").trim().take(64).ifEmpty { "Notebook" }
+            val file = File.createTempFile("flx-$cleanName-", ".flexi", context.cacheDir)
+            file.writeText(jsonContent, Charsets.UTF_8)
+            val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
+            Intent(Intent.ACTION_SEND).apply {
+                type = "application/octet-stream"
                 putExtra(Intent.EXTRA_STREAM, uri)
-                putExtra(Intent.EXTRA_SUBJECT, "FlexiList Defteri: ${notebook.name}")
-                putExtra(Intent.EXTRA_TEXT, jsonContent)
+                putExtra(Intent.EXTRA_SUBJECT, notebook.name)
+                // Large notebooks travel through the file grant, never through Binder's text payload.
                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                clipData = android.content.ClipData.newRawUri(notebook.name, uri)
             }
-
-            context.startActivity(Intent.createChooser(shareIntent, "Defteri Paylaş (.flexi)"))
-        } catch (e: Exception) {
-            e.printStackTrace()
-            Toast.makeText(context, "Defter dosyası oluşturulurken hata: ${e.message}", Toast.LENGTH_LONG).show()
+        }
+        kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main.immediate) {
+            context.startActivity(Intent.createChooser(shareIntent, context.getString(xyz.younglion.flexilist.R.string.share)))
         }
     }
 

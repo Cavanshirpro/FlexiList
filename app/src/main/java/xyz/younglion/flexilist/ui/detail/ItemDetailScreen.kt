@@ -1,5 +1,17 @@
 package xyz.younglion.flexilist.ui.detail
 
+import androidx.activity.compose.BackHandler
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.onStart
+import xyz.younglion.flexilist.ui.workspace.EntryUiState
+import kotlinx.coroutines.launch
+import xyz.younglion.flexilist.ui.workspace.DiscardChangesDialog
+import xyz.younglion.flexilist.ui.workspace.MessageState
+import xyz.younglion.flexilist.ui.workspace.rememberReminderPermissionAction
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import xyz.younglion.flexilist.data.model.NotebookEntity
@@ -48,16 +60,29 @@ import java.util.*
 fun ItemDetailScreen(
     itemId: Long,
     viewModel: FlexiViewModel,
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
+    notebookId: Long = viewModel.selectedNotebookId.value ?: 0L
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
-    // Retrieve existing item or start from a new draft (with explicit type annotation to avoid Any? inference)
-    val existingItemFlow: kotlinx.coroutines.flow.Flow<ListItemEntity?> = remember(itemId) {
-        if (itemId > 0L) viewModel.getItemById(itemId) else kotlinx.coroutines.flow.flowOf(null)
+    val existingItemFlow = remember(itemId, notebookId) {
+        if (itemId > 0L) viewModel.getItemById(itemId).map<ListItemEntity?, EntryUiState> {
+            if (it == null || it.notebookId != notebookId) EntryUiState.Missing else EntryUiState.Ready(it)
+        }.onStart { emit(EntryUiState.Loading) }.catch { emit(EntryUiState.Error) }
+        else kotlinx.coroutines.flow.flowOf<EntryUiState>(EntryUiState.Ready(null))
     }
-    val existingItem by existingItemFlow.collectAsState(initial = null)
+    val entryState by existingItemFlow.collectAsState(initial = EntryUiState.Loading)
+    val existingItem = (entryState as? EntryUiState.Ready)?.item
+    val loadedRecord = (entryState is EntryUiState.Ready) to existingItem
+    val newItem = remember(notebookId) { ListItemEntity(notebookId = notebookId, title = "") }
+    var saving by rememberSaveable { mutableStateOf(false) }
+    var saveError by remember { mutableStateOf(false) }
+    var attempted by rememberSaveable { mutableStateOf(false) }
+    var finalized by remember { mutableStateOf(false) }
+    var discard by rememberSaveable { mutableStateOf(false) }
+    var advanced by rememberSaveable { mutableStateOf(false) }
+    val reminderPermission = rememberReminderPermissionAction()
 
     var hasLoadedInitialData by rememberSaveable { mutableStateOf(false) }
 
@@ -92,21 +117,23 @@ fun ItemDetailScreen(
     var customFields by rememberSaveable(stateSaver = customFieldsSaver) { mutableStateOf(emptyList()) }
 
     // Workout specific states
-    val isWorkoutNotebook = viewModel.selectedNotebook.collectAsState().value?.type.let { it == "Workout Planner" || it == "WorkoutPlanner" }
+    val isWorkoutNotebook = xyz.younglion.flexilist.ui.workspace.NotebookKind.parse(viewModel.selectedNotebook.collectAsState().value?.type.orEmpty()) == xyz.younglion.flexilist.ui.workspace.NotebookKind.WORKOUT
     var exerciseType by rememberSaveable { mutableStateOf("Reps") }
     var setsCount by rememberSaveable { mutableStateOf(3) }
     var targetReps by rememberSaveable { mutableStateOf(10) }
     var targetTimeSeconds by rememberSaveable { mutableStateOf(30) }
     var restTimeSeconds by rememberSaveable { mutableStateOf(60) }
-    var weightKg by rememberSaveable { mutableStateOf(0.0) }
+    var weightInput by rememberSaveable { mutableStateOf("0") }
+    val weightKg = weightInput.replace(',', '.').toDoubleOrNull()
+    val invalidWeight = isWorkoutNotebook && (weightKg == null || !weightKg.isFinite() || weightKg < 0)
     var targetMuscles by rememberSaveable { mutableStateOf(emptySet<String>()) }
     var supersetGroupId by rememberSaveable { mutableStateOf("") }
     var workoutDays by rememberSaveable { mutableStateOf(emptySet<String>()) }
 
-    // Once existing item loads for the first time, initialize the states
-    LaunchedEffect(existingItem) {
-        if (!hasLoadedInitialData) {
-            existingItem?.let { item ->
+    LaunchedEffect(loadedRecord, isWorkoutNotebook) {
+        if (!hasLoadedInitialData && loadedRecord.first) {
+            val item = viewModel.workspace.draft(notebookId, itemId)?.item ?: existingItem ?: newItem
+            if (item.notebookId == notebookId) {
                 itemTitle = item.title
                 itemDescription = item.description
                 priority = item.priority
@@ -119,22 +146,69 @@ fun ItemDetailScreen(
                 recurrenceRule = item.recurrenceRule
                 subtasks = ListItemEntity.deserializeSubtasks(item.subtasksJson)
                 customFields = ListItemEntity.deserializeCustomFields(item.customFieldsJson)
-
-                if (isWorkoutNotebook && item.description.startsWith("[EXERCISE_CFG]")) {
+                if (isWorkoutNotebook) {
                     val cfg = parseExerciseConfig(item.description)
-                    exerciseType = cfg.type
-                    setsCount = cfg.setsCount
-                    targetReps = cfg.targetReps
-                    targetTimeSeconds = cfg.targetTimeSeconds
-                    restTimeSeconds = cfg.restTimeSeconds
-                    weightKg = cfg.weightKg
-                    targetMuscles = cfg.targetMuscles.toSet()
-                    supersetGroupId = cfg.supersetGroupId
-                    workoutDays = cfg.workoutDays.toSet()
+                    exerciseType = cfg.type; setsCount = cfg.setsCount; targetReps = cfg.targetReps
+                    targetTimeSeconds = cfg.targetTimeSeconds; restTimeSeconds = cfg.restTimeSeconds
+                    weightInput = cfg.weightKg.toString().replace('.', java.text.DecimalFormatSymbols.getInstance().decimalSeparator); targetMuscles = cfg.targetMuscles.toSet()
+                    supersetGroupId = cfg.supersetGroupId; workoutDays = cfg.workoutDays.toSet()
                 }
                 hasLoadedInitialData = true
             }
         }
+    }
+    if (entryState == EntryUiState.Missing || entryState == EntryUiState.Error) {
+        MessageState(if (entryState == EntryUiState.Missing) R.string.ux_missing_entry else R.string.ux_load_failed, R.string.back, onNavigateBack)
+        return
+    }
+    if (!loadedRecord.first || !hasLoadedInitialData) {
+        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
+        return
+    }
+    fun currentEntry(): ListItemEntity = (existingItem ?: newItem).copy(
+        title = itemTitle, description = if (isWorkoutNotebook) {
+            "[EXERCISE_CFG]type=$exerciseType|sets=$setsCount|reps=$targetReps|time=$targetTimeSeconds|rest=$restTimeSeconds|weight=$weightKg|muscles=${targetMuscles.joinToString(",")}|group=$supersetGroupId|days=${workoutDays.joinToString(",")}"
+        } else itemDescription,
+        priority = priority, tags = tagsInput, category = itemCategory, starred = starred,
+        dueDate = dueDate, reminderTime = reminderTime, isRecurring = isRecurring, recurrenceRule = recurrenceRule,
+        subtasksJson = ListItemEntity.serializeSubtasks(subtasks), customFieldsJson = ListItemEntity.serializeCustomFields(customFields)
+    )
+    fun fields(value: ListItemEntity): List<Any?> = listOf(
+        value.title, if (isWorkoutNotebook) parseExerciseConfig(value.description) else value.description,
+        value.priority, value.tags, value.category, value.starred, value.dueDate, value.reminderTime,
+        value.isRecurring, value.recurrenceRule, ListItemEntity.deserializeSubtasks(value.subtasksJson), ListItemEntity.deserializeCustomFields(value.customFieldsJson)
+    )
+    val dirty = invalidWeight || fields(currentEntry()) != fields(existingItem ?: newItem)
+    val close = { if (!saving) { if (dirty) discard = true else onNavigateBack() } }
+    BackHandler { close() }
+    SideEffect {
+        if (!finalized) {
+            if (dirty && !saving) viewModel.workspace.storeDraft(currentEntry())
+            else if (!saving) viewModel.workspace.clearDraft(notebookId, itemId)
+        }
+    }
+    if (discard) DiscardChangesDialog(
+        onDiscard = { finalized = true; viewModel.workspace.clearDraft(notebookId, itemId); discard = false; onNavigateBack() },
+        onContinue = { discard = false }
+    )
+
+    suspend fun persist(entry: ListItemEntity) {
+        try { viewModel.workspace.saveEntry(entry) }
+        catch (error: CancellationException) { throw error }
+        catch (_: Exception) {
+            withContext(Dispatchers.Main.immediate) { saveError = true; saving = false }
+            return
+        }
+        withContext(Dispatchers.Main.immediate) {
+            finalized = true; saving = false
+            viewModel.workspace.clearDraft(notebookId, itemId)
+            viewModel.workspace.acknowledgeEntrySave(entry)
+            viewModel.workspace.notices.tryEmit(R.string.saved_successfully)
+            onNavigateBack()
+        }
+    }
+    LaunchedEffect(Unit) {
+        if (saving) persist(viewModel.workspace.draft(notebookId, itemId)?.item ?: currentEntry())
     }
 
     // Date & Time picker helpers
@@ -158,7 +232,7 @@ fun ItemDetailScreen(
             calendar.set(Calendar.YEAR, year)
             calendar.set(Calendar.MONTH, month)
             calendar.set(Calendar.DAY_OF_MONTH, dayOfMonth)
-            
+
             // Immediately open time picker for reminder
             TimePickerDialog(
                 context,
@@ -183,76 +257,31 @@ fun ItemDetailScreen(
             TopAppBar(
                 title = { Text(if (itemId > 0L) stringResource(R.string.edit_item_title) else stringResource(R.string.new_item_detail_title), fontWeight = FontWeight.Bold) },
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
+                    IconButton(onClick = close, enabled = !saving) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.discard))
                     }
                 },
                 actions = {
                     // Star toggler
-                    IconButton(onClick = { starred = !starred }) {
+                    IconButton(enabled = !saving, onClick = { starred = !starred }) {
                         Icon(
                             imageVector = if (starred) Icons.Filled.Star else Icons.Filled.StarBorder,
                             contentDescription = stringResource(R.string.star),
                             tint = if (starred) Color(0xFFFFD600) else MaterialTheme.colorScheme.onSurface
                         )
                     }
-                    // Save Button
-                    IconButton(
+                    TextButton(
+                        enabled = !saving,
                         onClick = {
-                            if (itemTitle.isBlank()) {
-                                Toast.makeText(context, context.getString(R.string.title_required), Toast.LENGTH_SHORT).show()
-                                return@IconButton
-                            }
-                            val finalDescription = if (isWorkoutNotebook) {
-                                "[EXERCISE_CFG]type=$exerciseType|sets=$setsCount|reps=$targetReps|time=$targetTimeSeconds|rest=$restTimeSeconds|weight=$weightKg|muscles=${targetMuscles.joinToString(",")}|group=$supersetGroupId|days=${workoutDays.joinToString(",")}"
-                            } else {
-                                itemDescription
-                            }
-                            if (itemId > 0L) {
-                                // Update existing
-                                existingItem?.let {
-                                    viewModel.updateListItem(
-                                        it.copy(
-                                            title = itemTitle,
-                                            description = finalDescription,
-                                            priority = priority,
-                                            tags = tagsInput,
-                                            category = itemCategory,
-                                            starred = starred,
-                                            dueDate = dueDate,
-                                            reminderTime = reminderTime,
-                                            isRecurring = isRecurring,
-                                            recurrenceRule = recurrenceRule,
-                                            subtasksJson = ListItemEntity.serializeSubtasks(subtasks),
-                                            customFieldsJson = ListItemEntity.serializeCustomFields(customFields),
-                                            updatedAt = System.currentTimeMillis()
-                                        )
-                                    )
-                                }
-                            } else {
-                                // Create new
-                                viewModel.createListItem(
-                                    title = itemTitle,
-                                    description = finalDescription,
-                                    priority = priority,
-                                    tags = tagsInput,
-                                    category = itemCategory,
-                                    starred = starred,
-                                    dueDate = dueDate,
-                                    reminderTime = reminderTime,
-                                    isRecurring = isRecurring,
-                                    recurrenceRule = recurrenceRule,
-                                    subtasks = subtasks,
-                                    customFields = customFields
-                                )
-                            }
-                            Toast.makeText(context, context.getString(R.string.saved_successfully), Toast.LENGTH_SHORT).show()
-                            onNavigateBack()
-                        },
-                        modifier = Modifier.testTag("save_item_button")
-                    ) {
-                        Icon(Icons.Default.Check, contentDescription = stringResource(R.string.save), tint = MaterialTheme.colorScheme.primary)
-                    }
+                            attempted = true
+                            if (itemTitle.isBlank() || invalidWeight) return@TextButton
+                            saving = true; saveError = false
+                            val entry = currentEntry()
+                            viewModel.workspace.storeDraft(entry)
+                            scope.launch { persist(entry) }
+                        }, modifier = Modifier.testTag("save_item_button")
+                    ) { Text(stringResource(if (saving) R.string.ux_working else R.string.save)) }
+
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.background
@@ -265,17 +294,21 @@ fun ItemDetailScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
+                .imePadding()
                 .padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            if (saveError) item { Text(stringResource(R.string.ux_save_failed), color = MaterialTheme.colorScheme.error) }
             if (isWorkoutNotebook) {
                 // Title Inputs for workout
                 item {
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        OutlinedTextField(
+                        OutlinedTextField(enabled = !saving,
                             value = itemTitle,
                             onValueChange = { itemTitle = it },
-                            placeholder = { Text(stringResource(R.string.exercise_name_placeholder), fontSize = 18.sp) },
+                            label = { Text(stringResource(R.string.exercise_name_placeholder)) },
+                            isError = attempted && itemTitle.isBlank(),
+                            supportingText = { if (attempted && itemTitle.isBlank()) Text(stringResource(R.string.ux_title_required)) },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .testTag("item_title_input"),
@@ -305,7 +338,7 @@ fun ItemDetailScreen(
                                 Text(stringResource(R.string.workout_type), style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold)
                                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                     listOf("Reps" to stringResource(R.string.type_reps), "Timer" to stringResource(R.string.type_timer)).forEach { (key, label) ->
-                                        FilterChip(
+                                        FilterChip(enabled = !saving,
                                             selected = exerciseType == key,
                                             onClick = { exerciseType = key },
                                             label = { Text(label) }
@@ -318,7 +351,7 @@ fun ItemDetailScreen(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.spacedBy(10.dp)
                             ) {
-                                OutlinedTextField(
+                                OutlinedTextField(enabled = !saving,
                                     value = setsCount.toString(),
                                     onValueChange = { setsCount = it.toIntOrNull() ?: 1 },
                                     label = { Text(stringResource(R.string.sets_count_label)) },
@@ -327,7 +360,7 @@ fun ItemDetailScreen(
                                 )
 
                                 if (exerciseType == "Reps") {
-                                    OutlinedTextField(
+                                    OutlinedTextField(enabled = !saving,
                                         value = targetReps.toString(),
                                         onValueChange = { targetReps = it.toIntOrNull() ?: 1 },
                                         label = { Text(stringResource(R.string.target_reps_label)) },
@@ -335,7 +368,7 @@ fun ItemDetailScreen(
                                         modifier = Modifier.weight(1f)
                                     )
                                 } else {
-                                    OutlinedTextField(
+                                    OutlinedTextField(enabled = !saving,
                                         value = targetTimeSeconds.toString(),
                                         onValueChange = { targetTimeSeconds = it.toIntOrNull() ?: 1 },
                                         label = { Text(stringResource(R.string.duration_seconds_label)) },
@@ -349,15 +382,17 @@ fun ItemDetailScreen(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.spacedBy(10.dp)
                             ) {
-                                OutlinedTextField(
-                                    value = weightKg.toString(),
-                                    onValueChange = { weightKg = it.toDoubleOrNull() ?: 0.0 },
+                                OutlinedTextField(enabled = !saving,
+                                    value = weightInput,
+                                    onValueChange = { weightInput = it },
+                                    isError = attempted && invalidWeight,
+                                    supportingText = { if (attempted && invalidWeight) Text(stringResource(R.string.ux_invalid_weight)) },
                                     label = { Text(stringResource(R.string.weight_kg_label)) },
-                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                                     modifier = Modifier.weight(1f)
                                 )
 
-                                OutlinedTextField(
+                                OutlinedTextField(enabled = !saving,
                                     value = restTimeSeconds.toString(),
                                     onValueChange = { restTimeSeconds = it.toIntOrNull() ?: 1 },
                                     label = { Text(stringResource(R.string.rest_seconds_label)) },
@@ -367,7 +402,7 @@ fun ItemDetailScreen(
                             }
 
                             // Superset Group ID (Hibrit Çalışma için)
-                            OutlinedTextField(
+                            OutlinedTextField(enabled = !saving,
                                 value = supersetGroupId,
                                 onValueChange = { supersetGroupId = it },
                                 label = { Text(stringResource(R.string.hybrid_group_label)) },
@@ -395,7 +430,7 @@ fun ItemDetailScreen(
                                 ) {
                                     musclesList.forEach { (muscleKey, muscleLabel) ->
                                         val isSel = targetMuscles.contains(muscleKey)
-                                        FilterChip(
+                                        FilterChip(enabled = !saving,
                                             selected = isSel,
                                             onClick = {
                                                 targetMuscles = if (isSel) targetMuscles - muscleKey else targetMuscles + muscleKey
@@ -460,10 +495,12 @@ fun ItemDetailScreen(
                 // Title & description Inputs
                 item {
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        OutlinedTextField(
+                        OutlinedTextField(enabled = !saving,
                             value = itemTitle,
                             onValueChange = { itemTitle = it },
-                            placeholder = { Text(stringResource(R.string.item_title_placeholder), fontSize = 18.sp) },
+                            label = { Text(stringResource(R.string.item_title_label)) },
+                            isError = attempted && itemTitle.isBlank(),
+                            supportingText = { if (attempted && itemTitle.isBlank()) Text(stringResource(R.string.ux_title_required)) },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .testTag("item_title_input"),
@@ -474,10 +511,10 @@ fun ItemDetailScreen(
                             )
                         )
 
-                        OutlinedTextField(
+                        OutlinedTextField(enabled = !saving,
                             value = itemDescription,
                             onValueChange = { itemDescription = it },
-                            placeholder = { Text(stringResource(R.string.item_description_placeholder)) },
+                            label = { Text(stringResource(R.string.item_description_placeholder)) },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(80.dp),
@@ -489,6 +526,10 @@ fun ItemDetailScreen(
                     }
                 }
 
+            item {
+                TextButton(onClick = { advanced = !advanced }) { Text(stringResource(if (advanced) R.string.ux_hide_advanced else R.string.ux_advanced)) }
+            }
+            if (advanced) {
             // Priority Selection
             item {
                 Column {
@@ -511,7 +552,7 @@ fun ItemDetailScreen(
                                 }
                             } else Color.Transparent
 
-                            FilterChip(
+                            FilterChip(enabled = !saving,
                                 selected = priority == opt.level,
                                 onClick = { priority = opt.level },
                                 label = {
@@ -525,7 +566,7 @@ fun ItemDetailScreen(
                                             )
                                             Spacer(modifier = Modifier.width(4.dp))
                                         }
-                                        Text(opt.name)
+                                        Text(opt.getLocalizedName())
                                     }
                                 }
                             )
@@ -541,7 +582,7 @@ fun ItemDetailScreen(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        OutlinedTextField(
+                        OutlinedTextField(enabled = !saving,
                             value = itemCategory,
                             onValueChange = { itemCategory = it },
                             label = { Text(stringResource(R.string.category)) },
@@ -549,7 +590,7 @@ fun ItemDetailScreen(
                             modifier = Modifier.weight(1f)
                         )
 
-                        OutlinedTextField(
+                        OutlinedTextField(enabled = !saving,
                             value = tagsInput,
                             onValueChange = { tagsInput = it },
                             label = { Text(stringResource(R.string.tags_hint)) },
@@ -559,7 +600,7 @@ fun ItemDetailScreen(
                     }
 
                     // Quick category pills
-                    val quickItemCategories = listOf("Work", "Personal", "Groceries", "Fitness", "Study")
+                    val quickItemCategories by viewModel.availableCategories.collectAsState()
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(6.dp),
                         modifier = Modifier
@@ -576,7 +617,7 @@ fun ItemDetailScreen(
                                 "study" -> "📚"
                                 else -> "🏷️"
                             }
-                            FilterChip(
+                            FilterChip(enabled = !saving,
                                 selected = isSelected,
                                 onClick = { itemCategory = if (isSelected) "" else cat },
                                 label = { Text("$catEmoji $cat", fontSize = 11.sp) }
@@ -595,7 +636,7 @@ fun ItemDetailScreen(
                 ) {
                     Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                         Text(stringResource(R.string.timing_and_reminder), fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                        
+
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                             // Due Date trigger
                             Button(
@@ -613,7 +654,7 @@ fun ItemDetailScreen(
 
                             // Reminder alarm trigger
                             Button(
-                                onClick = { reminderDatePickerDialog.show() },
+                                onClick = { reminderPermission { reminderDatePickerDialog.show() } },
                                 modifier = Modifier.weight(1f),
                                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.1f), contentColor = MaterialTheme.colorScheme.primary)
                             ) {
@@ -660,7 +701,7 @@ fun ItemDetailScreen(
                             horizontalArrangement = Arrangement.spacedBy(6.dp)
                         ) {
                             listOf("DAILY" to stringResource(R.string.recurrence_daily), "WEEKDAYS" to stringResource(R.string.recurrence_weekdays), "WEEKLY" to stringResource(R.string.recurrence_weekly), "MONTHLY" to stringResource(R.string.recurrence_monthly)).forEach { (rule, label) ->
-                                FilterChip(
+                                FilterChip(enabled = !saving,
                                     selected = recurrenceRule == rule,
                                     onClick = { recurrenceRule = rule },
                                     label = { Text(label) }
@@ -716,7 +757,7 @@ fun ItemDetailScreen(
                             verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier.fillMaxWidth()
                         ) {
-                            OutlinedTextField(
+                            OutlinedTextField(enabled = !saving,
                                 value = newSubtaskTitle,
                                 onValueChange = { newSubtaskTitle = it },
                                 placeholder = { Text(stringResource(R.string.subtask_placeholder)) },
@@ -737,9 +778,9 @@ fun ItemDetailScreen(
                                 },
                                 modifier = Modifier
                                     .background(MaterialTheme.colorScheme.primary, CircleShape)
-                                    .size(40.dp)
+                                    .size(48.dp)
                             ) {
-                                Icon(Icons.Default.Add, null, tint = Color.White)
+                                Icon(Icons.Default.Add, null, tint = MaterialTheme.colorScheme.onPrimary)
                             }
                         }
                     }
@@ -766,12 +807,12 @@ fun ItemDetailScreen(
                             ) {
                                 Column(modifier = Modifier.weight(1f)) {
                                     Text("${field.name} (${field.type})", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold)
-                                    
+
                                     // Custom field values based on types
                                     when (field.type) {
                                         "Boolean" -> {
                                             val checked = field.value.toBoolean()
-                                            Switch(
+                                            Switch(enabled = !saving,
                                                 checked = checked,
                                                 onCheckedChange = { checkedNew ->
                                                     val mutable = customFields.toMutableList()
@@ -801,7 +842,7 @@ fun ItemDetailScreen(
                                         }
                                         else -> {
                                             // Text, Number, Dropdown, Date, URL
-                                            OutlinedTextField(
+                                            OutlinedTextField(enabled = !saving,
                                                 value = field.value,
                                                 onValueChange = { newVal ->
                                                     val mutable = customFields.toMutableList()
@@ -837,7 +878,7 @@ fun ItemDetailScreen(
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                             modifier = Modifier.fillMaxWidth()
                         ) {
-                            OutlinedTextField(
+                            OutlinedTextField(enabled = !saving,
                                 value = newFieldName,
                                 onValueChange = { newFieldName = it },
                                 placeholder = { Text(stringResource(R.string.field_name_placeholder)) },
@@ -847,16 +888,16 @@ fun ItemDetailScreen(
 
                             // Type dropdown selection chip
                             Box(modifier = Modifier.weight(1f)) {
-                                FilterChip(
+                                FilterChip(enabled = !saving,
                                     selected = true,
                                     onClick = { isTypeExpanded = !isTypeExpanded },
-                                    label = { Text(newFieldType) },
+                                    label = { Text(customFieldTypeLabel(newFieldType)) },
                                     trailingIcon = { Icon(Icons.Default.ArrowDropDown, null) }
                                 )
                                 DropdownMenu(expanded = isTypeExpanded, onDismissRequest = { isTypeExpanded = false }) {
                                     listOf("Text", "Number", "Boolean", "Date", "Dropdown", "Rating", "URL").forEach { t ->
                                         DropdownMenuItem(
-                                            text = { Text(t) },
+                                            text = { Text(customFieldTypeLabel(t)) },
                                             onClick = {
                                                 newFieldType = t
                                                 isTypeExpanded = false
@@ -884,14 +925,15 @@ fun ItemDetailScreen(
                                 },
                                 modifier = Modifier
                                     .background(MaterialTheme.colorScheme.primary, CircleShape)
-                                    .size(40.dp)
+                                    .size(48.dp)
                             ) {
-                                Icon(Icons.Default.Add, null, tint = Color.White)
+                                Icon(Icons.Default.Add, null, tint = MaterialTheme.colorScheme.onPrimary)
                             }
                         }
                     }
                 }
             }
+            } // Advanced options
             } // Close standard layout else block
         }
     }
@@ -934,3 +976,14 @@ fun parseExerciseConfig(desc: String): ExerciseConfig {
     }
 }
 
+
+@Composable
+private fun customFieldTypeLabel(type: String): String = stringResource(when (type) {
+    "Number" -> R.string.ux_field_number
+    "Boolean" -> R.string.ux_field_boolean
+    "Date" -> R.string.ux_field_date
+    "Dropdown" -> R.string.ux_field_dropdown
+    "Rating" -> R.string.ux_field_rating
+    "URL" -> R.string.ux_field_url
+    else -> R.string.ux_field_text
+})
