@@ -1,1 +1,1 @@
-Ultra-fast offline-first list manager and workout assistant
+Offline lists, habits, workouts and reading in four workspaces

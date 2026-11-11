@@ -1,10 +1,13 @@
-FlexiList is an ultra-fast, offline-first, modern, modular, and flexible multi-purpose list management and workout assistant application built with Kotlin and Jetpack Compose.
+FlexiList keeps tasks, shopping lists, habits, workouts and reading in local notebooks. Four workspaces share priorities, categories, tags, subtasks, custom fields and reminders.
 
-Features:
-- Advanced Workout Assistant with DSL parsing for exercises, sets, reps, timers, and target muscle groups.
-- Interactive Muscle Group Visualizer with cyberpunk anatomical body graphics.
-- Multi-purpose notebook support: To-Do lists, Shopping lists, Habit trackers, and Workout planners.
-- SSL-encrypted Cloud Sync and offline JSON backup/restore.
-- Multi-language support (English, Turkish, Russian, German, Spanish, French).
-- Material Design 3 customizable dark and light themes with custom accent colors.
-- Zero proprietary trackers, analytics, or proprietary ad SDKs.
+Find entries across workspaces with offline search. Today shows due tasks and unfinished habits; Starred focuses on favorite notebooks and entries. Archived notebooks are searched only when selected.
+
+Start blank or preview a notebook starter before saving. Add one entry or paste up to 100 lines, keep the sheet open to continue, and undo consecutive deletions together.
+
+The workout planner supports sets, repetitions, timers, rest, weight and muscle groups. Its player records completed work in local history. Water tracking and workout analytics are included. Progress resumes at saved set boundaries; exact background timer execution is not guaranteed.
+
+Export JSON backups or CSV, share .flexi notebooks, and review an import before adding copies. Optional JSONBlob backup is a manual network transfer: the backup code provides access to that stored copy. Ordinary notebook use is offline and needs no account.
+
+Choose Light, Dark or System, with eight accent choices. The interface supports English, Turkish, Russian, German, Spanish and French, plus phone, tablet and large-text layouts.
+
+Source code is available under GNU GPL v3. Store screenshots show the application with illustrative local notebook data.

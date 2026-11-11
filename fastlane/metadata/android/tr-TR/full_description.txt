@@ -1,21 +1,13 @@
-FlexiList; Kotlin, Jetpack Compose ve SQLite tabanlı Room veritabanı ile geliştirilmiş, ultra hızlı, çevrimdışı öncelikli, modern ve esnek bir çok amaçlı liste yönetimi ve antrenman asistanı uygulamasıdır.
+FlexiList; işleri, alışveriş listelerini, alışkanlıkları, antrenmanları ve okumayı yerel defterlerde tutar. Dört çalışma alanı; öncelik, kategori, etiket, alt görev, özel alan ve hatırlatıcı özelliklerini paylaşır.
 
-Öne Çıkan Özellikler:
+Çevrimdışı aramayla bütün alanlarda kayıt bul. Bugün görünümünde tarihi gelen işleri ve tamamlanmamış alışkanlıkları, Yıldızlılar görünümünde favorileri gör. Arşivdeki defterler yalnızca seçildiğinde aranır.
 
-1. Gelişmiş Antrenman Asistanı (Workout Planner):
-- Egzersiz açıklamalarından set, tekrar/süre, ağırlık, dinlenme ve hedef kas gruplarını otomatik ayrıştıran akıllı DSL motoru.
-- Süperset visual bağlantı rozetleri.
-- Hazırlık sayacı, otomatik dinlenme süresi ve anatomik Kas Grubu Görselleştiricisi içeren Tam Ekran Antrenman Oynatıcısı.
-- Haftalık ve Aylık antrenman programları.
-- Detaylı antrenman geçmişi raporları ve kaldırılan tonaj grafikleri.
+Boş defterle başla veya kaydetmeden önce bir başlangıcı önizle. Tek kayıt ya da bir seferde 100 satıra kadar kayıt ekle, eklemeye devam etmek için pencereyi açık tut ve art arda silinen kayıtları birlikte geri al.
 
-2. Çok Amaçlı Defter ve Liste Yönetimi:
-- Standart, Yapılacaklar (To-Do), Alışveriş, Alışkanlık Takibi ve Antrenman defterleri.
-- Sürükle-bırak sıralama, özelleştirilebilir öncelik dereceleri ve toplu seçim modu.
-- Etiket ve kategori filtreleme.
+Antrenman planlayıcı; set, tekrar, süre, dinlenme, ağırlık ve kas gruplarını destekler. Oynatıcı tamamlanan çalışmaları yerel geçmişe kaydeder. Su takibi ve antrenman analizleri bulunur. İlerleme kaydedilen set sınırından sürdürülür; arka planda zamanlayıcının tam süresinde çalışması garanti edilmez.
 
-3. Gizlilik ve Açık Kaynak Şartları:
-- %100 çevrimdışı yerel Room veritabanı depolaması.
-- F-Droid şartlarına tam uyumlu: Reklam, takipçi veya kapalı kaynak SDK barındırmaz.
-- Özel senkronizasyon kodları ile SSL şifreli bulut yedekleme.
-- Çoklu dil desteği (İngilizce, Türkçe, Rusça, Almanca, İspanyolca, Fransızca).
+JSON yedeği veya CSV dışa aktar, .flexi defterlerini paylaş ve kopyaları eklemeden önce içe aktarmayı incele. İsteğe bağlı JSONBlob yedeklemesi elle başlatılan bir ağ aktarımıdır; yedek kodu saklanan kopyaya erişim sağlar. Normal defter kullanımı çevrimdışıdır ve hesap gerektirmez.
+
+Açık, Koyu veya Sistem teması ve sekiz vurgu rengi arasından seç. İngilizce, Türkçe, Rusça, Almanca, İspanyolca ve Fransızca; telefon, tablet ve büyük yazı düzenleri desteklenir.
+
+Kaynak kod GNU GPL v3 lisanslıdır. Mağaza görüntüleri, örnek yerel defter verileriyle uygulamayı gösterir.
