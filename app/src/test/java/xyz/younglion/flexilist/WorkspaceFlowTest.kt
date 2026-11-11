@@ -66,8 +66,9 @@ class WorkspaceFlowTest {
     }
     private fun click(tag: String) { frame(); ui.onNodeWithTag(tag).performClick(); frame() }
     private fun shot(name: String, dialog: Boolean = false) {
-        if (System.getProperty("flexilist.captureUx") != "true") return
+        // CI and capture runs must settle the same UI animation before the next touch.
         frame()
+        if (System.getProperty("flexilist.captureUx") != "true") return
         (if (dialog) ui.onNode(isDialog()) else ui.onRoot()).captureRoboImage("build/outputs/ux/$name.png")
     }
 
@@ -268,6 +269,7 @@ class WorkspaceFlowTest {
         ui.onNodeWithTag("quick_keep_open").performScrollTo().performClick(); frame()
         scenario!!.recreate(); frame(); awaitTag("quick_entry_title")
         ui.onNodeWithTag("quick_entry_title").assertTextContains("Tea\nCoffee\nTea")
+        ui.onNodeWithTag("quick_entry_multiple").assertIsSelected()
         shot("23-batch-entry", dialog = true)
         ui.onNodeWithTag("quick_entry_save").performScrollTo().performClick(); frame()
         ui.waitUntil(10000) { ui.mainClock.advanceTimeBy(100); runBlocking(Dispatchers.IO) { database.listItemDao().getItemsForNotebookSuspend(notebook.id).size == 6 } }
