@@ -1,0 +1,1 @@
+Búsqueda en todos los espacios, Hoy para tareas y hábitos pendientes, plantillas opcionales y entradas múltiples. Nuevas portadas, progreso y tipografía. Deshaz eliminaciones consecutivas juntas. Se mantiene la compatibilidad con cuadernos y copias existentes.

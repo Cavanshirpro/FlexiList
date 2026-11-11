@@ -1,0 +1,1 @@
+Search across every workspace, find due tasks and habits in Today, start from optional notebook templates, and add multiple entries at once. Redesigned notebook covers, progress and typography. Consecutive deletions can be undone together. Existing notebooks and backups remain compatible.

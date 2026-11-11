@@ -80,7 +80,8 @@ fun ItemsScreen(
     viewModel: FlexiViewModel,
     onNavigateBack: () -> Unit,
     onNavigateToAddEdit: (Long) -> Unit,
-    onFocusChanged: (Boolean) -> Unit = {}
+    onFocusChanged: (Boolean) -> Unit = {},
+    onGlobalSearch: (() -> Unit)? = null
 ) {
     val context = LocalContext.current
     val notebook by viewModel.selectedNotebook.collectAsState()
@@ -222,6 +223,7 @@ fun ItemsScreen(
                                 DropdownMenuItem(text = { Text(stringResource(R.string.notebook_settings)) }, onClick = { toolbarMenu = false; showNotebookSettingsDialog = true })
                                 DropdownMenuItem(text = { Text(stringResource(R.string.reminder_time)) }, onClick = { toolbarMenu = false; reminderPermission { showReminderDialog = true } })
                                 DropdownMenuItem(text = { Text(stringResource(R.string.stats_analytics)) }, onClick = { toolbarMenu = false; showStatsDialog = true })
+                                if (onGlobalSearch != null) DropdownMenuItem(text = { Text(stringResource(R.string.v11_search)) }, leadingIcon = { Icon(Icons.Default.Search, null) }, onClick = { toolbarMenu = false; onGlobalSearch() })
                                 DropdownMenuItem(text = { Text(stringResource(R.string.ux_reorder)) }, onClick = {
                                     toolbarMenu = false; reordering = true; viewModel.clearFilters(); viewModel.completionFilterExplicit.value = true
                                 })
@@ -238,7 +240,12 @@ fun ItemsScreen(
         floatingActionButton = {
             if (!isBulkMode && !showWorkoutExecution && (!isWorkout || selectedWorkoutTab == 0)) {
                 val isWorkout = NotebookKind.parse(notebook?.type.orEmpty()) == NotebookKind.WORKOUT
-                ExtendedFloatingActionButton(
+                if (textScale > 1.3f) FloatingActionButton(
+                    onClick = { if (isWorkout) onNavigateToAddEdit(0L) else showQuickAddDialog = true },
+                    containerColor = MaterialTheme.colorScheme.primary, contentColor = MaterialTheme.colorScheme.onPrimary,
+                    modifier = Modifier.padding(8.dp).testTag("add_entry_button")
+                ) { Icon(Icons.Default.Add, stringResource(entryAction(NotebookKind.parse(notebook?.type.orEmpty())))) }
+                else ExtendedFloatingActionButton(
                     onClick = {
                         if (isWorkout) {
                             onNavigateToAddEdit(0L)
@@ -313,580 +320,593 @@ fun ItemsScreen(
             val isWorkout = NotebookKind.parse(notebook?.type.orEmpty()) == NotebookKind.WORKOUT
 
             if (isWorkout) {
-                TabRow(
+                ScrollableTabRow(
+                    edgePadding = 0.dp,
                     selectedTabIndex = selectedWorkoutTab,
                     containerColor = MaterialTheme.colorScheme.background,
                     contentColor = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Tab(
+                        modifier = Modifier.widthIn(min = if (textScale > 1.3f) 180.dp else 100.dp),
                         selected = selectedWorkoutTab == 0,
                         onClick = { selectedWorkoutTab = 0 },
-                        text = { Text(stringResource(R.string.exercises), fontWeight = FontWeight.Bold, fontSize = 12.sp) },
+                        text = { Text(stringResource(R.string.exercises), fontWeight = FontWeight.Bold, fontSize = 14.sp, maxLines = 1, overflow = TextOverflow.Ellipsis) },
                         icon = { Icon(Icons.Default.FitnessCenter, null, modifier = Modifier.size(18.dp)) }
                     )
                     Tab(
+                        modifier = Modifier.widthIn(min = if (textScale > 1.3f) 180.dp else 100.dp),
                         selected = selectedWorkoutTab == 1,
                         onClick = { selectedWorkoutTab = 1 },
-                        text = { Text(stringResource(R.string.water_tracker), fontWeight = FontWeight.Bold, fontSize = 12.sp) },
+                        text = { Text(stringResource(R.string.water_tracker), fontWeight = FontWeight.Bold, fontSize = 14.sp, maxLines = 1, overflow = TextOverflow.Ellipsis) },
                         icon = { Icon(Icons.Default.LocalCafe, null, modifier = Modifier.size(18.dp)) }
                     )
                     Tab(
+                        modifier = Modifier.widthIn(min = if (textScale > 1.3f) 180.dp else 100.dp),
                         selected = selectedWorkoutTab == 2,
                         onClick = { selectedWorkoutTab = 2 },
-                        text = { Text(stringResource(R.string.analytics_report), fontWeight = FontWeight.Bold, fontSize = 12.sp) },
+                        text = { Text(stringResource(R.string.analytics_report), fontWeight = FontWeight.Bold, fontSize = 14.sp, maxLines = 1, overflow = TextOverflow.Ellipsis) },
                         icon = { Icon(Icons.Default.Assessment, null, modifier = Modifier.size(18.dp)) }
                     )
                 }
             }
 
             if (!isWorkout || selectedWorkoutTab == 0) {
-                if (isWorkout) {
-                    when (workoutConfig.frequency) {
-                        "Daily" -> {
-                            // Requirement 2: Daily mode counter & progress bar, NO weekday chips
-                            val workoutLogs by viewModel.workoutLogs.collectAsState()
-                            val completedWorkoutDays = remember(workoutLogs) {
-                                val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-                                workoutLogs.map { sdf.format(Date(it.createdAt)) }.distinct().size
-                            }
-                            val daysSinceStart = remember(workoutConfig.startDate) {
-                                val diffMs = System.currentTimeMillis() - workoutConfig.startDate
-                                maxOf(1, (diffMs / (1000 * 60 * 60 * 24)).toInt() + 1)
-                            }
-                            val progress = (completedWorkoutDays.toFloat() / daysSinceStart.toFloat()).coerceIn(0f, 1f)
-                            val progressPercent = (progress * 100).toInt()
+                LazyColumn(modifier = Modifier.weight(1f).fillMaxWidth().testTag("notebook_content"),
+                    contentPadding = PaddingValues(bottom = 112.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    item(key = "notebook-controls") {
+                        Column {
 
-                            Card(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                                shape = RoundedCornerShape(16.dp),
-                                colors = CardDefaults.cardColors(
-                                    containerColor = MaterialTheme.colorScheme.surfaceVariant
-                                ),
-                                border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.3f))
-                            ) {
-                                Column(
+                            if (isWorkout) {
+                                when (workoutConfig.frequency) {
+                                    "Daily" -> {
+                                        // Requirement 2: Daily mode counter & progress bar, NO weekday chips
+                                        val workoutLogs by viewModel.workoutLogs.collectAsState()
+                                        val completedWorkoutDays = remember(workoutLogs) {
+                                            val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+                                            workoutLogs.map { sdf.format(Date(it.createdAt)) }.distinct().size
+                                        }
+                                        val daysSinceStart = remember(workoutConfig.startDate) {
+                                            val diffMs = System.currentTimeMillis() - workoutConfig.startDate
+                                            maxOf(1, (diffMs / (1000 * 60 * 60 * 24)).toInt() + 1)
+                                        }
+                                        val progress = (completedWorkoutDays.toFloat() / daysSinceStart.toFloat()).coerceIn(0f, 1f)
+                                        val progressPercent = (progress * 100).toInt()
+
+                                        Card(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(horizontal = 16.dp, vertical = 8.dp),
+                                            shape = RoundedCornerShape(16.dp),
+                                            colors = CardDefaults.cardColors(
+                                                containerColor = MaterialTheme.colorScheme.surfaceVariant
+                                            ),
+                                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.3f))
+                                        ) {
+                                            Column(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .padding(14.dp),
+                                                verticalArrangement = Arrangement.spacedBy(10.dp)
+                                            ) {
+                                                Row(
+                                                    modifier = Modifier.fillMaxWidth(),
+                                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                                    verticalAlignment = Alignment.CenterVertically
+                                                ) {
+                                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                                        Icon(
+                                                            imageVector = Icons.Default.DateRange,
+                                                            contentDescription = null,
+                                                            tint = MaterialTheme.colorScheme.primary,
+                                                            modifier = Modifier.size(20.dp)
+                                                        )
+                                                        Spacer(modifier = Modifier.width(8.dp))
+                                                        Text(
+                                                            text = stringResource(R.string.daily_workout_tracking),
+                                                            fontWeight = FontWeight.Bold,
+                                                            style = MaterialTheme.typography.titleSmall,
+                                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                        )
+                                                    }
+                                                    Surface(
+                                                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
+                                                        shape = RoundedCornerShape(8.dp)
+                                                    ) {
+                                                        Text(
+                                                            text = stringResource(R.string.day_counter, daysSinceStart),
+                                                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                                            fontSize = 11.sp,
+                                                            fontWeight = FontWeight.Bold,
+                                                            color = MaterialTheme.colorScheme.primary
+                                                        )
+                                                    }
+                                                }
+
+                                                Row(
+                                                    modifier = Modifier.fillMaxWidth(),
+                                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                                    verticalAlignment = Alignment.CenterVertically
+                                                ) {
+                                                    Text(
+                                                        text = stringResource(R.string.completed_days, completedWorkoutDays),
+                                                        fontSize = 12.sp,
+                                                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
+                                                    )
+                                                    Text(
+                                                        text = stringResource(R.string.success_rate, progressPercent),
+                                                        fontSize = 12.sp,
+                                                        fontWeight = FontWeight.Bold,
+                                                        color = MaterialTheme.colorScheme.primary
+                                                    )
+                                                }
+
+                                                LinearProgressIndicator(
+                                                    progress = { progress },
+                                                    modifier = Modifier
+                                                        .fillMaxWidth()
+                                                        .height(8.dp)
+                                                        .clip(RoundedCornerShape(4.dp)),
+                                                    color = MaterialTheme.colorScheme.primary,
+                                                    trackColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
+                                                )
+                                            }
+                                        }
+                                    }
+                                    "Monthly" -> {
+                                        // Requirement 3: Monthly mode days of month filter chips (1..31) cleanly in LazyRow
+                                        val todayDayNum = remember(todayDate) { Calendar.getInstance().get(Calendar.DAY_OF_MONTH) }
+                                        val todayText = stringResource(R.string.today)
+                                        val dayText = stringResource(R.string.day_suffix, 0).replace("0", "").trim()
+                                        LazyRow(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(horizontal = 16.dp, vertical = 6.dp),
+                                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            items((1..31).toList()) { day ->
+                                                val dayStr = day.toString()
+                                                val isSelected = selectedMonthlyDayFilter == dayStr
+                                                val isToday = day == todayDayNum
+                                                FilterChip(
+                                                    selected = isSelected,
+                                                    onClick = { selectedMonthlyDayFilter = dayStr },
+                                                    label = {
+                                                        Text(
+                                                            text = if (isToday) "$day ($todayText)" else stringResource(R.string.day_suffix, day),
+                                                            fontWeight = if (isSelected || isToday) FontWeight.Bold else FontWeight.Normal,
+                                                            fontSize = 11.sp
+                                                        )
+                                                    },
+                                                    colors = FilterChipDefaults.filterChipColors(
+                                                        selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                                                        selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
+                                                    )
+                                                )
+                                            }
+                                        }
+                                    }
+                                    else -> {
+                                        // "Weekly" - Days of week filter bar (Horizontally scrollable LazyRow)
+                                        val dayNames = listOf("Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz")
+                                        val todayText = stringResource(R.string.today)
+                                        LazyRow(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            items(dayNames) { dayName ->
+                                                val isSelected = selectedDayFilter == dayName
+                                                FilterChip(
+                                                    selected = isSelected,
+                                                    onClick = { selectedDayFilter = dayName },
+                                                    label = {
+                                                        Text(
+                                                            text = if (dayName == todayDayOfWeekAbbreviation) "${localizedDay(dayName)} ($todayText)" else localizedDay(dayName),
+                                                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                                            fontSize = 11.sp
+                                                        )
+                                                    },
+                                                    colors = FilterChipDefaults.filterChipColors(
+                                                        selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                                                        selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
+                                                    )
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+
+
+                            if (isWorkout && displayItems.isNotEmpty()) {
+                                val isToday = when (workoutConfig.frequency) {
+                                    "Daily" -> true
+                                    "Monthly" -> selectedMonthlyDayFilter == todayDayOfMonthStr
+                                    else -> selectedDayFilter == todayDayOfWeekAbbreviation
+                                }
+                                val isAllCompleted = displayItems.isNotEmpty() && displayItems.all { it.completed }
+                                val isWorkoutStarted = remember(notebook?.id, showWorkoutExecution) { viewModel.isWorkoutStarted(notebook?.id ?: 0L) }
+                                val savedStepIndex = viewModel.getSavedWorkoutStepIndex(notebook?.id ?: 0L)
+                                val isResuming = (isWorkoutStarted || savedStepIndex > 0) && !isAllCompleted
+
+                                val cardTitle = when (workoutConfig.frequency) {
+                                    "Daily" -> stringResource(R.string.daily_workout_program)
+                                    "Monthly" -> stringResource(R.string.monthly_workout_program, selectedMonthlyDayFilter)
+                                    else -> stringResource(R.string.weekly_workout_program, localizedDay(selectedDayFilter))
+                                }
+
+                                Card(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .padding(14.dp),
-                                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                                        .testTag("workout_start_card"),
+                                    shape = RoundedCornerShape(20.dp),
+                                    colors = CardDefaults.cardColors(
+                                        containerColor = MaterialTheme.colorScheme.surfaceVariant
+                                    ),
+                                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.3f))
                                 ) {
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.SpaceBetween,
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Row(verticalAlignment = Alignment.CenterVertically) {
-                                            Icon(
-                                                imageVector = Icons.Default.DateRange,
-                                                contentDescription = null,
-                                                tint = MaterialTheme.colorScheme.primary,
-                                                modifier = Modifier.size(20.dp)
-                                            )
-                                            Spacer(modifier = Modifier.width(8.dp))
-                                            Text(
-                                                text = stringResource(R.string.daily_workout_tracking),
-                                                fontWeight = FontWeight.Bold,
-                                                style = MaterialTheme.typography.titleSmall,
-                                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                                            )
-                                        }
-                                        Surface(
-                                            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
-                                            shape = RoundedCornerShape(8.dp)
-                                        ) {
-                                            Text(
-                                                text = stringResource(R.string.day_counter, daysSinceStart),
-                                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                                                fontSize = 11.sp,
-                                                fontWeight = FontWeight.Bold,
-                                                color = MaterialTheme.colorScheme.primary
-                                            )
-                                        }
-                                    }
-
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.SpaceBetween,
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Text(
-                                            text = stringResource(R.string.completed_days, completedWorkoutDays),
-                                            fontSize = 12.sp,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
-                                        )
-                                        Text(
-                                            text = stringResource(R.string.success_rate, progressPercent),
-                                            fontSize = 12.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            color = MaterialTheme.colorScheme.primary
-                                        )
-                                    }
-
-                                    LinearProgressIndicator(
-                                        progress = { progress },
+                                    Column(
                                         modifier = Modifier
                                             .fillMaxWidth()
-                                            .height(8.dp)
-                                            .clip(RoundedCornerShape(4.dp)),
-                                        color = MaterialTheme.colorScheme.primary,
-                                        trackColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
-                                    )
-                                }
-                            }
-                        }
-                        "Monthly" -> {
-                            // Requirement 3: Monthly mode days of month filter chips (1..31) cleanly in LazyRow
-                            val todayDayNum = remember(todayDate) { Calendar.getInstance().get(Calendar.DAY_OF_MONTH) }
-                            val todayText = stringResource(R.string.today)
-                            val dayText = stringResource(R.string.day_suffix, 0).replace("0", "").trim()
-                            LazyRow(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 16.dp, vertical = 6.dp),
-                                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                items((1..31).toList()) { day ->
-                                    val dayStr = day.toString()
-                                    val isSelected = selectedMonthlyDayFilter == dayStr
-                                    val isToday = day == todayDayNum
-                                    FilterChip(
-                                        selected = isSelected,
-                                        onClick = { selectedMonthlyDayFilter = dayStr },
-                                        label = {
-                                            Text(
-                                                text = if (isToday) "$day ($todayText)" else stringResource(R.string.day_suffix, day),
-                                                fontWeight = if (isSelected || isToday) FontWeight.Bold else FontWeight.Normal,
-                                                fontSize = 11.sp
-                                            )
-                                        },
-                                        colors = FilterChipDefaults.filterChipColors(
-                                            selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
-                                            selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
-                                        )
-                                    )
-                                }
-                            }
-                        }
-                        else -> {
-                            // "Weekly" - Days of week filter bar (Horizontally scrollable LazyRow)
-                            val dayNames = listOf("Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz")
-                            val todayText = stringResource(R.string.today)
-                            LazyRow(
-                                modifier = Modifier.fillMaxWidth(),
-                                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                items(dayNames) { dayName ->
-                                    val isSelected = selectedDayFilter == dayName
-                                    FilterChip(
-                                        selected = isSelected,
-                                        onClick = { selectedDayFilter = dayName },
-                                        label = {
-                                            Text(
-                                                text = if (dayName == todayDayOfWeekAbbreviation) "${localizedDay(dayName)} ($todayText)" else localizedDay(dayName),
-                                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                                                fontSize = 11.sp
-                                            )
-                                        },
-                                        colors = FilterChipDefaults.filterChipColors(
-                                            selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
-                                            selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
-                                        )
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
-
-
-
-                if (isWorkout && displayItems.isNotEmpty()) {
-                    val isToday = when (workoutConfig.frequency) {
-                        "Daily" -> true
-                        "Monthly" -> selectedMonthlyDayFilter == todayDayOfMonthStr
-                        else -> selectedDayFilter == todayDayOfWeekAbbreviation
-                    }
-                    val isAllCompleted = displayItems.isNotEmpty() && displayItems.all { it.completed }
-                    val isWorkoutStarted = remember(notebook?.id, showWorkoutExecution) { viewModel.isWorkoutStarted(notebook?.id ?: 0L) }
-                    val savedStepIndex = viewModel.getSavedWorkoutStepIndex(notebook?.id ?: 0L)
-                    val isResuming = (isWorkoutStarted || savedStepIndex > 0) && !isAllCompleted
-
-                    val cardTitle = when (workoutConfig.frequency) {
-                        "Daily" -> stringResource(R.string.daily_workout_program)
-                        "Monthly" -> stringResource(R.string.monthly_workout_program, selectedMonthlyDayFilter)
-                        else -> stringResource(R.string.weekly_workout_program, localizedDay(selectedDayFilter))
-                    }
-
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 8.dp)
-                            .testTag("workout_start_card"),
-                        shape = RoundedCornerShape(20.dp),
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant
-                        ),
-                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.3f))
-                    ) {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(16.dp),
-                            verticalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(10.dp)
-                                ) {
-                                    Surface(
-                                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
-                                        shape = CircleShape,
-                                        modifier = Modifier.size(40.dp)
+                                            .padding(16.dp),
+                                        verticalArrangement = Arrangement.spacedBy(12.dp)
                                     ) {
-                                        Box(contentAlignment = Alignment.Center) {
-                                            Icon(
-                                                imageVector = Icons.Default.FitnessCenter,
-                                                contentDescription = null,
-                                                tint = MaterialTheme.colorScheme.primary,
-                                                modifier = Modifier.size(20.dp)
-                                            )
-                                        }
-                                    }
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Row(
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                            ) {
+                                                Surface(
+                                                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
+                                                    shape = CircleShape,
+                                                    modifier = Modifier.size(40.dp)
+                                                ) {
+                                                    Box(contentAlignment = Alignment.Center) {
+                                                        Icon(
+                                                            imageVector = Icons.Default.FitnessCenter,
+                                                            contentDescription = null,
+                                                            tint = MaterialTheme.colorScheme.primary,
+                                                            modifier = Modifier.size(20.dp)
+                                                        )
+                                                    }
+                                                }
 
-                                    Column {
-                                        Text(
-                                            text = cardTitle,
-                                            fontWeight = FontWeight.Bold,
-                                            style = MaterialTheme.typography.titleMedium,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                                        )
-                                        val statusSubtext = when {
-                                            isAllCompleted -> stringResource(R.string.workout_done_today)
-                                            !isToday -> if (workoutConfig.frequency == "Monthly") stringResource(R.string.not_selected_day_monthly, todayDayOfMonthStr) else stringResource(R.string.not_selected_day_weekly, todayDayOfWeekAbbreviation)
-                                            isResuming -> stringResource(R.string.workout_in_progress, savedStepIndex + 1)
-                                            else -> stringResource(R.string.exercises_ready, displayItems.size)
+                                                Column {
+                                                    Text(
+                                                        text = cardTitle,
+                                                        fontWeight = FontWeight.Bold,
+                                                        style = MaterialTheme.typography.titleMedium,
+                                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                    )
+                                                    val statusSubtext = when {
+                                                        isAllCompleted -> stringResource(R.string.workout_done_today)
+                                                        !isToday -> if (workoutConfig.frequency == "Monthly") stringResource(R.string.not_selected_day_monthly, todayDayOfMonthStr) else stringResource(R.string.not_selected_day_weekly, todayDayOfWeekAbbreviation)
+                                                        isResuming -> stringResource(R.string.workout_in_progress, savedStepIndex + 1)
+                                                        else -> stringResource(R.string.exercises_ready, displayItems.size)
+                                                    }
+                                                    Text(
+                                                        text = statusSubtext,
+                                                        style = MaterialTheme.typography.bodySmall,
+                                                        color = if (isAllCompleted) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
+                                                    )
+                                                }
+                                            }
                                         }
-                                        Text(
-                                            text = statusSubtext,
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = if (isAllCompleted) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
-                                        )
+
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            OutlinedButton(
+                                                onClick = {
+                                                    resetConfirmation = true
+                                                },
+                                                shape = RoundedCornerShape(12.dp),
+                                                modifier = Modifier.weight(0.35f)
+                                            ) {
+                                                Icon(Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(16.dp))
+                                                Spacer(modifier = Modifier.width(4.dp))
+                                                Text(stringResource(R.string.reset), fontSize = 12.sp, maxLines = 1)
+                                            }
+
+                                            val buttonEnabled = isToday && !isAllCompleted
+                                            val buttonText = when {
+                                                isAllCompleted -> stringResource(R.string.completed_status)
+                                                !isToday -> stringResource(R.string.not_today)
+                                                isResuming -> stringResource(R.string.resume)
+                                                else -> stringResource(R.string.start_workout)
+                                            }
+
+                                            Button(
+                                                onClick = {
+                                                    viewModel.startWorkout(notebook?.id ?: 0L)
+                                                    showWorkoutExecution = true
+                                                },
+                                                enabled = buttonEnabled,
+                                                colors = ButtonDefaults.buttonColors(
+                                                    containerColor = MaterialTheme.colorScheme.primary,
+                                                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                                                    disabledContainerColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f),
+                                                    disabledContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+                                                ),
+                                                shape = RoundedCornerShape(12.dp),
+                                                modifier = Modifier
+                                                    .weight(0.65f)
+                                                    .testTag("start_workout_button")
+                                            ) {
+                                                Icon(
+                                                    imageVector = if (isAllCompleted) Icons.Default.CheckCircle else if (!isToday) Icons.Default.Lock else Icons.Default.PlayArrow,
+                                                    contentDescription = null,
+                                                    modifier = Modifier.size(18.dp)
+                                                )
+                                                Spacer(modifier = Modifier.width(6.dp))
+                                                Text(buttonText, fontWeight = FontWeight.Bold, fontSize = 13.sp, maxLines = 1)
+                                            }
+                                        }
                                     }
                                 }
                             }
 
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                OutlinedButton(
-                                    onClick = {
-                                        resetConfirmation = true
-                                    },
-                                    shape = RoundedCornerShape(12.dp),
-                                    modifier = Modifier.weight(0.35f)
-                                ) {
-                                    Icon(Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(16.dp))
-                                    Spacer(modifier = Modifier.width(4.dp))
-                                    Text(stringResource(R.string.reset), fontSize = 12.sp, maxLines = 1)
-                                }
-
-                                val buttonEnabled = isToday && !isAllCompleted
-                                val buttonText = when {
-                                    isAllCompleted -> stringResource(R.string.completed_status)
-                                    !isToday -> stringResource(R.string.not_today)
-                                    isResuming -> stringResource(R.string.resume)
-                                    else -> stringResource(R.string.start_workout)
-                                }
-
-                                Button(
-                                    onClick = {
-                                        viewModel.startWorkout(notebook?.id ?: 0L)
-                                        showWorkoutExecution = true
-                                    },
-                                    enabled = buttonEnabled,
-                                    colors = ButtonDefaults.buttonColors(
-                                        containerColor = MaterialTheme.colorScheme.primary,
-                                        contentColor = MaterialTheme.colorScheme.onPrimary,
-                                        disabledContainerColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f),
-                                        disabledContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
-                                    ),
-                                    shape = RoundedCornerShape(12.dp),
+                            if (unfilteredItems.isNotEmpty() || hasFilter) {
+                                // Fast Search Bar
+                                OutlinedTextField(
+                                    value = searchQuery,
+                                    onValueChange = { viewModel.searchQuery.value = it },
                                     modifier = Modifier
-                                        .weight(0.65f)
-                                        .testTag("start_workout_button")
-                                ) {
-                                    Icon(
-                                        imageVector = if (isAllCompleted) Icons.Default.CheckCircle else if (!isToday) Icons.Default.Lock else Icons.Default.PlayArrow,
-                                        contentDescription = null,
-                                        modifier = Modifier.size(18.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(6.dp))
-                                    Text(buttonText, fontWeight = FontWeight.Bold, fontSize = 13.sp, maxLines = 1)
-                                }
-                            }
-                        }
-                    }
-                }
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 16.dp, vertical = 6.dp)
+                                        .testTag("item_search_input"),
+                                    placeholder = { Text(stringResource(R.string.search_items_placeholder)) },
+                                    leadingIcon = { Icon(Icons.Default.Search, null) },
+                                    trailingIcon = {
+                                        if (searchQuery.isNotEmpty()) {
+                                            IconButton(onClick = { viewModel.searchQuery.value = "" }) {
+                                                Icon(Icons.Default.Clear, null)
+                                            }
+                                        }
+                                    },
+                                    shape = RoundedCornerShape(16.dp),
+                                    colors = OutlinedTextFieldDefaults.colors(
+                                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                                        unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.4f),
+                                        focusedContainerColor = MaterialTheme.colorScheme.surface,
+                                        unfocusedContainerColor = MaterialTheme.colorScheme.surface
+                                    ),
+                                    singleLine = true
+                                )
 
-            if (unfilteredItems.isNotEmpty() || hasFilter) {
-            // Fast Search Bar
-            OutlinedTextField(
-                value = searchQuery,
-                onValueChange = { viewModel.searchQuery.value = it },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 6.dp)
-                    .testTag("item_search_input"),
-                placeholder = { Text(stringResource(R.string.search_items_placeholder)) },
-                leadingIcon = { Icon(Icons.Default.Search, null) },
-                trailingIcon = {
-                    if (searchQuery.isNotEmpty()) {
-                        IconButton(onClick = { viewModel.searchQuery.value = "" }) {
-                            Icon(Icons.Default.Clear, null)
-                        }
-                    }
-                },
-                shape = RoundedCornerShape(16.dp),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = MaterialTheme.colorScheme.primary,
-                    unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.4f),
-                    focusedContainerColor = MaterialTheme.colorScheme.surface,
-                    unfocusedContainerColor = MaterialTheme.colorScheme.surface
-                ),
-                singleLine = true
-            )
-
-            if (!isWorkout) {
-                val content by viewModel.notebookContent.collectAsState()
-                val completeList = (content as? xyz.younglion.flexilist.ui.workspace.NotebookUiState.Ready)?.items.orEmpty()
-                val count = completeList.count { it.completed }
-                val kind = NotebookKind.parse(notebook?.type.orEmpty())
-                val summary = when (kind) {
-                    NotebookKind.HABIT -> stringResource(R.string.ux_today_summary, count, completeList.size)
-                    NotebookKind.READING -> stringResource(R.string.ux_read_summary, count, completeList.size)
-                    else -> stringResource(R.string.active_items_count, completeList.size - count, count)
-                }
-                Text(summary, Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp), style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-            NotebookFilters(viewModel, notebook)
-            if (reordering) TextButton(onClick = { reordering = false }) { Text(stringResource(R.string.ux_done)) }
-
-            } // Search and filtering are unnecessary for a new empty notebook.
-
-            // Items List
-            val showEmptyToday = isWorkout && selectedWorkoutTab == 0 && displayItems.isEmpty() && localItems.isNotEmpty()
-
-            if (localItems.isEmpty()) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .weight(1f),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 24.dp, vertical = 16.dp).padding(bottom = 80.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ListAlt,
-                            contentDescription = null,
-                            modifier = Modifier.size(72.dp),
-                            tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
-                        )
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text(stringResource(if (searchQuery.isNotBlank() || selectedTags.isNotEmpty() || selectedPriorities.isNotEmpty() || selectedCategory != null || filterStarred || filterCompleted != null) R.string.ux_no_results else R.string.no_items_title), fontWeight = FontWeight.Bold)
-                        if (searchQuery.isNotBlank() || selectedTags.isNotEmpty() || selectedPriorities.isNotEmpty() || selectedCategory != null || filterStarred || filterCompleted != null) {
-                            TextButton(onClick = { viewModel.clearFilters() }) { Text(stringResource(R.string.ux_clear_filters)) }
-                        }
-                        Text(
-                            text = stringResource(if (searchQuery.isNotBlank() || selectedTags.isNotEmpty() || selectedPriorities.isNotEmpty() || selectedCategory != null || filterStarred || filterCompleted != null) R.string.ux_clear_filters else R.string.ux_empty_entries_hint),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                            modifier = Modifier.padding(top = 8.dp)
-                        )
-                    }
-                }
-            } else if (showEmptyToday) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .weight(1f),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 24.dp, vertical = 16.dp).padding(bottom = 80.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.FitnessCenter,
-                            contentDescription = null,
-                            modifier = Modifier.size(72.dp),
-                            tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
-                        )
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text(stringResource(R.string.no_workout_plan_title, localizedDay(selectedDayFilter)), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
-                        Text(
-                            text = stringResource(R.string.no_workout_plan_sub),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                            modifier = Modifier.padding(top = 8.dp)
-                        )
-                    }
-                }
-            } else {
-                LazyColumn(
-                    contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp),
-                    modifier = Modifier.weight(1f)
-                ) {
-                    items(displayItems, key = { it.id }) { item ->
-                        val currentIndex = displayItems.indexOfFirst { it.id == item.id }
-
-                        val dragMod = Modifier.pointerInput(item.id) {
-                            detectDragGestures(
-                                onDragStart = {
-                                    isDragging = true
-                                    dragAccumulator = 0f
-                                    if (sortType != "Manuel") viewModel.sortType.value = "Manuel"
-                                },
-                                onDrag = { change, dragAmount ->
-                                    change.consume()
-                                    if (sortType != "Manuel") viewModel.sortType.value = "Manuel"
-                                    dragAccumulator += dragAmount.y
-                                    val idx = localItems.indexOfFirst { it.id == item.id }
-                                    if (idx != -1) {
-                                        val threshold = 40f
-                                        if (dragAccumulator < -threshold && idx > 0) {
-                                            // Swap with previous
-                                            val newList = localItems.toMutableList()
-                                            val temp = newList[idx]
-                                            newList[idx] = newList[idx - 1]
-                                            newList[idx - 1] = temp
-                                            localItems = newList
-                                            dragAccumulator = 0f
-                                        } else if (dragAccumulator > threshold && idx < localItems.size - 1) {
-                                            // Swap with next
-                                            val newList = localItems.toMutableList()
-                                            val temp = newList[idx]
-                                            newList[idx] = newList[idx + 1]
-                                            newList[idx + 1] = temp
-                                            localItems = newList
-                                            dragAccumulator = 0f
+                                if (!isWorkout) {
+                                    val content by viewModel.notebookContent.collectAsState()
+                                    val completeList = (content as? xyz.younglion.flexilist.ui.workspace.NotebookUiState.Ready)?.items.orEmpty()
+                                    val count = completeList.count { it.completed }
+                                    val kind = NotebookKind.parse(notebook?.type.orEmpty())
+                                    val summary = when (kind) {
+                                        NotebookKind.HABIT -> stringResource(R.string.ux_today_summary, count, completeList.size)
+                                        NotebookKind.READING -> stringResource(R.string.ux_read_summary, count, completeList.size)
+                                        else -> stringResource(R.string.active_items_count, completeList.size - count, count)
+                                    }
+                                    Surface(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp), shape = MaterialTheme.shapes.medium, color = MaterialTheme.colorScheme.surfaceContainerLow) {
+                                        Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                            Text(summary, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                            if (completeList.isNotEmpty()) LinearProgressIndicator(progress = { count.toFloat() / completeList.size }, modifier = Modifier.fillMaxWidth().height(4.dp), trackColor = MaterialTheme.colorScheme.surfaceContainerHighest)
                                         }
                                     }
-                                },
-                                onDragEnd = {
-                                    isDragging = false
-                                    dragAccumulator = 0f
-                                    viewModel.updateItemsOrder(localItems)
-                                },
-                                onDragCancel = {
-                                    isDragging = false
-                                    dragAccumulator = 0f
-                                    viewModel.updateItemsOrder(localItems)
                                 }
-                            )
-                        }
+                                NotebookFilters(viewModel, notebook)
+                                if (reordering) TextButton(onClick = { reordering = false }) { Text(stringResource(R.string.ux_done)) }
 
-                        val onMoveUp: (() -> Unit)? = if (currentIndex > 0) {
-                            {
-                                if (sortType != "Manuel") viewModel.sortType.value = "Manuel"
-                                val newList = localItems.toMutableList()
-                                val temp = newList[currentIndex]
-                                newList[currentIndex] = newList[currentIndex - 1]
-                                newList[currentIndex - 1] = temp
-                                localItems = newList
-                                viewModel.updateItemsOrder(newList)
-                            }
-                        } else null
+                            } // Search and filtering are unnecessary for a new empty notebook.
 
-                        val onMoveDown: (() -> Unit)? = if (currentIndex < localItems.size - 1) {
-                            {
-                                if (sortType != "Manuel") viewModel.sortType.value = "Manuel"
-                                val newList = localItems.toMutableList()
-                                val temp = newList[currentIndex]
-                                newList[currentIndex] = newList[currentIndex + 1]
-                                newList[currentIndex + 1] = temp
-                                localItems = newList
-                                viewModel.updateItemsOrder(newList)
-                            }
-                        } else null
-
-                        if (isWorkout) {
-                            WorkoutExerciseCard(
-                                item = item,
-                                notebook = notebook,
-                                isSelected = selectedItemIds.contains(item.id),
-                                isBulkMode = isBulkMode,
-                                onClick = {
-                                    if (isBulkMode) {
-                                        viewModel.toggleItemSelection(item.id)
-                                    } else {
-                                        // Navigate to detailed editor
-                                        onNavigateToAddEdit(item.id)
-                                    }
-                                },
-                                onLongClick = {
-                                    viewModel.toggleItemSelection(item.id)
-                                },
-                                onToggleComplete = {
-                                    viewModel.toggleItemComplete(item)
-                                },
-                                onToggleStar = {
-                                    viewModel.updateListItem(item.copy(starred = !item.starred))
-                                },
-                                reorderEnabled = reordering && !isBulkMode,
-                                dragModifier = dragMod,
-                                onMoveUp = onMoveUp,
-                                onMoveDown = onMoveDown
-                            )
-                        } else {
-                            ListItemCard(
-                                item = item,
-                                notebook = notebook,
-                                isSelected = selectedItemIds.contains(item.id),
-                                isBulkMode = isBulkMode,
-                                onClick = {
-                                    if (isBulkMode) {
-                                        viewModel.toggleItemSelection(item.id)
-                                    } else {
-                                        // Navigate to detailed editor
-                                        onNavigateToAddEdit(item.id)
-                                    }
-                                },
-                                onLongClick = {
-                                    viewModel.toggleItemSelection(item.id)
-                                },
-                                onToggleComplete = {
-                                    viewModel.toggleItemComplete(item)
-                                },
-                                onToggleStar = {
-                                    viewModel.updateListItem(item.copy(starred = !item.starred))
-                                },
-                                reorderEnabled = reordering && !isBulkMode,
-                                dragModifier = dragMod,
-                                onMoveUp = onMoveUp,
-                                onMoveDown = onMoveDown
-                            )
                         }
                     }
+                    // Items List
+                    val showEmptyToday = isWorkout && selectedWorkoutTab == 0 && displayItems.isEmpty() && localItems.isNotEmpty()
+
+                    if (localItems.isEmpty()) item {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth().heightIn(min = 240.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 16.dp).padding(bottom = 80.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Filled.ListAlt,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(72.dp),
+                                    tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
+                                )
+                                Spacer(modifier = Modifier.height(16.dp))
+                                Text(stringResource(if (searchQuery.isNotBlank() || selectedTags.isNotEmpty() || selectedPriorities.isNotEmpty() || selectedCategory != null || filterStarred || filterCompleted != null) R.string.ux_no_results else R.string.no_items_title), fontWeight = FontWeight.Bold)
+                                if (searchQuery.isNotBlank() || selectedTags.isNotEmpty() || selectedPriorities.isNotEmpty() || selectedCategory != null || filterStarred || filterCompleted != null) {
+                                    TextButton(onClick = { viewModel.clearFilters() }) { Text(stringResource(R.string.ux_clear_filters)) }
+                                }
+                                Text(
+                                    text = stringResource(if (searchQuery.isNotBlank() || selectedTags.isNotEmpty() || selectedPriorities.isNotEmpty() || selectedCategory != null || filterStarred || filterCompleted != null) R.string.ux_clear_filters else R.string.ux_empty_entries_hint),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                                    modifier = Modifier.padding(top = 8.dp)
+                                )
+                            }
+                        }
+                    } else if (showEmptyToday) item {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth().heightIn(min = 240.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 16.dp).padding(bottom = 80.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.FitnessCenter,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(72.dp),
+                                    tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
+                                )
+                                Spacer(modifier = Modifier.height(16.dp))
+                                Text(stringResource(R.string.no_workout_plan_title, localizedDay(selectedDayFilter)), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+                                Text(
+                                    text = stringResource(R.string.no_workout_plan_sub),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                                    modifier = Modifier.padding(top = 8.dp)
+                                )
+                            }
+                        }
+                    } else {
+
+                        items(displayItems, key = { it.id }) { item ->
+                            val currentIndex = displayItems.indexOfFirst { it.id == item.id }
+
+                            val dragMod = Modifier.pointerInput(item.id) {
+                                detectDragGestures(
+                                    onDragStart = {
+                                        isDragging = true
+                                        dragAccumulator = 0f
+                                        if (sortType != "Manuel") viewModel.sortType.value = "Manuel"
+                                    },
+                                    onDrag = { change, dragAmount ->
+                                        change.consume()
+                                        if (sortType != "Manuel") viewModel.sortType.value = "Manuel"
+                                        dragAccumulator += dragAmount.y
+                                        val idx = localItems.indexOfFirst { it.id == item.id }
+                                        if (idx != -1) {
+                                            val threshold = 40f
+                                            if (dragAccumulator < -threshold && idx > 0) {
+                                                // Swap with previous
+                                                val newList = localItems.toMutableList()
+                                                val temp = newList[idx]
+                                                newList[idx] = newList[idx - 1]
+                                                newList[idx - 1] = temp
+                                                localItems = newList
+                                                dragAccumulator = 0f
+                                            } else if (dragAccumulator > threshold && idx < localItems.size - 1) {
+                                                // Swap with next
+                                                val newList = localItems.toMutableList()
+                                                val temp = newList[idx]
+                                                newList[idx] = newList[idx + 1]
+                                                newList[idx + 1] = temp
+                                                localItems = newList
+                                                dragAccumulator = 0f
+                                            }
+                                        }
+                                    },
+                                    onDragEnd = {
+                                        isDragging = false
+                                        dragAccumulator = 0f
+                                        viewModel.updateItemsOrder(localItems)
+                                    },
+                                    onDragCancel = {
+                                        isDragging = false
+                                        dragAccumulator = 0f
+                                        viewModel.updateItemsOrder(localItems)
+                                    }
+                                )
+                            }
+
+                            val onMoveUp: (() -> Unit)? = if (currentIndex > 0) {
+                                {
+                                    if (sortType != "Manuel") viewModel.sortType.value = "Manuel"
+                                    val newList = localItems.toMutableList()
+                                    val temp = newList[currentIndex]
+                                    newList[currentIndex] = newList[currentIndex - 1]
+                                    newList[currentIndex - 1] = temp
+                                    localItems = newList
+                                    viewModel.updateItemsOrder(newList)
+                                }
+                            } else null
+
+                            val onMoveDown: (() -> Unit)? = if (currentIndex < localItems.size - 1) {
+                                {
+                                    if (sortType != "Manuel") viewModel.sortType.value = "Manuel"
+                                    val newList = localItems.toMutableList()
+                                    val temp = newList[currentIndex]
+                                    newList[currentIndex] = newList[currentIndex + 1]
+                                    newList[currentIndex + 1] = temp
+                                    localItems = newList
+                                    viewModel.updateItemsOrder(newList)
+                                }
+                            } else null
+
+                            Box(Modifier.padding(horizontal = 16.dp)) {
+                                if (isWorkout) {
+                                    WorkoutExerciseCard(
+                                        item = item,
+                                        notebook = notebook,
+                                        isSelected = selectedItemIds.contains(item.id),
+                                        isBulkMode = isBulkMode,
+                                        onClick = {
+                                            if (isBulkMode) {
+                                                viewModel.toggleItemSelection(item.id)
+                                            } else {
+                                                // Navigate to detailed editor
+                                                onNavigateToAddEdit(item.id)
+                                            }
+                                        },
+                                        onLongClick = {
+                                            viewModel.toggleItemSelection(item.id)
+                                        },
+                                        onToggleComplete = {
+                                            viewModel.toggleItemComplete(item)
+                                        },
+                                        onToggleStar = {
+                                            viewModel.updateListItem(item.copy(starred = !item.starred))
+                                        },
+                                        reorderEnabled = reordering && !isBulkMode,
+                                        dragModifier = dragMod,
+                                        onMoveUp = onMoveUp,
+                                        onMoveDown = onMoveDown
+                                    )
+                                } else {
+                                    ListItemCard(
+                                        item = item,
+                                        notebook = notebook,
+                                        isSelected = selectedItemIds.contains(item.id),
+                                        isBulkMode = isBulkMode,
+                                        onClick = {
+                                            if (isBulkMode) {
+                                                viewModel.toggleItemSelection(item.id)
+                                            } else {
+                                                // Navigate to detailed editor
+                                                onNavigateToAddEdit(item.id)
+                                            }
+                                        },
+                                        onLongClick = {
+                                            viewModel.toggleItemSelection(item.id)
+                                        },
+                                        onToggleComplete = {
+                                            viewModel.toggleItemComplete(item)
+                                        },
+                                        onToggleStar = {
+                                            viewModel.updateListItem(item.copy(starred = !item.starred))
+                                        },
+                                        reorderEnabled = reordering && !isBulkMode,
+                                        dragModifier = dragMod,
+                                        onMoveUp = onMoveUp,
+                                        onMoveDown = onMoveDown
+                                    )
+                                }
+                                }
+                        }
+
+                    }
                 }
-            }
             } // Close standard layout conditional block
 
             // --- WATER INTAKE TRACKER TAB ---

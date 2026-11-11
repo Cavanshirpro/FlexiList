@@ -124,13 +124,18 @@ class WorkspaceController(
     fun storeDraft(item: ListItemEntity) { savedState[EntryDraft.key(item.notebookId, item.id)] = EntryDraft(item).encode() }
     fun clearDraft(notebookId: Long, itemId: Long) { savedState.remove<String>(EntryDraft.key(notebookId, itemId)) }
 
-    suspend fun saveNotebook(notebook: NotebookEntity): Long {
+    suspend fun saveNotebook(notebook: NotebookEntity, starter: List<ListItemEntity> = emptyList()): Long {
+        require(notebook.id == 0L || starter.isEmpty())
         require(notebook.name.isNotBlank())
         val key = notebookSaveKey(notebook)
         savedState["pending-$key"] = NotebookDraft(notebook).encode()
-        return saveOnce(key, notebook.copy(createdAt = 0, updatedAt = 0)) {
+        return saveOnce(key, notebook.copy(createdAt = 0, updatedAt = 0) to starter.map { it.copy(createdAt = 0, updatedAt = 0) }) {
             repository.withTransaction {
-                if (notebook.id == 0L) repository.insertNotebook(notebook.copy(name = notebook.name.trim()))
+                if (notebook.id == 0L) {
+                    val id = repository.insertNotebook(notebook.copy(name = notebook.name.trim()))
+                    repository.insertItems(starter.mapIndexed { index, item -> item.copy(id = 0, notebookId = id, sortOrder = index) })
+                    id
+                }
                 else {
                     val original = checkNotNull(repository.getNotebookByIdSuspend(notebook.id))
                     repository.updateNotebook(original.copy(
@@ -143,6 +148,33 @@ class WorkspaceController(
             }
         }
     }
+
+    val stats: StateFlow<List<xyz.younglion.flexilist.data.model.NotebookStats>?> = repository.notebookStats()
+        .map<List<xyz.younglion.flexilist.data.model.NotebookStats>, List<xyz.younglion.flexilist.data.model.NotebookStats>?> { it }
+        .catch { emit(null) }.stateIn(scope, SharingStarted.WhileSubscribed(5000), null)
+    private val libraryRetry = MutableStateFlow(0)
+    fun retryLibrary() { libraryRetry.value++ }
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val library: StateFlow<LibraryState> = libraryRetry.flatMapLatest { combine(repository.allNotebooks, repository.getAllItemsGlobal()) { books, items ->
+        LibraryState.Ready(books, items) as LibraryState
+    }.onStart { emit(LibraryState.Loading) }.catch { emit(LibraryState.Error) } }
+        .stateIn(scope, SharingStarted.WhileSubscribed(stopTimeoutMillis = 0, replayExpirationMillis = 0), LibraryState.Loading)
+
+    fun keepAdding() = preferences.getBoolean("keep-adding", false)
+    fun setKeepAdding(value: Boolean) { preferences.edit().putBoolean("keep-adding", value).apply() }
+    suspend fun saveBatch(items: List<ListItemEntity>): Long {
+        require(items.size in 1..100 && items.all { it.id == 0L && it.title.isNotBlank() && it.notebookId == items.first().notebookId })
+        return saveOnce("batch-${items.first().notebookId}", items.map { it.copy(createdAt = 0, updatedAt = 0) }) {
+            val ids = repository.withTransaction {
+                check(repository.getNotebookByIdSuspend(items.first().notebookId) != null)
+                val nextOrder = (repository.maxSortOrder(items.first().notebookId).toLong() + 1).coerceAtMost(Int.MAX_VALUE.toLong()).toInt()
+                repository.insertItems(items.mapIndexed { index, item -> item.copy(title = item.title.trim(), sortOrder = (nextOrder.toLong() + index).coerceAtMost(Int.MAX_VALUE.toLong()).toInt()) })
+            }
+            items.zip(ids).forEach { (item, id) -> synchronizeReminder(item.copy(id = id)) }
+            ids.first()
+        }
+    }
+    fun acknowledgeBatch(notebookId: Long) { synchronized(saves) { saves.remove("batch-$notebookId") } }
 
     enum class NotebookFlag { PINNED, FAVORITE, ARCHIVED }
     suspend fun toggleNotebookFlag(id: Long, flag: NotebookFlag) = repository.withTransaction {
@@ -159,7 +191,10 @@ class WorkspaceController(
         return saveOnce(entrySaveKey(item), item.copy(createdAt = 0, updatedAt = 0)) {
             val id = repository.withTransaction {
                 check(repository.getNotebookByIdSuspend(item.notebookId) != null)
-                if (item.id == 0L) repository.insertItem(item.copy(title = item.title.trim()))
+                if (item.id == 0L) {
+                    val nextOrder = (repository.maxSortOrder(item.notebookId).toLong() + 1).coerceAtMost(Int.MAX_VALUE.toLong()).toInt()
+                    repository.insertItem(item.copy(title = item.title.trim(), sortOrder = nextOrder))
+                }
                 else {
                     val original = repository.getItemByIdSuspend(item.id)
                     check(original?.notebookId == item.notebookId)
@@ -194,7 +229,7 @@ class WorkspaceController(
             items
         }
         snapshot.forEach { runCatching { ReminderScheduler.cancel(application, it.id) } }
-        if (snapshot.isNotEmpty()) deletion.value = UndoDeletion(++deletionToken, snapshot)
+        if (snapshot.isNotEmpty()) deletion.value = UndoDeletion(++deletionToken, (deletion.value?.items.orEmpty() + snapshot).distinctBy { it.id })
     }
 
     suspend fun undoDelete(token: Long): Boolean = deletionMutex.withLock {

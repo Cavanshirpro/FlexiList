@@ -16,6 +16,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -38,6 +40,9 @@ fun NotebookForm(
     onSaved: (NotebookEntity) -> Unit
 ) {
     val scope = rememberCoroutineScope()
+    val context = LocalContext.current
+    var starterName by rememberSaveable { mutableStateOf(NotebookStarter.BLANK.name) }
+    val starter = NotebookStarter.valueOf(starterName)
     val initialConfig = remember(notebook?.id) { notebook?.getWorkoutScheduleConfig() ?: xyz.younglion.flexilist.data.model.WorkoutScheduleConfig() }
     val startDate = rememberSaveable { initialConfig.startDate }
     val initialKind = notebook?.let { NotebookKind.parse(it.type) } ?: if (workspace == WorkspaceId.LISTS) NotebookKind.TASK else workspace.kinds.first()
@@ -69,7 +74,7 @@ fun NotebookForm(
         else -> weekly.isEmpty()
     }
     suspend fun persist(value: NotebookEntity) {
-        val id = try { controller.saveNotebook(value) }
+        val id = try { controller.saveNotebook(value, if (notebook == null) starter.items(context) else emptyList()) }
         catch (error: CancellationException) { throw error }
         catch (_: Exception) {
             withContext(Dispatchers.Main.immediate) { saveFailed = true; saving = false }
@@ -91,6 +96,7 @@ fun NotebookForm(
     Scaffold(
         topBar = {
             TopAppBar(
+                expandedHeight = (64 * LocalDensity.current.fontScale.coerceIn(1f, 2f)).dp,
                 title = { Text(stringResource(if (notebook == null) R.string.ux_new_notebook else R.string.edit_notebook)) },
                 navigationIcon = { IconButton(onClick = close, enabled = !saving) { Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.back)) } },
                 actions = {
@@ -121,11 +127,30 @@ fun NotebookForm(
                 supportingText = { if (attempted && name.isBlank()) Text(stringResource(R.string.ux_title_required)) },
                 modifier = Modifier.fillMaxWidth().testTag("notebook_name_input")
             )
+            if (notebook == null) {
+                Text(stringResource(R.string.v11_starting_point), style = MaterialTheme.typography.titleSmall)
+                Text(stringResource(R.string.v11_template_hint), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    NotebookStarter.entries.filter { it.kind == null || it.kind.workspace == workspace }.forEach { option ->
+                        FilterChip(selected = starter == option, enabled = !saving, onClick = {
+                            starterName = option.name
+                            option.kind?.let { kindName = it.name; emoji = option.emoji; if (name.isBlank()) name = context.getString(option.label) }
+                            dirty = true
+                        }, label = { Text(stringResource(option.label)) }, modifier = Modifier.testTag("starter-${option.name}"))
+                    }
+                }
+                if (starter.entries.isNotEmpty()) Surface(color = MaterialTheme.colorScheme.surfaceContainerLow, shape = MaterialTheme.shapes.medium) {
+                    Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text(stringResource(R.string.v11_preview), style = MaterialTheme.typography.labelLarge)
+                        starter.entries.forEach { Text("• ${stringResource(it)}", style = MaterialTheme.typography.bodyLarge) }
+                    }
+                }
+            }
             val choices = if (notebook == null) workspace.kinds else NotebookKind.entries.filter { it != NotebookKind.OTHER }
             if (choices.size > 1) {
                 Text(stringResource(R.string.ux_notebook_kind), style = MaterialTheme.typography.titleSmall)
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    choices.forEach { option -> FilterChip(enabled = !saving, selected = kind == option, onClick = { kindName = option.name; dirty = true }, label = { Text(stringResource(option.title)) }) }
+                    choices.forEach { option -> FilterChip(enabled = !saving, selected = kind == option, onClick = { kindName = option.name; if (starter.kind != option) starterName = NotebookStarter.BLANK.name; dirty = true }, label = { Text(stringResource(option.title)) }) }
                 }
             }
             TextButton(enabled = !saving, onClick = { advanced = !advanced }, modifier = Modifier.testTag("notebook_advanced")) { Text(stringResource(if (advanced) R.string.ux_hide_advanced else R.string.ux_advanced)) }

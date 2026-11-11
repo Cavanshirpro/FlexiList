@@ -6,6 +6,12 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface ListItemDao {
+    @Query("SELECT COALESCE(MAX(sortOrder), -1) FROM list_items WHERE notebookId = :notebookId")
+    suspend fun maxSortOrder(notebookId: Long): Int
+
+    @Query("SELECT notebookId, COUNT(*) AS total, SUM(CASE WHEN completed = 1 THEN 1 ELSE 0 END) AS done FROM list_items GROUP BY notebookId")
+    fun notebookStats(): Flow<List<xyz.younglion.flexilist.data.model.NotebookStats>>
+
     @Query("SELECT * FROM list_items WHERE notebookId = :notebookId ORDER BY sortOrder ASC, id DESC")
     fun getAllItemsForNotebook(notebookId: Long): Flow<List<ListItemEntity>>
 

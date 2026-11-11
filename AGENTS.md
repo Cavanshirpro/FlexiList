@@ -146,3 +146,12 @@ The following checklist tracks development milestones, completed features, and f
 - Await confirmed Room writes before success/navigation. Use `WorkspaceController` for editor saves, flag toggles, deletions/Undo and reviewed imports. Keep editor field updates separate from concurrent completion/order/pin/archive changes.
 - Translate display labels only: workout day keys, serialized exercise/schedule configurations, custom field types and user-defined content must remain compatible with existing backups.
 - `WorkspaceFlowTest` runs native Compose journeys for narrow/large-text and expanded layouts. `-PcaptureUx=true` records evidence under `app/build/outputs/ux`; generated screenshots do not substitute for device/TalkBack verification.
+
+## 1.1.0 experience contracts
+
+- `LibrarySearch` owns local cross-workspace search, Today and Starred policies. Archive is opt-in; DSL configuration is excluded from prose matching. Keep search work off the UI thread and dispose the full corpus after search closes.
+- Overview counts use `NotebookStats`, a read-only aggregate Room projection. Do not reintroduce one item query per card or a schema bump for projections.
+- `NotebookStarter` content is translated and previewed before creation; pass it to `saveNotebook` so the parent and entries commit atomically. Never apply starters during an existing-notebook edit.
+- Batch quick entry accepts 1–100 non-empty lines, preserves duplicates and shared draft details, and appends in line order. Use `saveBatch`/acknowledgement for recreation-safe commits; keep input on failure.
+- The notebook header and rows share one lazy scroller. Test large-font workout controls and list reachability before restoring fixed-height header stacks.
+- A release candidate without the existing signing configuration must remain unsigned. Never fall back to debug signing or generate a new production identity.
